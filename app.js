@@ -54,11 +54,13 @@ jQuery(document).ready(function($){
             }, 1300);
         },
         createResponse: function (text) {
-            let regExp = /^\/(\w+)\s(\w+)*/g;
+            let regExp = /^\/(\w+)\s(\w+)*\s*(\d*)/g;
             let result = regExp.exec(text);
             if (!!result) {
+                console.log(result);
                 let intent = result[1];
                 let variable = result[2];
+                let quantity = result[3];
                 switch (intent) {
                     case 'name':
                         if (!!variable) {
@@ -67,7 +69,7 @@ jQuery(document).ready(function($){
                         }
                         break;
                     case 'image':
-                        this.showImage(variable);
+                        this.showImage(variable, quantity);
                         break;
                     default:
                         this.addMessage('You need to use one of the commands. Commands are starting with /', 'bot');
@@ -76,10 +78,9 @@ jQuery(document).ready(function($){
                 this.addMessage('You need to use one of the commands. Commands are starting with /', 'bot');
             }
         },
-        showImage: function (category) {
+        showImage: function (category, quantity) {
             let self = this;
             let headers = new Headers();
-            let randomImage = Math.floor(Math.random() * 50);
             headers.append('Authorization', this.APIkey);
             let myInit = {
                 method: 'GET',
@@ -91,17 +92,20 @@ jQuery(document).ready(function($){
             }).then(function (jsonResponse) {
                 console.log(jsonResponse);
                 if (jsonResponse.total_results > 0) {
-                    let image = new Image();
-                    image.src = jsonResponse.photos[randomImage].src.large;
-                    $(image).addClass('message_image');
-                    image.addEventListener('click',  function () {
-                        let lightbox = $('#widget_lightbox');
-                        $(lightbox).empty();
-                        $(this).clone().appendTo(lightbox);
-                        $(lightbox).show('blind', {direction: 'up'}, 700);
-                        $('#modal_overlay').show('explode', 800);
-                    });
-                    self.addMessage(image, 'bot');
+                    for (let i = 0; i < quantity; i++) {
+                        let randomImage = Math.floor(Math.random() * 50);
+                        let image = new Image();
+                        image.src = jsonResponse.photos[randomImage].src.large;
+                        $(image).addClass('message_image');
+                        image.addEventListener('click', function () {
+                            let lightbox = $('#widget_lightbox');
+                            $(lightbox).empty();
+                            $(this).clone().appendTo(lightbox);
+                            $(lightbox).show('blind', {direction: 'up'}, 700);
+                            $('#modal_overlay').show('explode', 800);
+                        });
+                        self.addMessage(image, 'bot');
+                    }
                 } else {
                     self.addMessage('Sorry, i was not able to find the images you requested', 'bot');
                 }
