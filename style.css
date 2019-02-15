@@ -157,6 +157,10 @@ body {
     display: none;
 }
 
+#widget_queue .widget_message img {
+    width: 100%
+}
+
 #widget_queue {
     display: flex;
     flex-direction: column;

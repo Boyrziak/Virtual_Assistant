@@ -5,6 +5,7 @@ jQuery(document).ready(function($){
         active: false,
         guestName: 'dear Guest',
         firstTime: true,
+        APIkey: '563492ad6f91700001000001bb151c8c07f048768f0c409fc846429b',
         click: function () {
             this.opened ? this.close() : this.open();
         },
@@ -38,6 +39,7 @@ jQuery(document).ready(function($){
                 if (sender === 'guest') {
                     self.createResponse(text);
                 }
+                $('#widget_queue').scrollTop($('#widget_queue').prop("scrollHeight"));
             }, 600);
         },
         initialize: function () {
@@ -63,7 +65,7 @@ jQuery(document).ready(function($){
                         }
                         break;
                     case 'image':
-                        this.addMessage('Sorry, ' + this.guestName + ', this option is not available right now', 'bot');
+                        this.showImage(variable);
                         break;
                     default:
                         this.addMessage('You need to use one of the commands. Commands are starting with /', 'bot');
@@ -71,10 +73,40 @@ jQuery(document).ready(function($){
             } else {
                 this.addMessage('You need to use one of the commands. Commands are starting with /', 'bot');
             }
+        },
+        showImage: function (category) {
+            let self = this;
+            let headers = new Headers();
+            let randomImage = Math.floor(Math.random() * 50);
+            headers.append('Authorization', this.APIkey);
+            let myInit = {
+                method: 'GET',
+                headers: headers
+            };
+            let request =  new Request('https://api.pexels.com/v1/search?query=' + category + '+query&per_page=50&page=1', myInit);
+            fetch(request).then(function (response) {
+                return response.json();
+            }).then(function (jsonResponse) {
+                console.log(jsonResponse);
+                // console.log(jsonResponse.photos[randomImage].src.large);
+                if (jsonResponse.total_results > 0) {
+                    self.addMessage('<img src="' + jsonResponse.photos[randomImage].src.large + '"', 'bot');
+                } else {
+                    self.addMessage('Sorry, i was not able to find the images you requested', 'bot');
+                }
+                // $('body').css('background', jsonResponse.photos[randomImage].src.large);
+            });
+        },
+        showGallery: function (category, slidesNumber) {
+            
         }
     };
 
-    $('#widget_input').keydown(function (e) {
+    //  API key
+    //
+
+
+        $('#widget_input').keydown(function (e) {
         if (e.keyCode == 13) {
             e.preventDefault();
             chat.addMessage($(this).text(), 'guest');
