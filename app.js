@@ -33,7 +33,9 @@ jQuery(document).ready(function($){
             setTimeout(function () {
                 let options = {direction: ''};
                 sender === 'bot' ? options.direction = 'left' : options.direction = 'right';
-                let newMessage = '<div class="widget_message ' + sender + '_message">' + text + '</div>';
+                let newMessage = document.createElement('div');
+                $(newMessage).addClass('widget_message ' + sender + '_message');
+                $(newMessage).append(text);
                 $(newMessage).appendTo('#widget_queue').show('drop', options, 600);
                 console.log($(newMessage).text());
                 if (sender === 'guest') {
@@ -88,13 +90,21 @@ jQuery(document).ready(function($){
                 return response.json();
             }).then(function (jsonResponse) {
                 console.log(jsonResponse);
-                // console.log(jsonResponse.photos[randomImage].src.large);
                 if (jsonResponse.total_results > 0) {
-                    self.addMessage('<img src="' + jsonResponse.photos[randomImage].src.large + '"', 'bot');
+                    let image = new Image();
+                    image.src = jsonResponse.photos[randomImage].src.large;
+                    $(image).addClass('message_image');
+                    image.addEventListener('click',  function () {
+                        let lightbox = $('#widget_lightbox');
+                        $(lightbox).empty();
+                        $(this).clone().appendTo(lightbox);
+                        $(lightbox).show('blind', {direction: 'up'}, 700);
+                        $('#modal_overlay').show('explode', 800);
+                    });
+                    self.addMessage(image, 'bot');
                 } else {
                     self.addMessage('Sorry, i was not able to find the images you requested', 'bot');
                 }
-                // $('body').css('background', jsonResponse.photos[randomImage].src.large);
             });
         },
         showGallery: function (category, slidesNumber) {
@@ -102,11 +112,7 @@ jQuery(document).ready(function($){
         }
     };
 
-    //  API key
-    //
-
-
-        $('#widget_input').keydown(function (e) {
+    $('#widget_input').keydown(function (e) {
         if (e.keyCode == 13) {
             e.preventDefault();
             chat.addMessage($(this).text(), 'guest');
@@ -116,5 +122,18 @@ jQuery(document).ready(function($){
 
     $('#widget_button').on('click', function(){
         chat.click();
+    });
+
+    $('.message_image').on('click', function () {
+        let lightbox = $('#widget_lightbox');
+        $(lightbox).empty();
+        $(this).clone().appendTo(lightbox);
+       $(lightbox).show('blind', {direction: 'up'}, 700);
+       $('#modal_overlay').show('explode', 800);
+    });
+
+    $('#modal_overlay').on('click', function () {
+        $('#widget_lightbox').hide('scale', 600);
+        $(this).hide('explode', 800);
     });
 });

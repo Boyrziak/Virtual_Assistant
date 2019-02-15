@@ -157,8 +157,9 @@ body {
     display: none;
 }
 
-#widget_queue .widget_message img {
-    width: 100%
+#widget_queue .widget_message .message_image {
+    width: 100%;
+    cursor: pointer;
 }
 
 #widget_queue {
@@ -198,4 +199,24 @@ body {
     background: #d6d1cc;
     align-self: flex-end;
     color: #565656;
+}
+
+#widget_lightbox {
+    z-index: 999;
+    position: absolute;
+    border: 2px solid #e7873c;
+    background: white;
+    display: none;
+}
+
+#modal_overlay {
+    z-index: 900;
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.5);
+    cursor: pointer;
+    display: none;
 }
