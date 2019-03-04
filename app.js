@@ -38,20 +38,39 @@ jQuery(document).ready(function($){
                 $(newMessage).append(text);
                 $(newMessage).appendTo('#widget_queue').show('drop', options, 600);
                 console.log($(newMessage).text());
+                // let stillnessCheck = setTimeout(function () {
+                //     self.addMessage('Why are you silent?', 'bot');
+                // }, 3000);
                 if (sender === 'guest') {
                     self.createResponse(text);
+                    // clearTimeout(stillnessCheck);
+                    // stillnessCheck = setTimeout(self.timeoutHandler, 3000);
                 }
                 $('#widget_queue').scrollTop($('#widget_queue').prop("scrollHeight"));
             }, 600);
         },
         initialize: function () {
             let self = this;
-            setTimeout(function () {
-                self.addMessage('Hello, dear Guest! My name is Mike! Happy to help you!', 'bot');
+            let initialized = localStorage.getItem('initialized');
+            console.log(initialized);
+            if (initialized!=='true') {
                 setTimeout(function () {
-                    self.addMessage('What is your name?', 'bot');
-                }, 700);
-            }, 1300);
+                    self.addMessage('Hello, dear Guest! My name is Mike! Happy to help you!', 'bot');
+                    setTimeout(function () {
+                        self.addMessage('What is your name?', 'bot');
+                    }, 700);
+                    localStorage.setItem('initialized', 'true');
+                }, 1300);
+            } else {
+                this.getHistory();
+            }
+        },
+        getHistory: function() {
+            this.addMessage('Welcome back!', 'bot');
+        },
+        clearHistory: function() {
+            localStorage.setItem('initialized', 'false');
+            location.reload();
         },
         createResponse: function (text) {
             let regExp = /^\/(\w+)\s(\w+)*\s*(\d*)/g;
@@ -81,7 +100,7 @@ jQuery(document).ready(function($){
         showImage: function (category, quantity) {
             let self = this;
             let headers = new Headers();
-            headers.append('Authorization', this.APIkey);
+            headers.append('Authorization', self.APIkey);
             let myInit = {
                 method: 'GET',
                 headers: headers
@@ -126,6 +145,14 @@ jQuery(document).ready(function($){
 
     $('#widget_button').on('click', function(){
         chat.click();
+    });
+
+    $('.close_widget').on('click', function(){
+        chat.click();
+    });
+
+    $('#clear_history').on('click', function () {
+       chat.clearHistory();
     });
 
     $('.message_image').on('click', function () {

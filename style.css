@@ -27,13 +27,13 @@ body {
     -webkit-box-shadow: -5px -5px 0px 0px rgba(168, 98, 49, 1);
     -moz-box-shadow: -5px -5px 0px 0px rgba(168, 98, 49, 1);
     box-shadow: -5px -5px 0px 0px rgba(168, 98, 49, 1);
-    transform: scale(0.7) rotate(180deg);
+    transform: scale(1) rotate(180deg);
     transition: transform 1s cubic-bezier(0.3, -0.7, 0.6, 1.7), box-shadow .6s cubic-bezier(0.7, 2.0, 0.9, 1.1) 1s;
 }
 
-#widget_button i {
+#widget_button img {
     text-shadow: 3px 1px rgba(0, 0, 0, 0.3);
-    transform: scale(1.1) rotate(180deg);
+    transform: scale(1) rotate(180deg);
     transition: 1s cubic-bezier(0.3, -0.7, 0.6, 1.7);
 }
 
@@ -41,52 +41,60 @@ body {
     -webkit-box-shadow: 5px 5px 0px 0px rgba(168, 98, 49, 1);
     -moz-box-shadow: 5px 5px 0px 0px rgba(168, 98, 49, 1);
     box-shadow: 5px 5px 0px 0px rgba(168, 98, 49, 1);
-    transform: scale(1) rotate(0);
+    transform: scale(0) rotate(0);
     transition: transform 1s cubic-bezier(0.3, -0.7, 0.6, 1.7), box-shadow .6s cubic-bezier(0.7, 2.0, 0.9, 1.1) 1s;
 }
 
 #widget_button.clicked i {
     transition: 1s cubic-bezier(0.3, -0.7, 0.6, 1.7);
-    transform: scale(1) rotate(0);
+    transform: scale(0) rotate(0);
 }
 
 #widget_body {
     display: none;
-    width: 300px;
-    height: 400px;
+    width: 500px;
+    height: 537px;
     border: 2px solid #e7873c;
     right: 10px;
     bottom: 120px;
     position: absolute;
-    border-radius: 50px 5px 50px 5px;
+    border-radius: 15px 15px 0px 0px;
     -webkit-box-shadow: inset 0px 0px 6px 1px rgba(110, 110, 110, 1);
     -moz-box-shadow: inset 0px 0px 6px 1px rgba(110, 110, 110, 1);
     box-shadow: inset 0px 0px 6px 1px rgba(110, 110, 110, 1);
 }
 
-#widget_body::after {
-    content: '';
-    border: 2px solid #e7873c;
-    border-top: transparent;
-    border-right: transparent;
-    z-index: 100;
+.close_widget {
     position: absolute;
-    bottom: -12px;
-    right: 50px;
-    width: 20px;
-    height: 20px;
-    transform: rotate(-45deg);
-    background: white;
-    -webkit-box-shadow: inset 8px -8px 6px -6px rgba(110, 110, 110, 1);
-    -moz-box-shadow: inset 8px -8px 6px -6px rgba(110, 110, 110, 1);
-    box-shadow: inset 8px -8px 6px -6px rgba(110, 110, 110, 1);
-    transition: 1s ease-in;
+    right: 20px;
+    color: white;
+    font-size: 25px;
+    cursor: pointer;
+}
+
+#widget_body::after {
+    /*content: '';*/
+    /*border: 2px solid #e7873c;*/
+    /*border-top: transparent;*/
+    /*border-right: transparent;*/
+    /*z-index: 100;*/
+    /*position: absolute;*/
+    /*bottom: -12px;*/
+    /*right: 50px;*/
+    /*width: 20px;*/
+    /*height: 20px;*/
+    /*transform: rotate(-45deg);*/
+    /*background: white;*/
+    /*-webkit-box-shadow: inset 8px -8px 6px -6px rgba(110, 110, 110, 1);*/
+    /*-moz-box-shadow: inset 8px -8px 6px -6px rgba(110, 110, 110, 1);*/
+    /*box-shadow: inset 8px -8px 6px -6px rgba(110, 110, 110, 1);*/
+    /*transition: 1s ease-in;*/
 }
 
 #widget_header {
     height: 50px;
     background: #e7873c;
-    border-top-left-radius: 50px;
+    border-radius: 15px 15px 0 0;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -147,6 +155,20 @@ body {
     display: block; /* For Firefox */
 }
 
+#clear_history {
+    position: absolute;
+    bottom: 20px;
+    right: 40px;
+    cursor: pointer;
+    z-index: 100;
+    font-size: 14px;
+    color: #e7873c;
+    border: 1px solid #e7873c;
+    border-radius: 10px;
+    padding: 5px 10px;
+    text-align: center;
+}
+
 #widget_queue .widget_message {
     width: auto;
     padding: 5px 10px;
@@ -166,6 +188,7 @@ body {
     display: flex;
     flex-direction: column;
     padding: 10px;
+    width: 285px;
     z-index: 20;
     overflow-y: scroll;
 }
@@ -199,6 +222,12 @@ body {
     background: #d6d1cc;
     align-self: flex-end;
     color: #565656;
+}
+
+#widget_avatar {
+    position: absolute;
+    right: 10px;
+    top: 50px;
 }
 
 #widget_lightbox {
