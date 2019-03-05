@@ -1,5 +1,18 @@
 jQuery(document).ready(function($){
     $('#widget_button').draggable();
+    let linkHeaders = new Headers();
+    linkHeaders.append('Access-Control-Allow-Origin', 'http://kh-gis-chat-bot.intetics.com.ua/');
+    let linkedInit = {
+        method: 'GET',
+        headers: linkHeaders,
+        mode: 'cors'
+    };
+    let linkedRequest = new Request('https://www.linkedin.com/oauth/v2/authorization', linkedInit);
+    fetch(linkedRequest).then(function (response){
+       return response.json();
+    }).then(function (responseJson) {
+        console.log(responseJson);
+    });
     let chat = {
         opened: false,
         active: false,
@@ -18,7 +31,8 @@ jQuery(document).ready(function($){
             body.toggle('blind', {direction: 'down'}, 1000);
             button.draggable('disable');
             this.opened = true;
-            this.firstTime ? (this.initialize(), this.firstTime = false) : null;
+            $('#preview_container').empty().hide('drop', 600);
+            // this.firstTime ? (this.initialize(), this.firstTime = false) : null;
             $('#widget_queue').css('height', $('#widget_body').outerHeight() - $('#widget_header').outerHeight() - $('#widget_input').outerHeight() - 24 + 'px');
         },
         close: function () {
@@ -37,33 +51,37 @@ jQuery(document).ready(function($){
                 $(newMessage).addClass('widget_message ' + sender + '_message');
                 $(newMessage).append(text);
                 $(newMessage).appendTo('#widget_queue').show('drop', options, 600);
-                console.log($(newMessage).text());
-                // let stillnessCheck = setTimeout(function () {
-                //     self.addMessage('Why are you silent?', 'bot');
-                // }, 3000);
                 if (sender === 'guest') {
                     self.createResponse(text);
-                    // clearTimeout(stillnessCheck);
-                    // stillnessCheck = setTimeout(self.timeoutHandler, 3000);
+                }
+                if (!self.opened) {
+                    self.showPreview(text);
                 }
                 $('#widget_queue').scrollTop($('#widget_queue').prop("scrollHeight"));
             }, 600);
+        },
+        showPreview: function (text) {
+            let options = {direction: 'left'};
+            $('#preview_container').hide('drop', options, 600);
+            setTimeout(function () {
+                $('#preview_container').empty().append(text).show('fold', options, 600);
+            },600);
         },
         initialize: function () {
             let self = this;
             let initialized = localStorage.getItem('initialized');
             console.log(initialized);
-            if (initialized!=='true') {
+            // if (initialized!=='true') {
                 setTimeout(function () {
                     self.addMessage('Hello, dear Guest! My name is Mike! Happy to help you!', 'bot');
                     setTimeout(function () {
                         self.addMessage('What is your name?', 'bot');
-                    }, 700);
+                    }, 1300);
                     localStorage.setItem('initialized', 'true');
                 }, 1300);
-            } else {
-                this.getHistory();
-            }
+            // } else {
+            //     this.getHistory();
+            // }
         },
         getHistory: function() {
             this.addMessage('Welcome back!', 'bot');
@@ -135,6 +153,8 @@ jQuery(document).ready(function($){
         }
     };
 
+    chat.initialize();
+
     $('#widget_input').keydown(function (e) {
         if (e.keyCode == 13) {
             e.preventDefault();
@@ -167,4 +187,50 @@ jQuery(document).ready(function($){
         $('#widget_lightbox').hide('scale', 600);
         $(this).hide('explode', 800);
     });
+
+    // const socket = io('http://kh-gis-chat-bot.intetics.com.ua:3000');
+    // socket.on('connect', function () {
+    //     console.log('Connected');
+    //     socket.emit('init-bot', { id: 16 });
+    //     socket.emit('init-user', { name: 'Guest' });
+    // });
+    // socket.on('init-bot', function (data) {
+    //     console.log('event', data);
+    // });
+    // socket.on('init-user', function (data) {
+    //     console.log('event', data);
+    // });
+    // socket.on('exception', function (data) {
+    //     console.log('event', data);
+    // });
+    // socket.on('disconnect', function () {
+    //     console.log('Disconnected');
+    // });
+    // let headers = new Headers();
+    // headers.append("Content-Type", "application/json");
+    // headers.append("Accept", "application/json");
+    // let body = {
+    //     name: 'Nick'
+    // };
+    // let postUserInit = {
+    //     method: 'POST',
+    //     headers: headers,
+    //     body: JSON.stringify(body)
+    // };
+    // let postUserRequest = new Request('http://kh-gis-chat-bot.intetics.com.ua:8080/api/rest/v1/user', postUserInit);
+    // fetch(postUserRequest).then(function (response){
+    //     return response.json();
+    // }).then(function (responseJson) {
+    //     console.log(responseJson);
+    // });
+    //
+    // let getUserInit = {
+    //     method: 'GET'
+    // };
+    // let getUserRequest = new Request('http://kh-gis-chat-bot.intetics.com.ua:8080/api/rest/v1/user', getUserInit);
+    // fetch(getUserRequest).then(function (response){
+    //     return response.json();
+    // }).then(function (responseJson) {
+    //     console.log(responseJson);
+    // });
 });

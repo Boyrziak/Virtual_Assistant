@@ -50,6 +50,19 @@ body {
     transform: scale(0) rotate(0);
 }
 
+#widget_button #preview_container {
+    position: absolute;
+    left: 120px!important;
+    min-width: 200px;
+    min-height: 30px;
+    padding: 10px;
+    border-radius: 10px;
+    display: none;
+    font-size: 14px;
+    transform: rotate(180deg);
+    background: #e7873c;
+}
+
 #widget_body {
     display: none;
     width: 500px;
