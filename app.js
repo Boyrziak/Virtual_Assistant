@@ -233,4 +233,116 @@ jQuery(document).ready(function($){
     // }).then(function (responseJson) {
     //     console.log(responseJson);
     // });
+
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const SpeechGrammarList = window.SpeechGrammarList || window.webkitSpeechGrammarList;
+    const SpeechRecognitionEvent = window.SpeechRecognitionEvent || window.webkitSpeechRecognitionEvent;
+    const commands = {
+        // красный: 'red',
+        // оранжевый: 'orange',
+        // желтый: 'yellow',
+        // зеленый: 'green',
+        // голубой: 'blue',
+        // синий: 'darkblue',
+        // фиолетовый: 'violet',
+        image: 'image',
+        name: 'name',
+        nick: 'Nick',
+        continue: 'continue',
+        post: 'post',
+        snow: 'snow',
+        sand: 'sand',
+        water: 'water',
+        1: 'one',
+        2: 'two',
+        3: 'three',
+        4: 'four',
+        5: '5',
+        6: '6',
+        7: '7',
+        8: '8',
+        9: '9',
+        10: 'ten',
+    };
+    const commandsList = Object.keys(commands);
+    const grammar = '#JSGF V1.0; grammar commands; public <command> = ' + commandsList.join(' | ') + ' ;';
+    const recognition = new SpeechRecognition();
+    const speechRecognitionList = new SpeechGrammarList();
+    speechRecognitionList.addFromString(grammar, 1);
+    recognition.grammars = speechRecognitionList;
+    recognition.lang = 'en-EN';
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 2;
+
+    $('#audio_input').on('click', function() {
+        recognition.start();
+        console.log('Ready to receive a command.');
+    });
+
+    function getCommand(speechResult) {
+        for (let index = 0; index < commandsList.length; index += 1) {
+            if (speechResult.indexOf(commandsList[index]) !== -1) {
+                const commandKey = commandsList[index];
+                return [commandKey, commandsList[commandKey], ''];
+            }
+        }
+        return null;
+    }
+
+    let continueLine = false;
+    recognition.onresult = function(event) {
+        const last = event.results.length - 1;
+        const commands = getCommand(event.results[last][0].transcript);
+        // recognitionTextResult.textContent = 'Результат: ' + commands[0];
+        // speechRecognitionSection.style.backgroundColor = commands[1];
+        let inputText = stripObscures(...commands);
+        switch (inputText) {
+            case 'continue':
+                continueLine = true;
+                break;
+            case 'post':
+                chat.addMessage($('#widget_input').text(), 'guest');
+                $('#widget_input').empty();
+                break;
+            default:
+                continueLine ? continueLineFromVoice(inputText) : newInputLineFromVoice(inputText);
+                continueLine = false;
+
+        }
+        console.log('Commands = ' + commands);
+        console.log(commands);
+        console.log('Confidence: ' + event.results[0][0].confidence);
+    };
+
+    function newInputLineFromVoice (inputText) {
+        console.log('NewInput');
+        if (inputText === 'image') {
+            inputText = '/' + inputText;
+        }
+        $('#widget_input').focus();
+        $('#widget_input').empty().text(inputText + ' ');
+    }
+
+    function continueLineFromVoice(inputText) {
+        console.log('ContinueInput');
+        $('#widget_input').focus();
+        $('#widget_input').append(inputText + ' ');
+    }
+
+    function stripObscures (text) {
+        return text.replace(/[^a-zA-Z0-9а-я]/gi);
+    }
+
+    recognition.onspeechend = function() {
+        recognition.stop();
+    };
+
+    recognition.onnomatch = function(event) {
+        console.log("I didn't recognise that command.");
+    };
+
+    recognition.onerror = function(event) {
+        console.log(`Error occurred in recognition: ${event.error}`);
+    };
+
 });
