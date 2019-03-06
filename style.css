@@ -65,8 +65,8 @@ body {
 
 #widget_body {
     display: none;
-    width: 500px;
-    height: 547px;
+    width: 575px;
+    height: 640px;
     border: 2px solid #e7873c;
     right: 10px;
     bottom: 120px;
@@ -85,26 +85,9 @@ body {
     cursor: pointer;
 }
 
-#widget_body::after {
-    /*content: '';*/
-    /*border: 2px solid #e7873c;*/
-    /*border-top: transparent;*/
-    /*border-right: transparent;*/
-    /*z-index: 100;*/
-    /*position: absolute;*/
-    /*bottom: -12px;*/
-    /*right: 50px;*/
-    /*width: 20px;*/
-    /*height: 20px;*/
-    /*transform: rotate(-45deg);*/
-    /*background: white;*/
-    /*-webkit-box-shadow: inset 8px -8px 6px -6px rgba(110, 110, 110, 1);*/
-    /*-moz-box-shadow: inset 8px -8px 6px -6px rgba(110, 110, 110, 1);*/
-    /*box-shadow: inset 8px -8px 6px -6px rgba(110, 110, 110, 1);*/
-    /*transition: 1s ease-in;*/
-}
-
 #widget_header {
+    position: relative;
+    z-index: 200;
     height: 50px;
     background: #e7873c;
     border-radius: 15px 15px 0 0;
@@ -126,7 +109,7 @@ body {
     box-sizing: border-box;
     width: 100%;
     left: 0;
-    height: 70px;
+    height: 95px;
     padding: 20px 200px 20px 80px;
     min-height: 60px;
     z-index: 50;
@@ -173,12 +156,20 @@ body {
 #widget_input:empty::before {
     content: attr(placeholder);
     display: block; /* For Firefox */
+    transition: .4s ease-in;
 }
 
-#clear_history {
+#control_buttons {
     position: absolute;
-    bottom: 20px;
-    right: 40px;
+    bottom: 10px;
+    right: 10px;
+    display: flex;
+    height: 80px;
+    flex-direction: column;
+}
+
+#control_buttons span {
+    margin-top: 10px;
     cursor: pointer;
     z-index: 100;
     font-size: 14px;
@@ -187,6 +178,57 @@ body {
     border-radius: 10px;
     padding: 5px 10px;
     text-align: center;
+    transition: .4s ease-out;
+}
+
+#control_buttons a {
+    margin-top: 10px;
+    cursor: pointer;
+    z-index: 100;
+    font-size: 14px;
+    color: #e7873c;
+    border: 1px solid #e7873c;
+    border-radius: 10px;
+    padding: 5px 10px;
+    text-align: center;
+    transition: .4s ease-out;
+    text-decoration: none;
+}
+
+#control_buttons span:hover {
+    background: #e7873c;
+    color: white;
+    transition: .5s ease-out;
+}
+
+#control_buttons a:hover {
+    background: #e7873c;
+    color: white;
+    transition: .5s ease-out;
+}
+
+#human_connect {
+    position: absolute;
+    top: 60px;
+    right: 10px;
+    cursor: pointer;
+    z-index: 100;
+    font-size: 14px;
+    height: 30px;
+    background: #e7873c;
+    color: white;
+    box-sizing: border-box;
+    border: 1px solid #e7873c;
+    border-radius: 10px;
+    padding: 5px 10px;
+    text-align: center;
+    transition: .4s ease-out;
+}
+
+#human_connect:hover {
+    background: white;
+    color: #e7873c;
+    transition: .5s ease-out;
 }
 
 #audio_input {
@@ -194,22 +236,56 @@ body {
     left: 10px;
     width: 50px;
     height: 50px;
-    bottom: 10px;
+    bottom: 20px;
     display: flex;
+    color: #e7873c;
     align-items: center;
     justify-content: center;
     cursor: pointer;
     border-radius: 100%;
     z-index: 199;
     border: 1px solid #e7873c;
-    box-shadow: inset 0 0 5px 4px #5b97f7;
+    /*box-shadow: inset 0 0 5px 4px #5b97f7;*/
     transition: .4s ease-in;
 }
 
+#audio_input::after {
+    content: '';
+    position: absolute;
+    width: 90%;
+    height: 90%;
+    border-radius: 100%;
+    border: 2px dashed #5b97f7;
+    transition: .4s ease-out;
+}
+
+#audio_input::before {
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    border-radius: 100%;
+    border: 2px dotted transparent;
+    transition: .4s ease-out;
+}
+
 #audio_input:hover {
-    box-shadow: inset 0 0 3px 10px #5b97f7;
+    box-shadow: inset 0 0 3px 50px #e7873c;
     border-width: 2px;
+    color: white;
     transition: .5s ease-out;
+}
+
+#audio_input:hover::after {
+    border-width: 4px;
+    transition: .4s ease-out;
+}
+
+#audio_input:hover::before {
+    width: 60%;
+    height: 60%;
+    border: 5px dotted #5b97f7;
+    transition: border .3s ease-out, width .2s ease-out .15s, height .2s ease-out .15s;
 }
 
 #widget_input::-webkit-scrollbar {
@@ -217,7 +293,10 @@ body {
 }
 
 #widget_input::-webkit-scrollbar-track {
-    background: transparent;
+    background: #fafafa;
+    border-width: 0 1px 0 1px;
+    border-style: solid;
+    border-color: #f2f2f2;
 }
 
 #widget_input::-webkit-scrollbar-thumb {
@@ -242,15 +321,20 @@ body {
 }
 
 #widget_queue .widget_message .message_image {
-    width: 100%;
+    height: 150px;
     cursor: pointer;
 }
 
 #widget_queue {
+    position: absolute;
+    bottom: 95px;
     display: flex;
     flex-direction: column;
     padding: 10px;
-    width: 290px;
+    width: 370px;
+    min-height: 270px;
+    max-height: 505px;
+    box-sizing: border-box;
     z-index: 20;
     overflow-y: scroll;
 }
@@ -260,7 +344,10 @@ body {
 }
 
 #widget_queue::-webkit-scrollbar-track {
-    background: transparent;
+    background: #fafafa;
+    border-width: 0 1px 0 1px;
+    border-style: solid;
+    border-color: #f2f2f2;
 }
 
 #widget_queue::-webkit-scrollbar-thumb {
@@ -288,7 +375,7 @@ body {
 
 #widget_avatar {
     position: absolute;
-    top: 50px;
+    top: 110px;
     right: 0;
     z-index: -1;
 }

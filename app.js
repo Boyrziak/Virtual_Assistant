@@ -29,11 +29,15 @@ jQuery(document).ready(function($){
             button.addClass('clicked');
             body.addClass('opened');
             body.toggle('blind', {direction: 'down'}, 1000);
+            if (body.offset().top <= 5) {
+                $(body).animate({top: '10px'}, 500);
+            }
             button.draggable('disable');
+            $('#widget_input').empty();
             this.opened = true;
             $('#preview_container').empty().hide('drop', 600);
             // this.firstTime ? (this.initialize(), this.firstTime = false) : null;
-            $('#widget_queue').css('height', $('#widget_body').outerHeight() - $('#widget_header').outerHeight() - $('#widget_input').outerHeight() - 24 + 'px');
+            // $('#widget_queue').css('height', $('#widget_body').outerHeight() - $('#widget_header').outerHeight() - $('#widget_input').outerHeight() - 24 + 'px');
         },
         close: function () {
             $('#widget_button').removeClass('clicked');
@@ -57,7 +61,7 @@ jQuery(document).ready(function($){
                 if (!self.opened) {
                     self.showPreview(text);
                 }
-                $('#widget_queue').scrollTop($('#widget_queue').prop("scrollHeight"));
+                $('#widget_queue').animate({scrollTop: $(this).scrollHeight}, 700);
             }, 600);
         },
         showPreview: function (text) {
@@ -114,6 +118,7 @@ jQuery(document).ready(function($){
             } else {
                 this.addMessage('You need to use one of the commands. Commands are starting with /', 'bot');
             }
+            $('#widget_queue').animate({scrollTop: $(this).scrollHeight}, 700);
         },
         showImage: function (category, quantity) {
             let self = this;
@@ -142,6 +147,12 @@ jQuery(document).ready(function($){
                             $('#modal_overlay').show('explode', 800);
                         });
                         self.addMessage(image, 'bot');
+                        image.addEventListener('load', function () {
+                            console.log($(image).outerHeight());
+                            setTimeout(function () {
+                                $('#widget_queue').animate({scrollTop: 150}, 700);
+                            }, 600);
+                        });
                     }
                 } else {
                     self.addMessage('Sorry, i was not able to find the images you requested', 'bot');
@@ -224,27 +235,20 @@ jQuery(document).ready(function($){
     //     console.log(responseJson);
     // });
     //
-    // let getUserInit = {
-    //     method: 'GET'
-    // };
-    // let getUserRequest = new Request('http://kh-gis-chat-bot.intetics.com.ua:8080/api/rest/v1/user', getUserInit);
-    // fetch(getUserRequest).then(function (response){
-    //     return response.json();
-    // }).then(function (responseJson) {
-    //     console.log(responseJson);
-    // });
+    let getUserInit = {
+        method: 'GET'
+    };
+    let getUserRequest = new Request('http://kh-gis-chat-bot.intetics.com.ua:8080/api/rest/v1/user', getUserInit);
+    fetch(getUserRequest).then(function (response){
+        return response.json();
+    }).then(function (responseJson) {
+        console.log(responseJson);
+    });
 
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     const SpeechGrammarList = window.SpeechGrammarList || window.webkitSpeechGrammarList;
     const SpeechRecognitionEvent = window.SpeechRecognitionEvent || window.webkitSpeechRecognitionEvent;
     const commands = {
-        // красный: 'red',
-        // оранжевый: 'orange',
-        // желтый: 'yellow',
-        // зеленый: 'green',
-        // голубой: 'blue',
-        // синий: 'darkblue',
-        // фиолетовый: 'violet',
         image: 'image',
         name: 'name',
         nick: 'Nick',
