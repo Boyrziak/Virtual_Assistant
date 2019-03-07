@@ -1,11 +1,10 @@
-/*#widget_container {*/
-/*position: fixed;*/
-/*right: 50px;*/
-/*bottom: 100px;*/
-/*}*/
+@font-face {
+    font-family: 'MuseoSansCyrl';
+    src: url(fonts/Museosanscyrl500.ttf);
+}
 body {
     overflow: hidden;
-    font-family: 'Roboto', sans-serif;
+    font-family: 'MuseoSansCyrl', sans-serif;
 }
 
 #widget_button {
@@ -64,10 +63,12 @@ body {
 }
 
 #widget_body {
+    font-family: 'MuseoSansCyrl', sans-serif;
     display: none;
     width: 575px;
     height: 640px;
     border: 2px solid #e7873c;
+    box-sizing: border-box;
     right: 10px;
     bottom: 120px;
     position: absolute;
@@ -83,12 +84,13 @@ body {
     color: white;
     font-size: 25px;
     cursor: pointer;
+    color: rgba(0,0,0,0.25);
 }
 
 #widget_header {
     position: relative;
     z-index: 200;
-    height: 50px;
+    height: 45px;
     background: #e7873c;
     border-radius: 15px 15px 0 0;
     display: flex;
@@ -98,22 +100,26 @@ body {
 
 #widget_header #header_text {
     color: white;
-    font-size: 20px;
+    font-size: 21px;
     margin: 0;
 }
 
 #widget_input {
     border-top: 1px solid #e7873c;
+    background: white;
     position: absolute;
     bottom: 0;
+    display: flex;
     box-sizing: border-box;
     width: 100%;
     left: 0;
-    height: 95px;
-    padding: 20px 200px 20px 80px;
+    height: 85px;
     min-height: 60px;
+    padding: 20px 75px;
     z-index: 50;
     overflow-y: scroll;
+    overflow-x: hidden;
+    cursor: pointer;
 }
 
 #widget_input::after {
@@ -129,10 +135,14 @@ body {
 
 #widget_input::before {
     content: attr(placeholder);
-    display: block;
+    display: flex;
+    position: absolute;
+    top: 0;
+    align-items: center;
+    left: 75px;
     opacity: 0.5;
-    width: 100%;
-    left: 0;
+    height: 100%;
+    width: 300px;
     transition: .4s ease-in;
 }
 
@@ -147,6 +157,12 @@ body {
     transition: .4s ease-in;
 }
 
+#widget_input:focus::after {
+    width: calc( 100% + 4px );
+    left: 0;
+    transition: .5s cubic-bezier(0.3, 1, 0.6, 0.6);
+}
+
 #widget_input:not(:empty)::before {
     content: '';
     opacity: 0;
@@ -155,41 +171,49 @@ body {
 
 #widget_input:empty::before {
     content: attr(placeholder);
-    display: block; /* For Firefox */
+    display: flex;
     transition: .4s ease-in;
 }
 
 #control_buttons {
     position: absolute;
-    bottom: 10px;
-    right: 10px;
+    bottom: 3px;
+    right: 8px;
     display: flex;
     height: 80px;
     flex-direction: column;
 }
 
 #control_buttons span {
-    margin-top: 10px;
+    margin-top: 5px;
     cursor: pointer;
     z-index: 100;
     font-size: 14px;
     color: #e7873c;
     border: 1px solid #e7873c;
-    border-radius: 10px;
-    padding: 5px 10px;
+    border-radius: 15px;
+    padding: 8px 35px;
     text-align: center;
     transition: .4s ease-out;
 }
 
+#control_buttons i{
+    color: transparent;
+    margin-right: 10px;
+    -webkit-text-stroke-width: 1px;
+    -webkit-text-stroke-color: #e7873c;
+    transition: .5s ease-out;
+}
+
 #control_buttons a {
-    margin-top: 10px;
+    margin-top: 5px;
     cursor: pointer;
     z-index: 100;
     font-size: 14px;
     color: #e7873c;
     border: 1px solid #e7873c;
-    border-radius: 10px;
-    padding: 5px 10px;
+    border-radius: 15px;
+    padding: 7px 35px;
     text-align: center;
     transition: .4s ease-out;
     text-decoration: none;
@@ -201,9 +225,19 @@ body {
     transition: .5s ease-out;
 }
 
+#control_buttons span:hover i{
+    -webkit-text-stroke-color: white;
+    transition: .5s ease-out;
+}
+
 #control_buttons a:hover {
     background: #e7873c;
     color: white;
+    transition: .5s ease-out;
+}
+
+#control_buttons a:hover i{
+    -webkit-text-stroke-color: white;
     transition: .5s ease-out;
 }
 
@@ -214,14 +248,25 @@ body {
     cursor: pointer;
     z-index: 100;
     font-size: 14px;
-    height: 30px;
-    background: #e7873c;
+    justify-content: center;
+    display: flex;
+    align-items: center;
+    background: #f0965f;
     color: white;
+    width: 188px;
+    height: 33px;
     box-sizing: border-box;
-    border: 1px solid #e7873c;
-    border-radius: 10px;
-    padding: 5px 10px;
+    border: 1px solid #f0965f;
+    border-radius: 15px;
     text-align: center;
+    transition: .4s ease-out;
+}
+
+#human_connect i{
+    color: transparent;
+    margin-right: 10px;
+    -webkit-text-stroke-width: 1px;
+    -webkit-text-stroke-color: white;
     transition: .4s ease-out;
 }
 
@@ -231,11 +276,16 @@ body {
     transition: .5s ease-out;
 }
 
+#human_connect:hover i{
+    -webkit-text-stroke-color: #e7873c;
+    transition: .5s ease-out;
+}
+
 #audio_input {
     position: absolute;
-    left: 10px;
-    width: 50px;
-    height: 50px;
+    left: 20px;
+    width: 40px;
+    height: 40px;
     bottom: 20px;
     display: flex;
     color: #e7873c;
@@ -245,8 +295,15 @@ body {
     border-radius: 100%;
     z-index: 199;
     border: 1px solid #e7873c;
-    /*box-shadow: inset 0 0 5px 4px #5b97f7;*/
+    box-shadow: inset 0 0 5px 4px #5b97f7;
     transition: .4s ease-in;
+}
+
+#audio_input i {
+    -webkit-text-stroke-width: 1px;
+    -webkit-text-stroke-color: #e7873c;
+    color: transparent;
+    transition: .4s ease-out;
 }
 
 #audio_input::after {
@@ -276,6 +333,12 @@ body {
     transition: .5s ease-out;
 }
 
+#audio_input:hover i{
+    -webkit-text-stroke-color: transparent;
+    color: white;
+    transition: .5s ease-out;
+}
+
 #audio_input:hover::after {
     border-width: 4px;
     transition: .4s ease-out;
@@ -293,10 +356,7 @@ body {
 }
 
 #widget_input::-webkit-scrollbar-track {
-    background: #fafafa;
-    border-width: 0 1px 0 1px;
-    border-style: solid;
-    border-color: #f2f2f2;
+    background: transparent;
 }
 
 #widget_input::-webkit-scrollbar-thumb {
@@ -315,7 +375,7 @@ body {
     padding: 5px 10px;
     border-radius: 10px;
     margin-bottom: 10px;
-    font-size: 14px;
+    font-size: 16px;
     /*transition: .4s ease-in;*/
     display: none;
 }
@@ -344,10 +404,7 @@ body {
 }
 
 #widget_queue::-webkit-scrollbar-track {
-    background: #fafafa;
-    border-width: 0 1px 0 1px;
-    border-style: solid;
-    border-color: #f2f2f2;
+    background: transparent;
 }
 
 #widget_queue::-webkit-scrollbar-thumb {

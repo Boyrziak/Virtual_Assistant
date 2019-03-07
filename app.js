@@ -1,5 +1,6 @@
 jQuery(document).ready(function($){
     $('#widget_button').draggable();
+    $('#widget_body').draggable({handle: '#widget_header'});
     let linkHeaders = new Headers();
     linkHeaders.append('Access-Control-Allow-Origin', 'http://kh-gis-chat-bot.intetics.com.ua/');
     let linkedInit = {
@@ -40,11 +41,17 @@ jQuery(document).ready(function($){
             // $('#widget_queue').css('height', $('#widget_body').outerHeight() - $('#widget_header').outerHeight() - $('#widget_input').outerHeight() - 24 + 'px');
         },
         close: function () {
-            $('#widget_button').removeClass('clicked');
-            $('#widget_body').removeClass('opened');
-            $('#widget_body').toggle('blind', {direction: 'down'}, 1000);
+            let body = $('#widget_body');
+            let button = $('#widget_button');
+            button.css({top: body.offset().top + body.outerHeight() + 40 + 'px', left: body.offset().left + body.outerWidth() - button.outerWidth()});
+            button.removeClass('clicked');
+            body.removeClass('opened');
+            body.toggle('blind', {direction: 'down'}, 1000);
             this.opened = false;
-            $('#widget_button').draggable('enable');
+            button.draggable('enable');
+            if (button.offset().top + button.outerHeight() >= $(window).outerHeight() - 5) {
+                $(button).animate({top: $(window).outerHeight() - button.outerHeight() - 10 + 'px'}, 500);
+            }
         },
         addMessage: function (text, sender) {
             let self = this;
@@ -83,9 +90,6 @@ jQuery(document).ready(function($){
                     }, 1300);
                     localStorage.setItem('initialized', 'true');
                 }, 1300);
-            // } else {
-            //     this.getHistory();
-            // }
         },
         getHistory: function() {
             this.addMessage('Welcome back!', 'bot');
