@@ -1,20 +1,53 @@
 jQuery(document).ready(function($){
     $('#widget_button').draggable();
-    $('#widget_body').draggable({handle: '#widget_header'});
-    let linkHeaders = new Headers();
-    linkHeaders.append('Access-Control-Allow-Origin', 'http://kh-gis-chat-bot.intetics.com.ua/');
-    let linkedInit = {
-        method: 'GET',
-        headers: linkHeaders,
-        mode: 'cors'
+
+
+    const S_CHANNEL = {
+        INIT_USER: 'init-user',
+        INIT_BOT: 'init-bot',
+        INIT_HISTORY: 'init-history',
+        MESSAGE: 'message',
+        CONNECT: 'connect',
+        DISCONNECT: 'disconnect',
+        EXCEPTION: 'exception'
     };
-    let linkedRequest = new Request('https://www.linkedin.com/oauth/v2/authorization', linkedInit);
-    fetch(linkedRequest).then(function (response){
-       return response.json();
-    }).then(function (responseJson) {
-        console.log(responseJson);
-    });
+    const lStorage = {
+        keys: {
+            INT_USER: 'intUser',
+        },
+        get: function(key) {
+            return JSON.parse(localStorage.getItem(key));
+        },
+        set: function(key, item) {
+            localStorage.setItem(key, JSON.stringify(item));
+        },
+        remove: function(key) {
+            localStorage.removeItem(key);
+        },
+        clear: function() {
+            localStorage.clear();
+        },
+        has: function(key) {
+            return localStorage.getItem(key) !== null;
+        }
+
+    };
+    $('#widget_body').draggable({handle: '#widget_header'});
+    // let linkHeaders = new Headers();
+    // linkHeaders.append('Access-Control-Allow-Origin', 'http://kh-gis-chat-bot.intetics.com.ua/');
+    // let linkedInit = {
+    //     method: 'GET',
+    //     headers: linkHeaders,
+    //     mode: 'cors'
+    // };
+    // let linkedRequest = new Request('https://www.linkedin.com/oauth/v2/authorization', linkedInit);
+    // fetch(linkedRequest).then(function (response){
+    //    return response.json();
+    // }).then(function (responseJson) {
+    //     console.log(responseJson);
+    // });
     let chat = {
+        socket: {},
         opened: false,
         active: false,
         guestName: 'dear Guest',
@@ -37,8 +70,6 @@ jQuery(document).ready(function($){
             $('#widget_input').empty();
             this.opened = true;
             $('#preview_container').empty().hide('drop', 600);
-            // this.firstTime ? (this.initialize(), this.firstTime = false) : null;
-            // $('#widget_queue').css('height', $('#widget_body').outerHeight() - $('#widget_header').outerHeight() - $('#widget_input').outerHeight() - 24 + 'px');
         },
         close: function () {
             let body = $('#widget_body');
@@ -99,30 +130,34 @@ jQuery(document).ready(function($){
             location.reload();
         },
         createResponse: function (text) {
-            let regExp = /^\/(\w+)\s(\w+)*\s*(\d*)/g;
-            let result = regExp.exec(text);
-            if (!!result) {
-                console.log(result);
-                let intent = result[1];
-                let variable = result[2];
-                let quantity = result[3];
-                switch (intent) {
-                    case 'name':
-                        if (!!variable) {
-                            this.guestName = variable;
-                            this.addMessage('Hello, ' + this.guestName, 'bot');
-                        }
-                        break;
-                    case 'image':
-                        this.showImage(variable, quantity);
-                        break;
-                    default:
-                        this.addMessage('You need to use one of the commands. Commands are starting with /', 'bot');
-                }
-            } else {
-                this.addMessage('You need to use one of the commands. Commands are starting with /', 'bot');
-            }
-            $('#widget_queue').animate({scrollTop: $(this).scrollHeight}, 700);
+            chat.socket.emit('message', {
+                message: text,
+                user: chat.user,
+            });
+            // let regExp = /^\/(\w+)\s(\w+)*\s*(\d*)/g;
+            // let result = regExp.exec(text);
+            // if (!!result) {
+            //     console.log(result);
+            //     let intent = result[1];
+            //     let variable = result[2];
+            //     let quantity = result[3];
+            //     switch (intent) {
+            //         case 'name':
+            //             if (!!variable) {
+            //                 this.guestName = variable;
+            //                 this.addMessage('Hello, ' + this.guestName, 'bot');
+            //             }
+            //             break;
+            //         case 'image':
+            //             this.showImage(variable, quantity);
+            //             break;
+            //         default:
+            //             this.addMessage('You need to use one of the commands. Commands are starting with /', 'bot');
+            //     }
+            // } else {
+            //     this.addMessage('You need to use one of the commands. Commands are starting with /', 'bot');
+            // }
+            // $('#widget_queue').animate({scrollTop: $(this).scrollHeight}, 700);
         },
         showImage: function (category, quantity) {
             let self = this;
@@ -170,6 +205,15 @@ jQuery(document).ready(function($){
 
     chat.initialize();
 
+    $('#human_connect').on('click', function () {
+        const content = 'connect with human';
+        chat.addMessage(content, 'guest')
+        /* chat.socket.emit('message', {
+            message: content,
+            user: chat.user,
+        }) */
+    });
+
     $('#widget_input').keydown(function (e) {
         if (e.keyCode == 13) {
             e.preventDefault();
@@ -203,51 +247,54 @@ jQuery(document).ready(function($){
         $(this).hide('explode', 800);
     });
 
-    // const socket = io('http://kh-gis-chat-bot.intetics.com.ua:3000');
-    // socket.on('connect', function () {
-    //     console.log('Connected');
-    //     socket.emit('init-bot', { id: 16 });
-    //     socket.emit('init-user', { name: 'Guest' });
-    // });
-    // socket.on('init-bot', function (data) {
-    //     console.log('event', data);
-    // });
-    // socket.on('init-user', function (data) {
-    //     console.log('event', data);
-    // });
-    // socket.on('exception', function (data) {
-    //     console.log('event', data);
-    // });
-    // socket.on('disconnect', function () {
-    //     console.log('Disconnected');
-    // });
-    // let headers = new Headers();
-    // headers.append("Content-Type", "application/json");
-    // headers.append("Accept", "application/json");
-    // let body = {
-    //     name: 'Nick'
+    const socket = io('http://292f3ee8.ngrok.io');
+    chat.socket = socket;
+    chat.socket.on(S_CHANNEL.CONNECT, function () {
+        console.log('Connected');
+        socket.emit(S_CHANNEL.INIT_BOT, { id: 16 });
+        if (lStorage.has(lStorage.keys.INT_USER)) {
+            //return history for existing user
+            const user = lStorage.get(lStorage.keys.INT_USER);
+            chat.user = user;
+            socket.emit(S_CHANNEL.INIT_HISTORY, user);
+        } else {
+            socket.emit(S_CHANNEL.INIT_USER, { name: 'Guest' });
+        }
+
+    });
+    chat.socket.on(S_CHANNEL.INIT_BOT, function (data) {
+        bot = data;
+        console.log(`get init-bot response with: ${JSON.stringify(data)}`);
+    });
+    chat.socket.on(S_CHANNEL.INIT_USER, function (data) {
+        chat.user = data;
+        lStorage.set(lStorage.keys.INT_USER, data);
+        console.log(`get init-user response with: ${JSON.stringify(data)}`);
+    });
+    chat.socket.on(S_CHANNEL.MESSAGE, function (data) {
+        console.log(`get message response with: ${JSON.stringify(data)}`);
+        data.forEach(d => chat.addMessage(d, 'bot'));
+    });
+    chat.socket.on(S_CHANNEL.INIT_HISTORY, function (data) {
+        console.log(`get HISTORY init response with: ${JSON.stringify(data)}`);
+        data.forEach(d => chat.addMessage(d.content, d.senderType === 'bot' ? 'bot' : 'guest'));
+    });
+    chat.socket.on(S_CHANNEL.EXCEPTION, function (data) {
+        console.log('exception: ', data);
+    });
+    chat.socket.on(S_CHANNEL.DISCONNECT, function () {
+        console.log('Disconnected');
+    });
+
+    // let getUserInit = {
+    //     method: 'GET'
     // };
-    // let postUserInit = {
-    //     method: 'POST',
-    //     headers: headers,
-    //     body: JSON.stringify(body)
-    // };
-    // let postUserRequest = new Request('http://kh-gis-chat-bot.intetics.com.ua:8080/api/rest/v1/user', postUserInit);
-    // fetch(postUserRequest).then(function (response){
+    // let getUserRequest = new Request('http://kh-gis-chat-bot.intetics.com.ua:8080/api/rest/v1/user', getUserInit);
+    // fetch(getUserRequest).then(function (response){
     //     return response.json();
     // }).then(function (responseJson) {
     //     console.log(responseJson);
     // });
-    //
-    let getUserInit = {
-        method: 'GET'
-    };
-    let getUserRequest = new Request('http://kh-gis-chat-bot.intetics.com.ua:8080/api/rest/v1/user', getUserInit);
-    fetch(getUserRequest).then(function (response){
-        return response.json();
-    }).then(function (responseJson) {
-        console.log(responseJson);
-    });
 
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     const SpeechGrammarList = window.SpeechGrammarList || window.webkitSpeechGrammarList;
