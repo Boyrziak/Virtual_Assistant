@@ -126,8 +126,7 @@ jQuery(document).ready(function($){
             this.addMessage('Welcome back!', 'bot');
         },
         clearHistory: function() {
-            localStorage.setItem('initialized', 'false');
-            location.reload();
+            $('#widget_queue').empty();
         },
         createResponse: function (text) {
             chat.socket.emit('message', {
@@ -247,7 +246,7 @@ jQuery(document).ready(function($){
         $(this).hide('explode', 800);
     });
 
-    const socket = io('http://292f3ee8.ngrok.io');
+    const socket = io('http://13b97537.ngrok.io');
     chat.socket = socket;
     chat.socket.on(S_CHANNEL.CONNECT, function () {
         console.log('Connected');
