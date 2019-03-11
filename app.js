@@ -13,12 +13,18 @@ jQuery(document).ready(function($){
         WELCOME_EVENT_FIRST: 'welcome-event-first',
         WELCOME_EVENT_RETURN: 'welcome-event-return'
     };
+    const INIT_STATUS = {
+        INITIALIZED: 'initialized',
+        NON_INITIALIZED: 'non-initialized',
+        RESET: 'reset'
+    }
     const lStorage = {
         get: function(key) {
             return JSON.parse(localStorage.getItem(key));
         },
         keys: {
             INT_USER: 'intUser',
+            INIT_STATUS: 'init-status'
         },
         set: function(key, item) {
             localStorage.setItem(key, JSON.stringify(item));
@@ -100,7 +106,7 @@ jQuery(document).ready(function($){
             },600);
         },
         initialize: function () {
-            let self = this;
+            /* let self = this;
             let initialized = localStorage.getItem('initialized');
             console.log(initialized);
                 setTimeout(function () {
@@ -108,7 +114,7 @@ jQuery(document).ready(function($){
                     setTimeout(function () {
                         self.addMessage('What is your name?', 'bot');
                     }, 1300);
-                }, 1300);
+                }, 1300); */
         },
         clearHistory: function() {
             chat.socket.emit(S_CHANNEL.CLEAR_USER_DATA, {
@@ -192,6 +198,7 @@ jQuery(document).ready(function($){
     });
 
     $('#clear_history').on('click', function () {
+        console.log('clear history click')
        chat.clearHistory();
     });
 
@@ -208,12 +215,12 @@ jQuery(document).ready(function($){
         $(this).hide('explode', 800);
     });
 
-    const socket = io('http://13b97537.ngrok.io');
+    const socket = io('http://localhost:3000');
     chat.socket = socket;
     chat.socket.on(S_CHANNEL.CONNECT, function () {
         console.log('Connected');
         socket.emit(S_CHANNEL.INIT_BOT, { id: 16 });
-        if (lStorage.has(lStorage.keys.INT_USER)) {
+        if (lStorage.has(lStorage.keys.INT_USER) && lStorage.get(lStorage.keys.INIT_STATUS) === INIT_STATUS.INITIALIZED) {
             //return history for existing user
             const user = lStorage.get(lStorage.keys.INT_USER);
             chat.user = user;
@@ -231,7 +238,11 @@ jQuery(document).ready(function($){
         chat.user = data;
         lStorage.set(lStorage.keys.INT_USER, data);
         console.log(`get init-user response with: ${JSON.stringify(data)}`);
-        socket.emit(S_CHANNEL.WELCOME_EVENT_FIRST, chat.user);
+        if (lStorage.get(lStorage.keys.INIT_STATUS) !== INIT_STATUS.RESET) {
+            socket.emit(S_CHANNEL.WELCOME_EVENT_FIRST, chat.user);
+        }
+        lStorage.set(lStorage.keys.INIT_STATUS, INIT_STATUS.INITIALIZED);
+
     });
     chat.socket.on(S_CHANNEL.MESSAGE, function (data) {
         console.log(`get message response with: ${JSON.stringify(data)}`);
@@ -253,8 +264,10 @@ jQuery(document).ready(function($){
         console.log('Clear History data => ', data);
         $('#widget_queue').empty();
         lStorage.clear();
+        lStorage.set(lStorage.keys.INIT_STATUS, INIT_STATUS.RESET);
         chat.user = null;
         data.forEach(d => chat.addMessage(d, 'bot'));
+        chat.socket.emit(S_CHANNEL.INIT_BOT, { id: 16 });
         chat.socket.emit(S_CHANNEL.INIT_USER, { name: 'Guest' });
     });
 
