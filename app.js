@@ -9,7 +9,10 @@ jQuery(document).ready(function($){
         MESSAGE: 'message',
         CONNECT: 'connect',
         DISCONNECT: 'disconnect',
-        EXCEPTION: 'exception'
+        EXCEPTION: 'exception',
+        CLEAR_USER_DATA: 'clear-user-data',
+        WELCOME_EVENT_FIRST: 'welcome-event-first',
+        WELCOME_EVENT_RETURN: 'welcome-event-return'
     };
     const lStorage = {
         keys: {
@@ -93,9 +96,9 @@ jQuery(document).ready(function($){
                 $(newMessage).addClass('widget_message ' + sender + '_message');
                 $(newMessage).append(text);
                 $(newMessage).appendTo('#widget_queue').show('drop', options, 600);
-                if (sender === 'guest') {
+                /* if (sender === 'guest') {
                     self.createResponse(text);
-                }
+                } */
                 if (!self.opened) {
                     self.showPreview(text);
                 }
@@ -110,7 +113,7 @@ jQuery(document).ready(function($){
             },600);
         },
         initialize: function () {
-            let self = this;
+            /* let self = this;
             let initialized = localStorage.getItem('initialized');
             console.log(initialized);
             // if (initialized!=='true') {
@@ -120,43 +123,22 @@ jQuery(document).ready(function($){
                         self.addMessage('What is your name?', 'bot');
                     }, 1300);
                     localStorage.setItem('initialized', 'true');
-                }, 1300);
+                }, 1300); */
         },
         getHistory: function() {
             this.addMessage('Welcome back!', 'bot');
         },
         clearHistory: function() {
-            $('#widget_queue').empty();
+            chat.socket.emit(S_CHANNEL.CLEAR_USER_DATA, {
+                message: 'clear my data',
+                user: chat.user,
+            });
         },
         createResponse: function (text) {
-            chat.socket.emit('message', {
+            chat.socket.emit(S_CHANNEL.MESSAGE, {
                 message: text,
                 user: chat.user,
             });
-            // let regExp = /^\/(\w+)\s(\w+)*\s*(\d*)/g;
-            // let result = regExp.exec(text);
-            // if (!!result) {
-            //     console.log(result);
-            //     let intent = result[1];
-            //     let variable = result[2];
-            //     let quantity = result[3];
-            //     switch (intent) {
-            //         case 'name':
-            //             if (!!variable) {
-            //                 this.guestName = variable;
-            //                 this.addMessage('Hello, ' + this.guestName, 'bot');
-            //             }
-            //             break;
-            //         case 'image':
-            //             this.showImage(variable, quantity);
-            //             break;
-            //         default:
-            //             this.addMessage('You need to use one of the commands. Commands are starting with /', 'bot');
-            //     }
-            // } else {
-            //     this.addMessage('You need to use one of the commands. Commands are starting with /', 'bot');
-            // }
-            // $('#widget_queue').animate({scrollTop: $(this).scrollHeight}, 700);
         },
         showImage: function (category, quantity) {
             let self = this;
@@ -207,16 +189,17 @@ jQuery(document).ready(function($){
     $('#human_connect').on('click', function () {
         const content = 'connect with human';
         chat.addMessage(content, 'guest')
-        /* chat.socket.emit('message', {
+        chat.socket.emit('message', {
             message: content,
             user: chat.user,
-        }) */
+        })
     });
 
     $('#widget_input').keydown(function (e) {
         if (e.keyCode == 13) {
             e.preventDefault();
             chat.addMessage($(this).text(), 'guest');
+            chat.createResponse($(this).text());
             $(this).empty();
         }
     });
@@ -246,7 +229,7 @@ jQuery(document).ready(function($){
         $(this).hide('explode', 800);
     });
 
-    const socket = io('http://13b97537.ngrok.io');
+    const socket = io('http://localhost:3000');
     chat.socket = socket;
     chat.socket.on(S_CHANNEL.CONNECT, function () {
         console.log('Connected');
@@ -269,6 +252,7 @@ jQuery(document).ready(function($){
         chat.user = data;
         lStorage.set(lStorage.keys.INT_USER, data);
         console.log(`get init-user response with: ${JSON.stringify(data)}`);
+        socket.emit(S_CHANNEL.WELCOME_EVENT_FIRST, chat.user);
     });
     chat.socket.on(S_CHANNEL.MESSAGE, function (data) {
         console.log(`get message response with: ${JSON.stringify(data)}`);
@@ -277,12 +261,30 @@ jQuery(document).ready(function($){
     chat.socket.on(S_CHANNEL.INIT_HISTORY, function (data) {
         console.log(`get HISTORY init response with: ${JSON.stringify(data)}`);
         data.forEach(d => chat.addMessage(d.content, d.senderType === 'bot' ? 'bot' : 'guest'));
+        chat.socket.emit(S_CHANNEL.WELCOME_EVENT_RETURN, chat.user);
     });
     chat.socket.on(S_CHANNEL.EXCEPTION, function (data) {
         console.log('exception: ', data);
     });
     chat.socket.on(S_CHANNEL.DISCONNECT, function () {
         console.log('Disconnected');
+    });
+
+    chat.socket.on(S_CHANNEL.CLEAR_USER_DATA, function (data) {
+        console.log('Clear History data => ', data);
+        $('#widget_queue').empty();
+        lStorage.clear();
+        chat.user = null;
+        data.forEach(d => chat.addMessage(d, 'bot'));
+        chat.socket.emit(S_CHANNEL.INIT_USER, { name: 'Guest' });
+    });
+
+    chat.socket.on(S_CHANNEL.WELCOME_EVENT_FIRST, function(data) {
+        data.forEach(d => chat.addMessage(d, 'bot'));
+    });
+
+    chat.socket.on(S_CHANNEL.WELCOME_EVENT_RETURN, function(data) {
+        data.forEach(d => chat.addMessage(d, 'bot'));
     });
 
     // let getUserInit = {
