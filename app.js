@@ -14,11 +14,11 @@ jQuery(document).ready(function($){
         WELCOME_EVENT_RETURN: 'welcome-event-return'
     };
     const lStorage = {
-        keys: {
-            INT_USER: 'intUser',
-        },
         get: function(key) {
             return JSON.parse(localStorage.getItem(key));
+        },
+        keys: {
+            INT_USER: 'intUser',
         },
         set: function(key, item) {
             localStorage.setItem(key, JSON.stringify(item));
@@ -83,9 +83,6 @@ jQuery(document).ready(function($){
                 $(newMessage).addClass('widget_message ' + sender + '_message');
                 $(newMessage).append(text);
                 $(newMessage).appendTo('#widget_queue').show('drop', options, 600);
-                /* if (sender === 'guest') {
-                    self.createResponse(text);
-                } */
                 if (!self.opened) {
                     self.showPreview(text);
                 }
