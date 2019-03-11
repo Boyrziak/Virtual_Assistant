@@ -1,7 +1,6 @@
 jQuery(document).ready(function($){
     $('#widget_button').draggable();
 
-
     const S_CHANNEL = {
         INIT_USER: 'init-user',
         INIT_BOT: 'init-bot',
@@ -36,19 +35,6 @@ jQuery(document).ready(function($){
 
     };
     $('#widget_body').draggable({handle: '#widget_header'});
-    // let linkHeaders = new Headers();
-    // linkHeaders.append('Access-Control-Allow-Origin', 'http://kh-gis-chat-bot.intetics.com.ua/');
-    // let linkedInit = {
-    //     method: 'GET',
-    //     headers: linkHeaders,
-    //     mode: 'cors'
-    // };
-    // let linkedRequest = new Request('https://www.linkedin.com/oauth/v2/authorization', linkedInit);
-    // fetch(linkedRequest).then(function (response){
-    //    return response.json();
-    // }).then(function (responseJson) {
-    //     console.log(responseJson);
-    // });
     let chat = {
         socket: {},
         opened: false,
@@ -73,6 +59,7 @@ jQuery(document).ready(function($){
             $('#widget_input').empty();
             this.opened = true;
             $('#preview_container').empty().hide('drop', 600);
+            this.scrollQuery();
         },
         close: function () {
             let body = $('#widget_body');
@@ -102,8 +89,11 @@ jQuery(document).ready(function($){
                 if (!self.opened) {
                     self.showPreview(text);
                 }
-                $('#widget_queue').animate({scrollTop: $(this).scrollHeight}, 700);
+                self.scrollQuery();
             }, 600);
+        },
+        scrollQuery: function () {
+            $('#widget_queue').animate({scrollTop: $('#widget_queue')[0].scrollHeight}, 700);
         },
         showPreview: function (text) {
             let options = {direction: 'left'};
@@ -113,20 +103,15 @@ jQuery(document).ready(function($){
             },600);
         },
         initialize: function () {
-            /* let self = this;
+            let self = this;
             let initialized = localStorage.getItem('initialized');
             console.log(initialized);
-            // if (initialized!=='true') {
                 setTimeout(function () {
                     self.addMessage('Hello, dear Guest! My name is Mike! Happy to help you!', 'bot');
                     setTimeout(function () {
                         self.addMessage('What is your name?', 'bot');
                     }, 1300);
-                    localStorage.setItem('initialized', 'true');
-                }, 1300); */
-        },
-        getHistory: function() {
-            this.addMessage('Welcome back!', 'bot');
+                }, 1300);
         },
         clearHistory: function() {
             chat.socket.emit(S_CHANNEL.CLEAR_USER_DATA, {
@@ -178,9 +163,6 @@ jQuery(document).ready(function($){
                     self.addMessage('Sorry, i was not able to find the images you requested', 'bot');
                 }
             });
-        },
-        showGallery: function (category, slidesNumber) {
-            
         }
     };
 
@@ -229,7 +211,7 @@ jQuery(document).ready(function($){
         $(this).hide('explode', 800);
     });
 
-    const socket = io('http://localhost:3000');
+    const socket = io('http://13b97537.ngrok.io');
     chat.socket = socket;
     chat.socket.on(S_CHANNEL.CONNECT, function () {
         console.log('Connected');
@@ -287,16 +269,6 @@ jQuery(document).ready(function($){
         data.forEach(d => chat.addMessage(d, 'bot'));
     });
 
-    // let getUserInit = {
-    //     method: 'GET'
-    // };
-    // let getUserRequest = new Request('http://kh-gis-chat-bot.intetics.com.ua:8080/api/rest/v1/user', getUserInit);
-    // fetch(getUserRequest).then(function (response){
-    //     return response.json();
-    // }).then(function (responseJson) {
-    //     console.log(responseJson);
-    // });
-
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     const SpeechGrammarList = window.SpeechGrammarList || window.webkitSpeechGrammarList;
     const SpeechRecognitionEvent = window.SpeechRecognitionEvent || window.webkitSpeechRecognitionEvent;
@@ -349,8 +321,6 @@ jQuery(document).ready(function($){
     recognition.onresult = function(event) {
         const last = event.results.length - 1;
         const commands = getCommand(event.results[last][0].transcript);
-        // recognitionTextResult.textContent = 'Результат: ' + commands[0];
-        // speechRecognitionSection.style.backgroundColor = commands[1];
         let inputText = stripObscures(...commands);
         switch (inputText) {
             case 'continue':
