@@ -17,7 +17,7 @@ jQuery(document).ready(function($){
         INITIALIZED: 'initialized',
         NON_INITIALIZED: 'non-initialized',
         RESET: 'reset'
-    }
+    };
     const lStorage = {
         get: function(key) {
             return JSON.parse(localStorage.getItem(key));
@@ -48,6 +48,7 @@ jQuery(document).ready(function($){
         guestName: 'dear Guest',
         firstTime: true,
         APIkey: '563492ad6f91700001000001bb151c8c07f048768f0c409fc846429b',
+        messageQueue: 0,
         click: function () {
             this.opened ? this.close() : this.open();
         },
@@ -65,7 +66,7 @@ jQuery(document).ready(function($){
             $('#widget_input').empty();
             this.opened = true;
             $('#preview_container').empty().hide('drop', 600);
-            this.scrollQuery();
+            this.scrollQuery(1200);
         },
         close: function () {
             let body = $('#widget_body');
@@ -82,6 +83,7 @@ jQuery(document).ready(function($){
         },
         addMessage: function (text, sender) {
             let self = this;
+            self.messageQueue++;
             setTimeout(function () {
                 let options = {direction: ''};
                 sender === 'bot' ? options.direction = 'left' : options.direction = 'right';
@@ -92,11 +94,14 @@ jQuery(document).ready(function($){
                 if (!self.opened) {
                     self.showPreview(text);
                 }
-                self.scrollQuery();
+                self.messageQueue--;
+                console.log(self.messageQueue);
+                self.messageQueue === 0 ?
+                    self.scrollQuery(400) : null;
             }, 600);
         },
-        scrollQuery: function () {
-            $('#widget_queue').animate({scrollTop: $('#widget_queue')[0].scrollHeight}, 700);
+        scrollQuery: function (timeout) {
+            $('#widget_queue').animate({scrollTop: $('#widget_queue')[0].scrollHeight}, timeout);
         },
         showPreview: function (text) {
             let options = {direction: 'left'};
@@ -198,7 +203,6 @@ jQuery(document).ready(function($){
     });
 
     $('#clear_history').on('click', function () {
-        console.log('clear history click')
        chat.clearHistory();
     });
 
@@ -215,7 +219,7 @@ jQuery(document).ready(function($){
         $(this).hide('explode', 800);
     });
 
-    const socket = io('http://localhost:3000');
+    const socket = io('https://kh-gis-chat-bot.intetics.com', {path: '/chat/socket.io'});
     chat.socket = socket;
     chat.socket.on(S_CHANNEL.CONNECT, function () {
         console.log('Connected');
@@ -301,6 +305,8 @@ jQuery(document).ready(function($){
         8: '8',
         9: '9',
         10: 'ten',
+        hi: 'Hi',
+        Hello: 'Hello'
     };
     const commandsList = Object.keys(commands);
     const grammar = '#JSGF V1.0; grammar commands; public <command> = ' + commandsList.join(' | ') + ' ;';
