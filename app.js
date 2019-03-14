@@ -25,6 +25,7 @@ jQuery(document).ready(function($){
         keys: {
             INT_USER: 'intUser',
             INIT_STATUS: 'init-status'
+
         },
         set: function(key, item) {
             localStorage.setItem(key, JSON.stringify(item));
@@ -40,7 +41,6 @@ jQuery(document).ready(function($){
         }
 
     };
-    $('#widget_body').draggable({handle: '#widget_header'});
     let chat = {
         socket: {},
         opened: false,
@@ -49,11 +49,51 @@ jQuery(document).ready(function($){
         firstTime: true,
         APIkey: '563492ad6f91700001000001bb151c8c07f048768f0c409fc846429b',
         messageQueue: 0,
-        click: function () {
-            this.opened ? this.close() : this.open();
+        connect: function () {
+            console.log('Connected');
+            socket.emit(S_CHANNEL.INIT_BOT, { id: 16 });
+            if (lStorage.has(lStorage.keys.INT_USER) && lStorage.get(lStorage.keys.INIT_STATUS) === INIT_STATUS.INITIALIZED) {
+                //return history for existing user
+                const user = lStorage.get(lStorage.keys.INT_USER);
+                chat.user = user;
+                socket.emit(S_CHANNEL.INIT_HISTORY, user);
+            } else {
+                socket.emit(S_CHANNEL.INIT_USER, { name: 'Guest' });
+            }
+
+        },
+        initBot: function (data) {
+            bot = data;
+            console.log(`get init-bot response with: ${JSON.stringify(data)}`);
+        },
+        initUser: function (data) {
+            chat.user = data;
+            lStorage.set(lStorage.keys.INT_USER, data);
+            console.log(`get init-user response with: ${JSON.stringify(data)}`);
+            if (lStorage.get(lStorage.keys.INIT_STATUS) !== INIT_STATUS.RESET) {
+                socket.emit(S_CHANNEL.WELCOME_EVENT_FIRST, chat.user);
+            }
+            lStorage.set(lStorage.keys.INIT_STATUS, INIT_STATUS.INITIALIZED);
+
+        },
+        chatMessage: function (data) {
+            console.log(`get message response with: ${JSON.stringify(data)}`);
+            data.forEach(d => chat.addMessage(d, 'bot'));
+        },
+        initHistory: function (data) {
+            console.log(`get HISTORY init response with: ${JSON.stringify(data)}`);
+            data.forEach(d => chat.addMessage(d.content, d.senderType === 'bot' ? 'bot' : 'guest'));
+            chat.socket.emit(S_CHANNEL.WELCOME_EVENT_RETURN, chat.user);
+        },
+        chatException: function (data) {
+            console.log('exception: ', data);
+        },
+        chatDissconnect: function () {
+            console.log('Disconnected');
         },
         open: function() {
             let button = $('#widget_button');
+            let self = this;
             let body = $('#widget_body');
             body.css({top: button.offset().top - body.outerHeight() - 40 + 'px', left: button.offset().left - body.outerWidth() + 100 + 'px'});
             button.addClass('clicked');
@@ -64,9 +104,9 @@ jQuery(document).ready(function($){
             }
             button.draggable('disable');
             $('#widget_input').empty();
-            this.opened = true;
+            self.opened = true;
             $('#preview_container').empty().hide('drop', 600);
-            this.scrollQuery(1200);
+            self.scrollQuery(1200);
         },
         close: function () {
             let body = $('#widget_body');
@@ -95,7 +135,6 @@ jQuery(document).ready(function($){
                     self.showPreview(text);
                 }
                 self.messageQueue--;
-                console.log(self.messageQueue);
                 self.messageQueue === 0 ?
                     self.scrollQuery(400) : null;
             }, 600);
@@ -111,21 +150,28 @@ jQuery(document).ready(function($){
             },600);
         },
         initialize: function () {
-            /* let self = this;
-            let initialized = localStorage.getItem('initialized');
-            console.log(initialized);
-                setTimeout(function () {
-                    self.addMessage('Hello, dear Guest! My name is Mike! Happy to help you!', 'bot');
-                    setTimeout(function () {
-                        self.addMessage('What is your name?', 'bot');
-                    }, 1300);
-                }, 1300); */
         },
         clearHistory: function() {
             chat.socket.emit(S_CHANNEL.CLEAR_USER_DATA, {
                 message: 'clear my data',
                 user: chat.user,
             });
+        },
+        clearUserData: function (data) {
+            console.log('Clear History data => ', data);
+            $('#widget_queue').empty();
+            lStorage.clear();
+            lStorage.set(lStorage.keys.INIT_STATUS, INIT_STATUS.RESET);
+            chat.user = null;
+            data.forEach(d => chat.addMessage(d, 'bot'));
+            chat.socket.emit(S_CHANNEL.INIT_BOT, { id: 16 });
+            chat.socket.emit(S_CHANNEL.INIT_USER, { name: 'Guest' });
+        },
+        welcomeEvent: function(data) {
+            data.forEach(d => chat.addMessage(d, 'bot'));
+        },
+        welcomeReturnEvent: function(data) {
+            data.forEach(d => chat.addMessage(d, 'bot'));
         },
         createResponse: function (text) {
             chat.socket.emit(S_CHANNEL.MESSAGE, {
@@ -195,16 +241,12 @@ jQuery(document).ready(function($){
     });
 
     $('#widget_button').on('click', function(){
-        chat.click();
+        chat.open();
     });
 
-    $('.close_widget').on('click', function(){
-        chat.click();
-    });
+    $('.close_widget').on('click', chat.close);
 
-    $('#clear_history').on('click', function () {
-       chat.clearHistory();
-    });
+    $('#clear_history').on('click', chat.clearHistory);
 
     $('.message_image').on('click', function () {
         let lightbox = $('#widget_lightbox');
@@ -221,170 +263,14 @@ jQuery(document).ready(function($){
 
     const socket = io('https://kh-gis-chat-bot.intetics.com', {path: '/chat/socket.io'});
     chat.socket = socket;
-    chat.socket.on(S_CHANNEL.CONNECT, function () {
-        console.log('Connected');
-        socket.emit(S_CHANNEL.INIT_BOT, { id: 16 });
-        if (lStorage.has(lStorage.keys.INT_USER) && lStorage.get(lStorage.keys.INIT_STATUS) === INIT_STATUS.INITIALIZED) {
-            //return history for existing user
-            const user = lStorage.get(lStorage.keys.INT_USER);
-            chat.user = user;
-            socket.emit(S_CHANNEL.INIT_HISTORY, user);
-        } else {
-            socket.emit(S_CHANNEL.INIT_USER, { name: 'Guest' });
-        }
-
-    });
-    chat.socket.on(S_CHANNEL.INIT_BOT, function (data) {
-        bot = data;
-        console.log(`get init-bot response with: ${JSON.stringify(data)}`);
-    });
-    chat.socket.on(S_CHANNEL.INIT_USER, function (data) {
-        chat.user = data;
-        lStorage.set(lStorage.keys.INT_USER, data);
-        console.log(`get init-user response with: ${JSON.stringify(data)}`);
-        if (lStorage.get(lStorage.keys.INIT_STATUS) !== INIT_STATUS.RESET) {
-            socket.emit(S_CHANNEL.WELCOME_EVENT_FIRST, chat.user);
-        }
-        lStorage.set(lStorage.keys.INIT_STATUS, INIT_STATUS.INITIALIZED);
-
-    });
-    chat.socket.on(S_CHANNEL.MESSAGE, function (data) {
-        console.log(`get message response with: ${JSON.stringify(data)}`);
-        data.forEach(d => chat.addMessage(d, 'bot'));
-    });
-    chat.socket.on(S_CHANNEL.INIT_HISTORY, function (data) {
-        console.log(`get HISTORY init response with: ${JSON.stringify(data)}`);
-        data.forEach(d => chat.addMessage(d.content, d.senderType === 'bot' ? 'bot' : 'guest'));
-        chat.socket.emit(S_CHANNEL.WELCOME_EVENT_RETURN, chat.user);
-    });
-    chat.socket.on(S_CHANNEL.EXCEPTION, function (data) {
-        console.log('exception: ', data);
-    });
-    chat.socket.on(S_CHANNEL.DISCONNECT, function () {
-        console.log('Disconnected');
-    });
-
-    chat.socket.on(S_CHANNEL.CLEAR_USER_DATA, function (data) {
-        console.log('Clear History data => ', data);
-        $('#widget_queue').empty();
-        lStorage.clear();
-        lStorage.set(lStorage.keys.INIT_STATUS, INIT_STATUS.RESET);
-        chat.user = null;
-        data.forEach(d => chat.addMessage(d, 'bot'));
-        chat.socket.emit(S_CHANNEL.INIT_BOT, { id: 16 });
-        chat.socket.emit(S_CHANNEL.INIT_USER, { name: 'Guest' });
-    });
-
-    chat.socket.on(S_CHANNEL.WELCOME_EVENT_FIRST, function(data) {
-        data.forEach(d => chat.addMessage(d, 'bot'));
-    });
-
-    chat.socket.on(S_CHANNEL.WELCOME_EVENT_RETURN, function(data) {
-        data.forEach(d => chat.addMessage(d, 'bot'));
-    });
-
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    const SpeechGrammarList = window.SpeechGrammarList || window.webkitSpeechGrammarList;
-    const SpeechRecognitionEvent = window.SpeechRecognitionEvent || window.webkitSpeechRecognitionEvent;
-    const commands = {
-        image: 'image',
-        name: 'name',
-        nick: 'Nick',
-        continue: 'continue',
-        post: 'post',
-        snow: 'snow',
-        sand: 'sand',
-        water: 'water',
-        1: 'one',
-        2: 'two',
-        3: 'three',
-        4: 'four',
-        5: '5',
-        6: '6',
-        7: '7',
-        8: '8',
-        9: '9',
-        10: 'ten',
-        hi: 'Hi',
-        Hello: 'Hello'
-    };
-    const commandsList = Object.keys(commands);
-    const grammar = '#JSGF V1.0; grammar commands; public <command> = ' + commandsList.join(' | ') + ' ;';
-    const recognition = new SpeechRecognition();
-    const speechRecognitionList = new SpeechGrammarList();
-    speechRecognitionList.addFromString(grammar, 1);
-    recognition.grammars = speechRecognitionList;
-    recognition.lang = 'en-EN';
-    recognition.interimResults = false;
-    recognition.maxAlternatives = 2;
-
-    $('#audio_input').on('click', function() {
-        recognition.start();
-        console.log('Ready to receive a command.');
-    });
-
-    function getCommand(speechResult) {
-        for (let index = 0; index < commandsList.length; index += 1) {
-            if (speechResult.indexOf(commandsList[index]) !== -1) {
-                const commandKey = commandsList[index];
-                return [commandKey, commandsList[commandKey], ''];
-            }
-        }
-        return null;
-    }
-
-    let continueLine = false;
-    recognition.onresult = function(event) {
-        const last = event.results.length - 1;
-        const commands = getCommand(event.results[last][0].transcript);
-        let inputText = stripObscures(...commands);
-        switch (inputText) {
-            case 'continue':
-                continueLine = true;
-                break;
-            case 'post':
-                chat.addMessage($('#widget_input').text(), 'guest');
-                $('#widget_input').empty();
-                break;
-            default:
-                continueLine ? continueLineFromVoice(inputText) : newInputLineFromVoice(inputText);
-                continueLine = false;
-
-        }
-        console.log('Commands = ' + commands);
-        console.log(commands);
-        console.log('Confidence: ' + event.results[0][0].confidence);
-    };
-
-    function newInputLineFromVoice (inputText) {
-        console.log('NewInput');
-        if (inputText === 'image') {
-            inputText = '/' + inputText;
-        }
-        $('#widget_input').focus();
-        $('#widget_input').empty().text(inputText + ' ');
-    }
-
-    function continueLineFromVoice(inputText) {
-        console.log('ContinueInput');
-        $('#widget_input').focus();
-        $('#widget_input').append(inputText + ' ');
-    }
-
-    function stripObscures (text) {
-        return text.replace(/[^a-zA-Z0-9а-я]/gi);
-    }
-
-    recognition.onspeechend = function() {
-        recognition.stop();
-    };
-
-    recognition.onnomatch = function(event) {
-        console.log("I didn't recognise that command.");
-    };
-
-    recognition.onerror = function(event) {
-        console.log(`Error occurred in recognition: ${event.error}`);
-    };
-
+    chat.socket.on(S_CHANNEL.CONNECT, chat.connect);
+    chat.socket.on(S_CHANNEL.INIT_BOT, chat.initBot);
+    chat.socket.on(S_CHANNEL.INIT_USER, chat.initUser);
+    chat.socket.on(S_CHANNEL.MESSAGE, chat.chatMessage);
+    chat.socket.on(S_CHANNEL.INIT_HISTORY, chat.initHistory);
+    chat.socket.on(S_CHANNEL.EXCEPTION, chat.chatException);
+    chat.socket.on(S_CHANNEL.DISCONNECT, chat.chatDissconnect);
+    chat.socket.on(S_CHANNEL.CLEAR_USER_DATA, chat.clearUserData);
+    chat.socket.on(S_CHANNEL.WELCOME_EVENT_FIRST, chat.welcomeEvent);
+    chat.socket.on(S_CHANNEL.WELCOME_EVENT_RETURN, chat.welcomeReturnEvent());
 });
