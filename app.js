@@ -1,5 +1,11 @@
 jQuery(document).ready(function($){
-    $('#widget_button').draggable();
+    $('#widget_button').draggable({
+        containment: 'window'
+    });
+    $('#widget_body').draggable({
+        handle: '#widget_header',
+        containment: 'window'
+    });
 
     const S_CHANNEL = {
         INIT_USER: 'init-user',

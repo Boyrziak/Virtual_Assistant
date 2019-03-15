@@ -111,14 +111,16 @@ body {
     bottom: 0;
     display: flex;
     box-sizing: border-box;
-    width: 100%;
+    width: 570px;
+    max-width: 570px;
     left: 0;
     height: 85px;
     min-height: 60px;
-    padding: 20px 75px;
+    padding: 20px 200px 20px 75px;
     z-index: 50;
     overflow-y: scroll;
     overflow-x: hidden;
+    word-break: break-all;
     cursor: pointer;
 }
 
