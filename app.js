@@ -7,15 +7,64 @@ jQuery(document).ready(function ($) {
         containment: 'window'
     });
 
-    class Content {
-        content;
-        contentType;
+    // Model part
 
-        constructor(content, contentType) {
-            this.content = content || undefined;
-            this.contentType = contentType || undefined;
-        };
+    class MessageContent {
+        constructor(content, type) {
+            this.content = content;
+            this.type = type;
+        }
+    };
+
+    class ContentText {
+        constructor(text) {
+            this.text = text;
+        }
     }
+
+    class ContentEvent {
+        constructor(name) {
+            this.name = name;
+        }
+    }
+
+    class MessageDto {
+        constructor(message, userDto) {
+            this.message = message;
+            this.userDto = userDto;
+        }
+    }
+
+    class ModelFabric {
+        static getUserObject(id) {
+            return {
+                id: id
+            }
+        };
+
+        static messageDtoBuilder(content, type, userDto) {
+            let _content = null;
+            switch (type) {
+                case ContentType.TEXT:
+                    _content = new ContentText([content]);
+                    break;
+                case ContentType.EVENT:
+                    _content = new ContentEvent(content);
+                    break;
+                default:
+                    _content = null;
+                    break;
+            }
+            const messageContent = new MessageContent(_content, type)
+            return new MessageDto(messageContent, userDto)
+        }
+
+        static getMessageDto(messageContent, userDto) {
+            return new MessageDto(messageContent, userDto)
+        }
+    }
+
+    // Model part end
 
     const ContentType = Object.freeze({
         TEXT: 'text',
@@ -29,7 +78,7 @@ jQuery(document).ready(function ($) {
         INIT_USER: 'init-user',
         INIT_USER_HIDDEN: 'init-user-hidden',
         INIT_BOT: 'init-bot',
-        INIT_HISTORY: 'init-history',
+        INIT_HISTORY: 'init-his',
         MESSAGE: 'message',
         CONNECT: 'connect',
         DISCONNECT: 'disconnect',
@@ -73,20 +122,22 @@ jQuery(document).ready(function ($) {
         messageQueue: 0,
         connect: function () {
             console.log('Connected');
-            socket.emit(S_CHANNEL.INIT_BOT, { id: 16 });
+            socket.emit(S_CHANNEL.INIT_BOT, { id: 1 });
             if (lStorage.has(lStorage.keys.INT_USER)) {
                 //return history for existing user
                 const user = lStorage.get(lStorage.keys.INT_USER);
                 chat.user = user;
-                socket.emit(S_CHANNEL.INIT_HISTORY, user);
+                console.log('request to init history');
+                console.log(chat.user);
+                socket.emit(S_CHANNEL.INIT_HISTORY, null);
             } else {
-                socket.emit(S_CHANNEL.INIT_USER, { id: null });
+                socket.emit(S_CHANNEL.INIT_USER, ModelFabric.getUserObject(null));
             }
 
         },
         initBot: function (bot) {
-            bot = bot;
-            console.log(bot);
+            chat.bot = bot;
+            console.log(`Bot has been initialized ${bot}`);
         },
         initUser: function (user) {
             chat.user = user;
@@ -113,10 +164,10 @@ jQuery(document).ready(function ($) {
             console.log(data);
             chat.renderContent(data, 'bot');
         },
-        initHistory: function (data) {
-            console.log(`get HISTORY init response with: ${JSON.stringify(data)}`);
-            data.forEach(d => chat.addMessage(d.content, d.senderType === 'bot' ? 'bot' : 'guest'));
-            chat.socket.emit(S_CHANNEL.WELCOME_EVENT_RETURN, chat.user);
+        initHistory: function (history) {
+            chat.renderContent(history)
+            // data.forEach(d => chat.addMessage(d.content, d.senderType === 'bot' ? 'bot' : 'guest'));
+            chat.socket.emit(S_CHANNEL.MESSAGE, ModelFabric.messageDtoBuilder('WELCOME', ContentType.EVENT), chat.user);
         },
         chatException: function (data) {
             console.log('exception: ', data);
@@ -155,19 +206,19 @@ jQuery(document).ready(function ($) {
             }
         },
         renderContent: function (message, sender) {
-            if (message.contentType === ContentType.TEXT) {
+            if (message.type === ContentType.TEXT) {
                 message.content.text.forEach(t => chat.addMessage(t, sender));
             }
-            if (message.contentType === ContentType.EVENT) {
+            if (message.type === ContentType.EVENT) {
                 // TODO place implementation of rendering EVENT
             }
-            if (message.contentType === ContentType.CHOICE) {
+            if (message.type === ContentType.CHOICE) {
                 // TOTO place implementation of rendering CHOICE
             }
-            if (message.contentType === ContentType.CARD) {
+            if (message.type === ContentType.CARD) {
                 // TOTO place implementation of rendering CARD
             }
-            if (message.contentType === ContentType.CAROUSEL) {
+            if (message.type === ContentType.CAROUSEL) {
                 // TOTO place implementation of rendering CAROUSEL
             }
         },
@@ -202,27 +253,16 @@ jQuery(document).ready(function ($) {
         initialize: function () {
         },
         clearHistory: function () {
-
-            /* chat.socket.emit(S_CHANNEL.CLEAR_USER_DATA, {
-                message: 'clear my data',
-                user: chat.user,
-            }); */
+            chat.socket.emit(S_CHANNEL.MESSAGE, ModelFabric.messageDtoBuilder('CLEAR_USER_DATA', ContentType.EVENT, chat.user));
         },
         clearUserData: function (data) {
             console.log('Clear History data => ', data);
             $('#widget_queue').empty();
             lStorage.clear();
-            lStorage.set(lStorage.keys.INIT_STATUS, INIT_STATUS.RESET);
-            chat.user = null;
-            data.forEach(d => chat.addMessage(d, 'bot'));
-            chat.socket.emit(S_CHANNEL.INIT_BOT, { id: 16 });
-            chat.socket.emit(S_CHANNEL.INIT_USER, { name: 'Guest' });
+            chat.renderContent(data);
         },
-        createResponse: function (msg) {
-            chat.socket.emit(S_CHANNEL.MESSAGE, {
-                message: msg,
-                user: chat.user,
-            });
+        createResponse: function (content, contentType, userDto) {
+            chat.socket.emit(S_CHANNEL.MESSAGE, ModelFabric.messageDtoBuilder(content, contentType, userDto));
         },
         showImage: function (category, quantity) {
             let self = this;
@@ -270,10 +310,7 @@ jQuery(document).ready(function ($) {
     $('#human_connect').on('click', function () {
         const content = 'connect with human';
         chat.addMessage(content, 'guest')
-        chat.socket.emit('message', {
-            message: content,
-            user: chat.user,
-        })
+        chat.socket.emit('message', ModelFabric.messageDtoBuilder('CONNECT_WITH_HUMAN', ContentType.EVENT, chat.user));
     });
 
     $('#widget_input').keypress(function (e) {
@@ -286,11 +323,11 @@ jQuery(document).ready(function ($) {
         if (e.keyCode == 13) {
             e.preventDefault();
             const textContent = $(this).text();
-            const content = new Content({
+            const content = new MessageContent({
                 text: [textContent],
             }, ContentType.TEXT);
-            chat.addMessage(content, 'guest');
-            chat.createResponse(content);
+            chat.renderContent(content, 'guest');
+            chat.createResponse(textContent, ContentType.TEXT, chat.user);
             $(this).empty();
         }
     });
