@@ -425,7 +425,7 @@ body {
     color: white;
 }
 
-#widget_queue .guest_message {
+#widget_queue .user_message {
     background: #d6d1cc;
     align-self: flex-end;
     color: #565656;

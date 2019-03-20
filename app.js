@@ -29,20 +29,21 @@ jQuery(document).ready(function ($) {
     }
 
     class MessageDto {
-        constructor(message, userDto) {
+        constructor(message, userDto, senderType) {
             this.message = message;
             this.userDto = userDto;
+            this.senderType = senderType;
         }
     }
 
-    class ModelFabric {
+    class ModelFactory {
         static getUserObject(id) {
             return {
                 id: id
             }
         };
 
-        static messageDtoBuilder(content, type, userDto) {
+        static messageDtoBuilder(content, type, senderType) {
             let _content = null;
             switch (type) {
                 case ContentType.TEXT:
@@ -56,11 +57,11 @@ jQuery(document).ready(function ($) {
                     break;
             }
             const messageContent = new MessageContent(_content, type)
-            return new MessageDto(messageContent, userDto)
+            return new MessageDto(messageContent, chat.user, senderType)
         }
 
-        static getMessageDto(messageContent, userDto) {
-            return new MessageDto(messageContent, userDto)
+        static getMessageDto(messageContent) {
+            return new MessageDto(messageContent, chat.user, senderType)
         }
     }
 
@@ -74,11 +75,18 @@ jQuery(document).ready(function ($) {
         CAROUSEL: 'carousel'
     });
 
-    const S_CHANNEL = {
+    const SenderType = Object.freeze({
+        USER: 'user',
+        BOT: 'bot',
+    });
+
+
+
+    const WS_ENDPOINTS = {
         INIT_USER: 'init-user',
         INIT_USER_HIDDEN: 'init-user-hidden',
         INIT_BOT: 'init-bot',
-        INIT_HISTORY: 'init-his',
+        INIT_HISTORY: 'init-history',
         MESSAGE: 'message',
         CONNECT: 'connect',
         DISCONNECT: 'disconnect',
@@ -122,35 +130,36 @@ jQuery(document).ready(function ($) {
         messageQueue: 0,
         connect: function () {
             console.log('Connected');
-            socket.emit(S_CHANNEL.INIT_BOT, { id: 1 });
+            socket.emit(WS_ENDPOINTS.INIT_BOT, { id: 1 });
             if (lStorage.has(lStorage.keys.INT_USER)) {
                 //return history for existing user
                 const user = lStorage.get(lStorage.keys.INT_USER);
                 chat.user = user;
                 console.log('request to init history');
                 console.log(chat.user);
-                socket.emit(S_CHANNEL.INIT_HISTORY, null);
+                socket.emit(WS_ENDPOINTS.INIT_HISTORY, user);
             } else {
-                socket.emit(S_CHANNEL.INIT_USER, ModelFabric.getUserObject(null));
+                socket.emit(WS_ENDPOINTS.INIT_USER, ModelFactory.getUserObject(null));
             }
 
         },
         initBot: function (bot) {
             chat.bot = bot;
-            console.log(`Bot has been initialized ${bot}`);
+            console.log(`Bot has been initialized`);
+            console.log(bot);
         },
         initUser: function (user) {
             chat.user = user;
             lStorage.set(lStorage.keys.INT_USER, user);
             console.log(`get init-user response with: ${user}`);
-            // welcome first event
+            // welcome event
             const welcomeEvent = {
                 type: ContentType.EVENT,
                 content: {
                     name: 'WELCOME'
                 }
             };
-            socket.emit(S_CHANNEL.MESSAGE, {
+            socket.emit(WS_ENDPOINTS.MESSAGE, {
                 userDto: lStorage.get(lStorage.keys.INT_USER),
                 message: welcomeEvent
             });
@@ -162,12 +171,17 @@ jQuery(document).ready(function ($) {
         },
         chatMessage: function (data) {
             console.log(data);
-            chat.renderContent(data, 'bot');
+            chat.renderContent(data);
         },
         initHistory: function (history) {
-            chat.renderContent(history)
-            // data.forEach(d => chat.addMessage(d.content, d.senderType === 'bot' ? 'bot' : 'guest'));
-            chat.socket.emit(S_CHANNEL.MESSAGE, ModelFabric.messageDtoBuilder('WELCOME', ContentType.EVENT), chat.user);
+            if (history != null) {
+                history.forEach(m => chat.renderContent(m));
+                chat.socket.emit(WS_ENDPOINTS.MESSAGE, ModelFactory.messageDtoBuilder('WELCOME', ContentType.EVENT, SenderType.USER));
+            } else {
+                console.log('init history null');
+                console.log(history);
+            }
+
         },
         chatException: function (data) {
             console.log('exception: ', data);
@@ -205,20 +219,20 @@ jQuery(document).ready(function ($) {
                 $(button).animate({ top: $(window).outerHeight() - button.outerHeight() - 10 + 'px' }, 500);
             }
         },
-        renderContent: function (message, sender) {
-            if (message.type === ContentType.TEXT) {
-                message.content.text.forEach(t => chat.addMessage(t, sender));
+        renderContent: function (messageDto) {
+            if (messageDto.message.type === ContentType.TEXT) {
+                messageDto.message.content.text.forEach(t => chat.addMessage(t, messageDto.senderType));
             }
-            if (message.type === ContentType.EVENT) {
+            if (messageDto.message.type === ContentType.EVENT) {
                 // TODO place implementation of rendering EVENT
             }
-            if (message.type === ContentType.CHOICE) {
+            if (messageDto.message.type === ContentType.CHOICE) {
                 // TOTO place implementation of rendering CHOICE
             }
-            if (message.type === ContentType.CARD) {
+            if (messageDto.message.type === ContentType.CARD) {
                 // TOTO place implementation of rendering CARD
             }
-            if (message.type === ContentType.CAROUSEL) {
+            if (messageDto.message.type === ContentType.CAROUSEL) {
                 // TOTO place implementation of rendering CAROUSEL
             }
         },
@@ -227,7 +241,7 @@ jQuery(document).ready(function ($) {
             self.messageQueue++;
             setTimeout(function () {
                 let options = { direction: '' };
-                sender === 'bot' ? options.direction = 'left' : options.direction = 'right';
+                sender === SenderType.BOT ? options.direction = 'left' : options.direction = 'right';
                 let newMessage = document.createElement('div');
                 $(newMessage).addClass('widget_message ' + sender + '_message');
                 $(newMessage).append(text);
@@ -253,7 +267,7 @@ jQuery(document).ready(function ($) {
         initialize: function () {
         },
         clearHistory: function () {
-            chat.socket.emit(S_CHANNEL.MESSAGE, ModelFabric.messageDtoBuilder('CLEAR_USER_DATA', ContentType.EVENT, chat.user));
+            chat.socket.emit(WS_ENDPOINTS.MESSAGE, ModelFactory.messageDtoBuilder('CLEAR_USER_DATA', ContentType.EVENT, SenderType.USER));
         },
         clearUserData: function (data) {
             console.log('Clear History data => ', data);
@@ -261,8 +275,8 @@ jQuery(document).ready(function ($) {
             lStorage.clear();
             chat.renderContent(data);
         },
-        createResponse: function (content, contentType, userDto) {
-            chat.socket.emit(S_CHANNEL.MESSAGE, ModelFabric.messageDtoBuilder(content, contentType, userDto));
+        createResponse: function (content, contentType) {
+            chat.socket.emit(WS_ENDPOINTS.MESSAGE, ModelFactory.messageDtoBuilder(content, contentType, SenderType.USER));
         },
         showImage: function (category, quantity) {
             let self = this;
@@ -309,13 +323,13 @@ jQuery(document).ready(function ($) {
 
     $('#human_connect').on('click', function () {
         const content = 'connect with human';
-        chat.addMessage(content, 'guest')
-        chat.socket.emit('message', ModelFabric.messageDtoBuilder('CONNECT_WITH_HUMAN', ContentType.EVENT, chat.user));
+        chat.addMessage(content, SenderType.USER)
+        chat.socket.emit('message', ModelFactory.messageDtoBuilder('CONNECT_WITH_HUMAN', ContentType.EVENT, SenderType.USER));
     });
 
     $('#widget_input').keypress(function (e) {
         if (!lStorage.has(lStorage.keys.INT_USER)) {
-            chat.socket.emit(S_CHANNEL.INIT_USER_HIDDEN, { id: null })
+            chat.socket.emit(WS_ENDPOINTS.INIT_USER_HIDDEN, { id: null })
         }
     });
 
@@ -323,11 +337,9 @@ jQuery(document).ready(function ($) {
         if (e.keyCode == 13) {
             e.preventDefault();
             const textContent = $(this).text();
-            const content = new MessageContent({
-                text: [textContent],
-            }, ContentType.TEXT);
-            chat.renderContent(content, 'guest');
-            chat.createResponse(textContent, ContentType.TEXT, chat.user);
+            const messageDto = ModelFactory.messageDtoBuilder(textContent, ContentType.TEXT, SenderType.USER)
+            chat.renderContent(messageDto);
+            chat.createResponse(textContent, ContentType.TEXT);
             $(this).empty();
         }
     });
@@ -355,12 +367,12 @@ jQuery(document).ready(function ($) {
 
     const socket = io('http://localhost:3000', { path: '/chat/socket.io' });
     chat.socket = socket;
-    chat.socket.on(S_CHANNEL.CONNECT, chat.connect);
-    chat.socket.on(S_CHANNEL.INIT_BOT, chat.initBot);
-    chat.socket.on(S_CHANNEL.INIT_USER, chat.initUser);
-    chat.socket.on(S_CHANNEL.INIT_USER_HIDDEN, chat.initUserHidden);
-    chat.socket.on(S_CHANNEL.MESSAGE, chat.chatMessage);
-    chat.socket.on(S_CHANNEL.INIT_HISTORY, chat.initHistory);
-    chat.socket.on(S_CHANNEL.EXCEPTION, chat.chatException);
-    chat.socket.on(S_CHANNEL.DISCONNECT, chat.chatDisconnect);
+    chat.socket.on(WS_ENDPOINTS.CONNECT, chat.connect);
+    chat.socket.on(WS_ENDPOINTS.INIT_BOT, chat.initBot);
+    chat.socket.on(WS_ENDPOINTS.INIT_USER, chat.initUser);
+    chat.socket.on(WS_ENDPOINTS.INIT_USER_HIDDEN, chat.initUserHidden);
+    chat.socket.on(WS_ENDPOINTS.MESSAGE, chat.chatMessage);
+    chat.socket.on(WS_ENDPOINTS.INIT_HISTORY, chat.initHistory);
+    chat.socket.on(WS_ENDPOINTS.EXCEPTION, chat.chatException);
+    chat.socket.on(WS_ENDPOINTS.DISCONNECT, chat.chatDisconnect);
 });
