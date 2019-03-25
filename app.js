@@ -87,6 +87,7 @@ jQuery(document).ready(function ($) {
         INIT_USER_HIDDEN: 'init-user-hidden',
         INIT_BOT: 'init-bot',
         INIT_HISTORY: 'init-history',
+        CLEAR_HISTORY: 'clear-history',
         MESSAGE: 'message',
         CONNECT: 'connect',
         DISCONNECT: 'disconnect',
@@ -267,12 +268,13 @@ jQuery(document).ready(function ($) {
         initialize: function () {
         },
         clearHistory: function () {
-            chat.socket.emit(WS_ENDPOINTS.MESSAGE, ModelFactory.messageDtoBuilder('CLEAR_USER_DATA', ContentType.EVENT, SenderType.USER));
+            chat.socket.emit(WS_ENDPOINTS.CLEAR_HISTORY, ModelFactory.messageDtoBuilder('CLEAR_USER_DATA', ContentType.EVENT, SenderType.USER));
         },
         clearUserData: function (data) {
             console.log('Clear History data => ', data);
             $('#widget_queue').empty();
             lStorage.clear();
+            delete chat.user;
             chat.renderContent(data);
         },
         createResponse: function (content, contentType) {
@@ -324,7 +326,8 @@ jQuery(document).ready(function ($) {
     $('#human_connect').on('click', function () {
         const content = 'connect with human';
         chat.addMessage(content, SenderType.USER)
-        chat.socket.emit('message', ModelFactory.messageDtoBuilder('CONNECT_WITH_HUMAN', ContentType.EVENT, SenderType.USER));
+        // chat.socket.emit('message', ModelFactory.messageDtoBuilder('CONNECT_WITH_HUMAN', ContentType.EVENT, SenderType.USER));
+        chat.socket.emit('message', ModelFactory.messageDtoBuilder('NO_REPLY', ContentType.EVENT, SenderType.USER));
     });
 
     $('#widget_input').keypress(function (e) {
@@ -371,6 +374,7 @@ jQuery(document).ready(function ($) {
     chat.socket.on(WS_ENDPOINTS.INIT_BOT, chat.initBot);
     chat.socket.on(WS_ENDPOINTS.INIT_USER, chat.initUser);
     chat.socket.on(WS_ENDPOINTS.INIT_USER_HIDDEN, chat.initUserHidden);
+    chat.socket.on(WS_ENDPOINTS.CLEAR_HISTORY, chat.clearUserData);
     chat.socket.on(WS_ENDPOINTS.MESSAGE, chat.chatMessage);
     chat.socket.on(WS_ENDPOINTS.INIT_HISTORY, chat.initHistory);
     chat.socket.on(WS_ENDPOINTS.EXCEPTION, chat.chatException);
