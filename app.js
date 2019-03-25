@@ -326,8 +326,8 @@ jQuery(document).ready(function ($) {
     $('#human_connect').on('click', function () {
         const content = 'connect with human';
         chat.addMessage(content, SenderType.USER)
-        // chat.socket.emit('message', ModelFactory.messageDtoBuilder('CONNECT_WITH_HUMAN', ContentType.EVENT, SenderType.USER));
-        chat.socket.emit('message', ModelFactory.messageDtoBuilder('NO_REPLY', ContentType.EVENT, SenderType.USER));
+        chat.socket.emit('message', ModelFactory.messageDtoBuilder('CONNECT_WITH_HUMAN', ContentType.EVENT, SenderType.USER));
+        // chat.socket.emit('message', ModelFactory.messageDtoBuilder('NO_REPLY', ContentType.EVENT, SenderType.USER));
     });
 
     $('#widget_input').keypress(function (e) {
