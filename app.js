@@ -55,6 +55,8 @@ jQuery(document).ready(function($){
         firstTime: true,
         APIkey: '563492ad6f91700001000001bb151c8c07f048768f0c409fc846429b',
         messageQueue: 0,
+        lastMessage: '',
+        currentLocation: location.href,
         connect: function () {
             console.log('Connected');
             socket.emit(S_CHANNEL.INIT_BOT, { id: 16 });
@@ -117,6 +119,7 @@ jQuery(document).ready(function($){
         close: function () {
             let body = $('#widget_body');
             let button = $('#widget_button');
+            let self = this;
             button.css({top: body.offset().top + body.outerHeight() + 40 + 'px', left: body.offset().left + body.outerWidth() - button.outerWidth()});
             button.removeClass('clicked');
             body.removeClass('opened');
@@ -126,13 +129,31 @@ jQuery(document).ready(function($){
             if (button.offset().top + button.outerHeight() >= $(window).outerHeight() - 5) {
                 $(button).animate({top: $(window).outerHeight() - button.outerHeight() - 10 + 'px'}, 500);
             }
+            // self.showPreview(this.lastMessage);
+            console.log(self.lastMessage);
+        },
+        reposition: function(){
+            let self = this;
+            let body = $('#widget_body');
+            let windowHeight = $(window).outerHeight();
+            let windowWidth = $(window).outerWidth();
+            if (body.offset().top <= 5) {
+                $(body).animate({top: '10px'}, 500);
+            } else if (body.offset().top + body.outerHeight() > windowHeight) {
+                $(body).animate({top: windowHeight - body.outerHeight() - 5 +'px'}, 500);
+            }
+            if (body.offset().left < 0) {
+                $(body).animate({left: '10px'}, 500);
+            } else if (body.offset().left + body.outerWidth() > windowWidth) {
+                $(body).animate({left: windowWidth - body.outerWidth() - 5 +'px'}, 500);
+            }
         },
         addMessage: function (text, sender) {
             let self = this;
             self.messageQueue++;
             setTimeout(function () {
                 let options = {direction: ''};
-                sender === 'bot' ? options.direction = 'left' : options.direction = 'right';
+                sender === 'bot' ? (options.direction = 'left', self.lastMessage = text) : options.direction = 'right';
                 let newMessage = document.createElement('div');
                 $(newMessage).addClass('widget_message ' + sender + '_message');
                 $(newMessage).append(text);
@@ -185,6 +206,16 @@ jQuery(document).ready(function($){
                 user: chat.user,
             });
         },
+        idleAction: function (timeout) {
+          console.log('Idle for ' + timeout + ' seconds');
+          idleTimer = setTimeout(function () {
+              chat.idleAction(timeout);
+          }, timeout);
+        },
+        getCurrentLocation: function () {
+          this.currentLocation = location.href;
+          return this.currentLocation;
+        },
         showImage: function (category, quantity) {
             let self = this;
             let headers = new Headers();
@@ -227,6 +258,11 @@ jQuery(document).ready(function($){
     };
 
     chat.initialize();
+    let timeout = 5000;
+
+    let idleTimer = setTimeout(function () {
+        chat.idleAction(timeout);
+    }, timeout);
 
     $('#human_connect').on('click', function () {
         const content = 'connect with human';
@@ -254,6 +290,12 @@ jQuery(document).ready(function($){
 
     $('#clear_history').on('click', chat.clearHistory);
 
+    let resizeTimer;
+    $(window).resize(function (){
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(chat.reposition, 500);
+    });
+
     $('.message_image').on('click', function () {
         let lightbox = $('#widget_lightbox');
         $(lightbox).empty();
@@ -265,6 +307,46 @@ jQuery(document).ready(function($){
     $('#modal_overlay').on('click', function () {
         $('#widget_lightbox').hide('scale', 600);
         $(this).hide('explode', 800);
+    });
+
+    $(window).mousemove(function () {
+        clearTimeout(idleTimer);
+        console.log('Mouse move was performed');
+        idleTimer = setTimeout(function () {
+            chat.idleAction(timeout);
+        }, timeout);
+    });
+
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const SpeechGrammarList = window.SpeechGrammarList || window.webkitSpeechGrammarList;
+    const SpeechRecognitionEvent = window.SpeechRecognitionEvent || window.webkitSpeechRecognitionEvent;
+    const colors = {
+        red: 'red',
+        orange: 'orange',
+        yellow: 'yellow',
+        green: 'green',
+        blue: 'blue',
+        darkblue: 'darkblue',
+        violet: 'violet'
+    };
+    const colorsList = Object.keys(colors);
+    const recognition = new SpeechRecognition();
+    const speechRecognitionList = new SpeechGrammarList();
+    speechRecognitionList.addFromString(grammar, 1);
+    recognition.grammars = speechRecognitionList;
+//recognition.continuous = false;
+    recognition.lang = 'en-EN';
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+
+    $('#audio_input').on('click', function () {
+        console.log('Recognition started');
+        recognition.start();
+        recognition.onresult = (event) => {
+            event
+            const speechToText = event.results[0][0].transcript;
+            console.log(speechToText);
+        }
     });
 
     const socket = io('https://kh-gis-chat-bot.intetics.com', {path: '/chat/socket.io'});

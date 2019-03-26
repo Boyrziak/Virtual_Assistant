@@ -65,8 +65,10 @@ body {
 #widget_body {
     font-family: 'MuseoSansCyrl', sans-serif;
     display: none;
-    width: 575px;
-    height: 640px;
+    width: 30%;
+    max-height: 640px;
+    height: 80%;
+    overflow: hidden;
     border: 2px solid #e7873c;
     box-sizing: border-box;
     right: 10px;
@@ -254,7 +256,7 @@ body {
     align-items: center;
     background: #f0965f;
     color: white;
-    width: 188px;
+    width: 35%;
     height: 33px;
     box-sizing: border-box;
     border: 1px solid #f0965f;
@@ -392,7 +394,7 @@ body {
     display: flex;
     flex-direction: column;
     padding: 10px;
-    width: 370px;
+    width: 60%;
     min-height: 270px;
     max-height: 505px;
     box-sizing: border-box;
@@ -436,6 +438,7 @@ body {
     top: 110px;
     right: 0;
     z-index: -1;
+    width: 35%;
 }
 
 #widget_lightbox {
