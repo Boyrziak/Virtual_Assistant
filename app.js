@@ -88,6 +88,7 @@ jQuery(document).ready(function ($) {
         INIT_BOT: 'init-bot',
         INIT_HISTORY: 'init-history',
         CLEAR_HISTORY: 'clear-history',
+        CLEAR_HISTORY_CONFIRMATION: 'clear-history-confirmation',
         MESSAGE: 'message',
         CONNECT: 'connect',
         DISCONNECT: 'disconnect',
@@ -267,15 +268,21 @@ jQuery(document).ready(function ($) {
         },
         initialize: function () {
         },
-        clearHistory: function () {
-            chat.socket.emit(WS_ENDPOINTS.CLEAR_HISTORY, ModelFactory.messageDtoBuilder('CLEAR_USER_DATA', ContentType.EVENT, SenderType.USER));
+        clearHistoryRequest: function () {
+            chat.socket.emit(WS_ENDPOINTS.MESSAGE, ModelFactory.messageDtoBuilder('CLEAR_USER_DATA', ContentType.EVENT, SenderType.USER));
         },
-        clearUserData: function (data) {
+        clearUserDataHandler: function (data) {
             console.log('Clear History data => ', data);
+            /* $('#widget_queue').empty();
+            lStorage.clear();
+            delete chat.user;
+            chat.renderContent(data); */
+        },
+        clearHistoryConfirmed: function (data) {
+            console.log('Clear History confirmed  => ', data);
             $('#widget_queue').empty();
             lStorage.clear();
             delete chat.user;
-            chat.renderContent(data);
         },
         createResponse: function (content, contentType) {
             chat.socket.emit(WS_ENDPOINTS.MESSAGE, ModelFactory.messageDtoBuilder(content, contentType, SenderType.USER));
@@ -353,7 +360,7 @@ jQuery(document).ready(function ($) {
 
     $('.close_widget').on('click', chat.close);
 
-    $('#clear_history').on('click', chat.clearHistory);
+    $('#clear_history').on('click', chat.clearHistoryRequest);
 
     $('.message_image').on('click', function () {
         let lightbox = $('#widget_lightbox');
@@ -374,7 +381,7 @@ jQuery(document).ready(function ($) {
     chat.socket.on(WS_ENDPOINTS.INIT_BOT, chat.initBot);
     chat.socket.on(WS_ENDPOINTS.INIT_USER, chat.initUser);
     chat.socket.on(WS_ENDPOINTS.INIT_USER_HIDDEN, chat.initUserHidden);
-    chat.socket.on(WS_ENDPOINTS.CLEAR_HISTORY, chat.clearUserData);
+    chat.socket.on(WS_ENDPOINTS.CLEAR_HISTORY_CONFIRMATION, chat.clearHistoryConfirmed);
     chat.socket.on(WS_ENDPOINTS.MESSAGE, chat.chatMessage);
     chat.socket.on(WS_ENDPOINTS.INIT_HISTORY, chat.initHistory);
     chat.socket.on(WS_ENDPOINTS.EXCEPTION, chat.chatException);
