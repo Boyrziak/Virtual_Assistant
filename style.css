@@ -128,10 +128,12 @@ body {
 #widget_input_field {
     position: absolute;
     bottom: 0;
-    width: 40%;
+    width: 50%;
+    max-height: 85px;
+    min-height: 60px;
     height: 85px;
     box-sizing: border-box;
-    left: 15%;
+    left: 70px;
     overflow-y: scroll;
     overflow-x: hidden;
     z-index: 99;
@@ -153,7 +155,7 @@ body {
     content: attr(placeholder);
     display: flex;
     position: absolute;
-    top: 0;
+    top: -15px;
     align-items: center;
     left: 0;
     opacity: 0.5;
@@ -197,7 +199,7 @@ body {
     right: 8px;
     display: flex;
     height: 80px;
-    width: 40%;
+    width: 35%;
     flex-direction: column;
 }
 
