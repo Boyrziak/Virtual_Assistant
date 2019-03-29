@@ -65,8 +65,10 @@ body {
 #widget_body {
     font-family: 'MuseoSansCyrl', sans-serif;
     display: none;
-    width: 575px;
-    height: 640px;
+    width: 30%;
+    max-height: 640px;
+    height: 80%;
+    overflow: hidden;
     border: 2px solid #e7873c;
     box-sizing: border-box;
     right: 10px;
@@ -117,10 +119,25 @@ body {
     min-height: 60px;
     padding: 20px 200px 20px 75px;
     z-index: 50;
-    overflow-y: scroll;
-    overflow-x: hidden;
+    /*overflow-y: scroll;*/
+    /*overflow-x: hidden;*/
     word-break: break-all;
     cursor: pointer;
+}
+
+#widget_input_field {
+    position: absolute;
+    bottom: 0;
+    width: 50%;
+    max-height: 85px;
+    min-height: 60px;
+    height: 85px;
+    box-sizing: border-box;
+    left: 70px;
+    overflow-y: scroll;
+    overflow-x: hidden;
+    z-index: 99;
+    padding: 5px;
 }
 
 #widget_input::after {
@@ -134,43 +151,43 @@ body {
     transition: .3s cubic-bezier(0.6, 1.0, 0.8, 0.8);
 }
 
-#widget_input::before {
+#widget_input_field::before {
     content: attr(placeholder);
     display: flex;
     position: absolute;
-    top: 0;
+    top: -15px;
     align-items: center;
-    left: 75px;
+    left: 0;
     opacity: 0.5;
     height: 100%;
-    width: 300px;
+    /*width: 300px;*/
     transition: .4s ease-in;
 }
 
-#widget_input:focus {
+#widget_input_field:focus {
     outline: none;
 }
 
 
-#widget_input:focus::before {
+#widget_input_field:focus::before {
     content: '';
     opacity: 0;
     transition: .4s ease-in;
 }
 
-#widget_input:focus::after {
+#widget_input_field:focus #widget_input::after {
     width: calc( 100% + 4px );
     left: 0;
     transition: .5s cubic-bezier(0.3, 1, 0.6, 0.6);
 }
 
-#widget_input:not(:empty)::before {
+#widget_input_field:not(:empty)::before {
     content: '';
     opacity: 0;
     transition: .4s ease-in;
 }
 
-#widget_input:empty::before {
+#widget_input_field:empty::before {
     content: attr(placeholder);
     display: flex;
     transition: .4s ease-in;
@@ -182,6 +199,7 @@ body {
     right: 8px;
     display: flex;
     height: 80px;
+    width: 35%;
     flex-direction: column;
 }
 
@@ -190,10 +208,11 @@ body {
     cursor: pointer;
     z-index: 100;
     font-size: 14px;
+    width: 100%;
     color: #e7873c;
     border: 1px solid #e7873c;
     border-radius: 15px;
-    padding: 8px 35px;
+    padding: 7px 0;
     text-align: center;
     transition: .4s ease-out;
 }
@@ -211,10 +230,11 @@ body {
     cursor: pointer;
     z-index: 100;
     font-size: 14px;
+    width: 100%;
     color: #e7873c;
     border: 1px solid #e7873c;
     border-radius: 15px;
-    padding: 7px 35px;
+    padding: 7px 0;
     text-align: center;
     transition: .4s ease-out;
     text-decoration: none;
@@ -252,9 +272,10 @@ body {
     justify-content: center;
     display: flex;
     align-items: center;
+    padding: 1.1pc 10px;
     background: #f0965f;
     color: white;
-    width: 188px;
+    width: 40%;
     height: 33px;
     box-sizing: border-box;
     border: 1px solid #f0965f;
@@ -352,21 +373,21 @@ body {
     transition: border .3s ease-out, width .2s ease-out .15s, height .2s ease-out .15s;
 }
 
-#widget_input::-webkit-scrollbar {
+#widget_input_field::-webkit-scrollbar {
     width: 8px;
 }
 
-#widget_input::-webkit-scrollbar-track {
+#widget_input_field::-webkit-scrollbar-track {
     background: transparent;
 }
 
-#widget_input::-webkit-scrollbar-thumb {
+#widget_input_field::-webkit-scrollbar-thumb {
     background: #e7873c;
     border-radius: 4px;
 }
 
 
-#widget_input::-webkit-scrollbar-thumb:hover {
+#widget_input_field::-webkit-scrollbar-thumb:hover {
     background: #e7653a;
     transition: .3s ease-in;
 }
@@ -392,7 +413,7 @@ body {
     display: flex;
     flex-direction: column;
     padding: 10px;
-    width: 370px;
+    width: 60%;
     min-height: 270px;
     max-height: 505px;
     box-sizing: border-box;
@@ -436,6 +457,7 @@ body {
     top: 110px;
     right: 0;
     z-index: -1;
+    width: 35%;
 }
 
 #widget_lightbox {
@@ -456,4 +478,33 @@ body {
     background: rgba(0,0,0,0.5);
     cursor: pointer;
     display: none;
+}
+
+#widget_queue .choice_container {
+    position: absolute;
+    bottom: 10px;
+    width: 90%;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+}
+
+#widget_queue .choice_container .choice_button {
+    width: 45%;
+    margin: 10px 5px;
+    text-align: center;
+    padding: 5px 0;
+    cursor: pointer;
+    background: white;
+    color: #e7873c;
+    font-size: 12px;
+    border: 1px solid #e7873c;
+    border-radius: 10px;
+    transition: .4s ease-in-out;
+}
+
+#widget_queue .choice_container .choice_button:hover {
+    background: #e7873c;
+    color: white;
+    transition: .5s ease-in;
 }

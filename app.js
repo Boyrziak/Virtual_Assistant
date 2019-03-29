@@ -130,6 +130,8 @@ jQuery(document).ready(function ($) {
         firstTime: true,
         APIkey: '563492ad6f91700001000001bb151c8c07f048768f0c409fc846429b',
         messageQueue: 0,
+        lastMessage: '',
+        currentLocation: location.href,
         connect: function () {
             console.log('Connected');
             socket.emit(WS_ENDPOINTS.INIT_BOT, { id: 1 });
@@ -173,11 +175,11 @@ jQuery(document).ready(function ($) {
         },
         chatMessage: function (data) {
             console.log(data);
-            chat.renderContent(data);
+            chat.addMessage(data);
         },
         initHistory: function (history) {
             if (history != null) {
-                history.forEach(m => chat.renderContent(m));
+                history.forEach(m => chat.addMessage(m));
                 chat.socket.emit(WS_ENDPOINTS.MESSAGE, ModelFactory.messageDtoBuilder('WELCOME', ContentType.EVENT, SenderType.USER));
             } else {
                 console.log('init history null');
@@ -195,7 +197,10 @@ jQuery(document).ready(function ($) {
             let button = $('#widget_button');
             let self = this;
             let body = $('#widget_body');
-            body.css({ top: button.offset().top - body.outerHeight() - 40 + 'px', left: button.offset().left - body.outerWidth() + 100 + 'px' });
+            body.css({
+                top: button.offset().top - body.outerHeight() - 40 + 'px',
+                left: button.offset().left - body.outerWidth() + 100 + 'px'
+            });
             button.addClass('clicked');
             body.addClass('opened');
             body.toggle('blind', { direction: 'down' }, 1000);
@@ -211,7 +216,11 @@ jQuery(document).ready(function ($) {
         close: function () {
             let body = $('#widget_body');
             let button = $('#widget_button');
-            button.css({ top: body.offset().top + body.outerHeight() + 40 + 'px', left: body.offset().left + body.outerWidth() - button.outerWidth() });
+            let self = this;
+            button.css({
+                top: body.offset().top + body.outerHeight() + 40 + 'px',
+                left: body.offset().left + body.outerWidth() - button.outerWidth()
+            });
             button.removeClass('clicked');
             body.removeClass('opened');
             body.toggle('blind', { direction: 'down' }, 1000);
@@ -221,40 +230,82 @@ jQuery(document).ready(function ($) {
                 $(button).animate({ top: $(window).outerHeight() - button.outerHeight() - 10 + 'px' }, 500);
             }
         },
-        renderContent: function (messageDto) {
-            if (messageDto.message.type === ContentType.TEXT) {
-                messageDto.message.content.text.forEach(t => chat.addMessage(t, messageDto.senderType));
+        reposition: function () {
+            let self = this;
+            let body = $('#widget_body');
+            let windowHeight = $(window).outerHeight();
+            let windowWidth = $(window).outerWidth();
+            if (body.offset().top <= 5) {
+                $(body).animate({ top: '10px' }, 500);
+            } else if (body.offset().top + body.outerHeight() > windowHeight) {
+                $(body).animate({ top: windowHeight - body.outerHeight() - 5 + 'px' }, 500);
             }
-            if (messageDto.message.type === ContentType.EVENT) {
-                // TODO place implementation of rendering EVENT
-            }
-            if (messageDto.message.type === ContentType.CHOICE) {
-                // TOTO place implementation of rendering CHOICE
-            }
-            if (messageDto.message.type === ContentType.CARD) {
-                // TOTO place implementation of rendering CARD
-            }
-            if (messageDto.message.type === ContentType.CAROUSEL) {
-                // TOTO place implementation of rendering CAROUSEL
+            if (body.offset().left < 0) {
+                $(body).animate({ left: '10px' }, 500);
+            } else if (body.offset().left + body.outerWidth() > windowWidth) {
+                $(body).animate({ left: windowWidth - body.outerWidth() - 5 + 'px' }, 500);
             }
         },
-        addMessage: function (text, sender) {
+        addMessage: function (messageDto) {
+            const type = messageDto.message.type;
+            const sender = messageDto.senderType;
+            const value = messageDto.message.content;
             let self = this;
             self.messageQueue++;
             setTimeout(function () {
                 let options = { direction: '' };
-                sender === SenderType.BOT ? options.direction = 'left' : options.direction = 'right';
-                let newMessage = document.createElement('div');
-                $(newMessage).addClass('widget_message ' + sender + '_message');
-                $(newMessage).append(text);
-                $(newMessage).appendTo('#widget_queue').show('drop', options, 600);
-                if (!self.opened) {
-                    self.showPreview(text);
+                sender === 'bot' ? (options.direction = 'left', self.lastMessage = value) : options.direction = 'right';
+                switch (type) {
+                    case ContentType.CHOICE:
+                        self.showChoice(value);
+                        break;
+                    case ContentType.EVENT:
+                        self.showEvent(value);
+                        break;
+                    case ContentType.TEXT:
+                        value.text.forEach(t => self.showText(t, sender, options));
+                        break;
+                    case ContentType.CARD:
+                        self.showImage(value);
+                        break;
                 }
                 self.messageQueue--;
                 self.messageQueue === 0 ?
                     self.scrollQuery(400) : null;
             }, 600);
+        },
+        showEvent: function (event, sender, options) {
+            let self = this;
+            self.showText(event.name, sender, options);
+        },
+        showText: function (text, sender, options) {
+            let self = this;
+            let newMessage = document.createElement('div');
+            $(newMessage).addClass('widget_message ' + sender + '_message');
+            $(newMessage).append(text);
+            $(newMessage).appendTo('#widget_queue').show('drop', options, 600);
+            if (!self.opened) {
+                self.showPreview(text);
+            }
+        },
+        showChoice: function (choices) {
+            let self = this;
+            let choiceContainer = document.createElement('div');
+            $(choiceContainer).addClass('choice_container');
+            choices.forEach(function (choice) {
+                let choiceButton = document.createElement('span');
+                $(choiceButton).addClass('choice_button');
+                $(choiceButton).text(choice['value']);
+                //Здесь обработчик на нажатие кнопки
+                choiceButton.addEventListener('click', function () {
+                    console.log($(this).text());
+                    $(this).addClass('chosen');
+                    self.addMessage(ModelFactory.messageDtoBuilder($(this).text(), ContentType.TEXT, SenderType.USER));
+                    $(choiceContainer).remove();
+                });
+                $(choiceContainer).append(choiceButton);
+            });
+            $(choiceContainer).appendTo('#widget_queue').show('drop', { direction: 'left' }, 600);
         },
         scrollQuery: function (timeout) {
             $('#widget_queue').animate({ scrollTop: $('#widget_queue')[0].scrollHeight }, timeout);
@@ -287,68 +338,62 @@ jQuery(document).ready(function ($) {
         createResponse: function (content, contentType) {
             chat.socket.emit(WS_ENDPOINTS.MESSAGE, ModelFactory.messageDtoBuilder(content, contentType, SenderType.USER));
         },
-        showImage: function (category, quantity) {
+        idleAction: function (timeout) {
+            console.log('Idle for ' + timeout + ' seconds');
+            idleTimer = setTimeout(function () {
+                chat.idleAction(timeout);
+            }, timeout);
+        },
+        getCurrentLocation: function () {
+            this.currentLocation = location.href;
+            return this.currentLocation;
+        },
+        showCard: function (card) {
             let self = this;
-            let headers = new Headers();
-            headers.append('Authorization', self.APIkey);
-            let myInit = {
-                method: 'GET',
-                headers: headers
-            };
-            let request = new Request('https://api.pexels.com/v1/search?query=' + category + '+query&per_page=50&page=1', myInit);
-            fetch(request).then(function (response) {
-                return response.json();
-            }).then(function (jsonResponse) {
-                console.log(jsonResponse);
-                if (jsonResponse.total_results > 0) {
-                    for (let i = 0; i < quantity; i++) {
-                        let randomImage = Math.floor(Math.random() * 50);
-                        let image = new Image();
-                        image.src = jsonResponse.photos[randomImage].src.large;
-                        $(image).addClass('message_image');
-                        image.addEventListener('click', function () {
-                            let lightbox = $('#widget_lightbox');
-                            $(lightbox).empty();
-                            $(this).clone().appendTo(lightbox);
-                            $(lightbox).show('blind', { direction: 'up' }, 700);
-                            $('#modal_overlay').show('explode', 800);
-                        });
-                        self.addMessage(image, 'bot');
-                        image.addEventListener('load', function () {
-                            console.log($(image).outerHeight());
-                            setTimeout(function () {
-                                $('#widget_queue').animate({ scrollTop: 150 }, 700);
-                            }, 600);
-                        });
-                    }
-                } else {
-                    self.addMessage('Sorry, i was not able to find the images you requested', 'bot');
-                }
+            let image = new Image();
+            image.src = card['src'];
+            $(image).addClass('message_image');
+            image.addEventListener('click', function () {
+                let lightbox = $('#widget_lightbox');
+                $(lightbox).empty();
+                $(this).clone().appendTo(lightbox);
+                $(lightbox).show('blind', { direction: 'up' }, 700);
+                $('#modal_overlay').show('explode', 800);
+            });
+            image.addEventListener('load', function () {
+                setTimeout(function () {
+                    $(image).appendTo('#widget_queue').show('drop', { direction: 'left' }, 600);
+                }, 600);
             });
         }
     };
 
     chat.initialize();
+    let timeout = 5000;
+
+    let idleTimer = setTimeout(function () {
+        chat.idleAction(timeout);
+    }, timeout);
 
     $('#human_connect').on('click', function () {
-        const content = 'connect with human';
-        chat.addMessage(content, SenderType.USER)
-        chat.socket.emit('message', ModelFactory.messageDtoBuilder('CONNECT_WITH_HUMAN', ContentType.EVENT, SenderType.USER));
+        const msg = ModelFactory.messageDtoBuilder('CONNECT_WITH_HUMAN', ContentType.EVENT, SenderType.USER)
+        chat.addMessage(msg)
+        chat.socket.emit('message', msg);
         // chat.socket.emit('message', ModelFactory.messageDtoBuilder('NO_REPLY', ContentType.EVENT, SenderType.USER));
     });
 
-    $('#widget_input').keypress(function (e) {
+    $('#widget_input_field').keypress(function (e) {
         if (!lStorage.has(lStorage.keys.INT_USER)) {
             chat.socket.emit(WS_ENDPOINTS.INIT_USER_HIDDEN, { id: null })
         }
     });
 
-    $('#widget_input').keydown(function (e) {
-        if (e.keyCode == 13) {
+    $('#widget_input_field').keydown(function (e) {
+        if (e.keyCode === 13) {
             e.preventDefault();
             const textContent = $(this).text();
             const messageDto = ModelFactory.messageDtoBuilder(textContent, ContentType.TEXT, SenderType.USER)
-            chat.renderContent(messageDto);
+            chat.addMessage(messageDto);
             chat.createResponse(textContent, ContentType.TEXT);
             $(this).empty();
         }
@@ -362,12 +407,10 @@ jQuery(document).ready(function ($) {
 
     $('#clear_history').on('click', chat.clearHistoryRequest);
 
-    $('.message_image').on('click', function () {
-        let lightbox = $('#widget_lightbox');
-        $(lightbox).empty();
-        $(this).clone().appendTo(lightbox);
-        $(lightbox).show('blind', { direction: 'up' }, 700);
-        $('#modal_overlay').show('explode', 800);
+    let resizeTimer;
+    $(window).resize(function () {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(chat.reposition, 500);
     });
 
     $('#modal_overlay').on('click', function () {
@@ -386,4 +429,43 @@ jQuery(document).ready(function ($) {
     chat.socket.on(WS_ENDPOINTS.INIT_HISTORY, chat.initHistory);
     chat.socket.on(WS_ENDPOINTS.EXCEPTION, chat.chatException);
     chat.socket.on(WS_ENDPOINTS.DISCONNECT, chat.chatDisconnect);
+
+    // let timeout = 5000;
+    //
+    // let idleTimer = setTimeout(function () {
+    //     chat.idleAction(timeout);
+    // }, timeout);
+    // let choices = [{value: 'Yes'}, {value: 'No'}];
+    // let img = {src: 'Layer 6.png'};
+    // chat.addMessage(choices, 'bot', 'choice');
+    // chat.addMessage(img, 'bot', 'image');
+
+    // $(window).mousemove(function () {
+    //     clearTimeout(idleTimer);
+    //     console.log('Mouse move was performed');
+    //     idleTimer = setTimeout(function () {
+    //         chat.idleAction(timeout);
+    //     }, timeout);
+    // });
+
+    // if(window.SpeechRecognition || window.webkitSpeechRecognition || window.mozSpeechRecognition || window.msSpeechRecognition){
+    //     console.log('Браузер поддерживает данную технологию');
+    // }else{
+    //     console.log('Не поддерживается данным браузером');
+    // }
+    // let SpeechRecognition = new (window.SpeechRecognition || window.webkitSpeechRecognition || window.mozSpeechRecognition || window.msSpeechRecognition)();
+    // SpeechRecognition.lang = "en-EN";
+    // SpeechRecognition.onresult = function(event){
+    //     console.log(event);
+    // };
+    // SpeechRecognition.onend = function(){
+    //     SpeechRecognition.start();
+    // };
+    //
+    // let recording = false;
+    //
+    // $('#audio_input').on('click', function () {
+    //         console.log('Recognition started');
+    //         SpeechRecognition.start();
+    // });
 });
