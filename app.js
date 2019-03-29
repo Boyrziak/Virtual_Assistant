@@ -267,11 +267,9 @@ jQuery(document).ready(function ($) {
                 $(lightbox).show('blind', {direction: 'up'}, 700);
                 $('#modal_overlay').show('explode', 800);
             });
-            self.addMessage(image, 'bot');
             image.addEventListener('load', function () {
-                console.log($(image).outerHeight());
                 setTimeout(function () {
-                    $('#widget_queue').animate({scrollTop: 150}, 700);
+                    $(image).appendTo('#widget_queue').show('drop', {direction: 'left'}, 600);
                 }, 600);
             });
         }
@@ -316,26 +314,41 @@ jQuery(document).ready(function ($) {
         resizeTimer = setTimeout(chat.reposition, 500);
     });
 
-    $('.message_image').on('click', function () {
-        let lightbox = $('#widget_lightbox');
-        $(lightbox).empty();
-        $(this).clone().appendTo(lightbox);
-        $(lightbox).show('blind', {direction: 'up'}, 700);
-        $('#modal_overlay').show('explode', 800);
-    });
-
     $('#modal_overlay').on('click', function () {
         $('#widget_lightbox').hide('scale', 600);
         $(this).hide('explode', 800);
     });
 
-    $(window).mousemove(function () {
-        clearTimeout(idleTimer);
-        console.log('Mouse move was performed');
-        idleTimer = setTimeout(function () {
-            chat.idleAction(timeout);
-        }, timeout);
-    });
+    const socket = io('https://kh-gis-chat-bot.intetics.com', {path: '/chat/socket.io'});
+    chat.socket = socket;
+    chat.socket.on(S_CHANNEL.CONNECT, chat.connect);
+    chat.socket.on(S_CHANNEL.INIT_BOT, chat.initBot);
+    chat.socket.on(S_CHANNEL.INIT_USER, chat.initUser);
+    chat.socket.on(S_CHANNEL.MESSAGE, chat.chatMessage);
+    chat.socket.on(S_CHANNEL.INIT_HISTORY, chat.initHistory);
+    chat.socket.on(S_CHANNEL.EXCEPTION, chat.chatException);
+    chat.socket.on(S_CHANNEL.DISCONNECT, chat.chatDissconnect);
+    chat.socket.on(S_CHANNEL.CLEAR_USER_DATA, chat.clearUserData);
+    chat.socket.on(S_CHANNEL.WELCOME_EVENT_FIRST, chat.welcomeEvent);
+    chat.socket.on(S_CHANNEL.WELCOME_EVENT_RETURN, chat.welcomeReturnEvent());
+
+    // let timeout = 5000;
+    //
+    // let idleTimer = setTimeout(function () {
+    //     chat.idleAction(timeout);
+    // }, timeout);
+    // let choices = [{value: 'Yes'}, {value: 'No'}];
+    // let img = {src: 'Layer 6.png'};
+    // chat.addMessage(choices, 'bot', 'choice');
+    // chat.addMessage(img, 'bot', 'image');
+
+    // $(window).mousemove(function () {
+    //     clearTimeout(idleTimer);
+    //     console.log('Mouse move was performed');
+    //     idleTimer = setTimeout(function () {
+    //         chat.idleAction(timeout);
+    //     }, timeout);
+    // });
 
     // if(window.SpeechRecognition || window.webkitSpeechRecognition || window.mozSpeechRecognition || window.msSpeechRecognition){
     //     console.log('Браузер поддерживает данную технологию');
@@ -358,16 +371,4 @@ jQuery(document).ready(function ($) {
     //         SpeechRecognition.start();
     // });
 
-    const socket = io('https://kh-gis-chat-bot.intetics.com', {path: '/chat/socket.io'});
-    chat.socket = socket;
-    chat.socket.on(S_CHANNEL.CONNECT, chat.connect);
-    chat.socket.on(S_CHANNEL.INIT_BOT, chat.initBot);
-    chat.socket.on(S_CHANNEL.INIT_USER, chat.initUser);
-    chat.socket.on(S_CHANNEL.MESSAGE, chat.chatMessage);
-    chat.socket.on(S_CHANNEL.INIT_HISTORY, chat.initHistory);
-    chat.socket.on(S_CHANNEL.EXCEPTION, chat.chatException);
-    chat.socket.on(S_CHANNEL.DISCONNECT, chat.chatDissconnect);
-    chat.socket.on(S_CHANNEL.CLEAR_USER_DATA, chat.clearUserData);
-    chat.socket.on(S_CHANNEL.WELCOME_EVENT_FIRST, chat.welcomeEvent);
-    chat.socket.on(S_CHANNEL.WELCOME_EVENT_RETURN, chat.welcomeReturnEvent());
 });
