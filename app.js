@@ -81,7 +81,6 @@ jQuery(document).ready(function ($) {
     });
 
 
-
     const WS_ENDPOINTS = {
         INIT_USER: 'init-user',
         INIT_USER_HIDDEN: 'init-user-hidden',
@@ -134,7 +133,7 @@ jQuery(document).ready(function ($) {
         currentLocation: location.href,
         connect: function () {
             console.log('Connected');
-            socket.emit(WS_ENDPOINTS.INIT_BOT, { id: 1 });
+            socket.emit(WS_ENDPOINTS.INIT_BOT, {id: 1});
             if (lStorage.has(lStorage.keys.INT_USER)) {
                 //return history for existing user
                 const user = lStorage.get(lStorage.keys.INT_USER);
@@ -203,9 +202,9 @@ jQuery(document).ready(function ($) {
             });
             button.addClass('clicked');
             body.addClass('opened');
-            body.toggle('blind', { direction: 'down' }, 1000);
+            body.toggle('blind', {direction: 'down'}, 1000);
             if (body.offset().top <= 5) {
-                $(body).animate({ top: '10px' }, 500);
+                $(body).animate({top: '10px'}, 500);
             }
             button.draggable('disable');
             $('#widget_input').empty();
@@ -223,12 +222,14 @@ jQuery(document).ready(function ($) {
             });
             button.removeClass('clicked');
             body.removeClass('opened');
-            body.toggle('blind', { direction: 'down' }, 1000);
+            body.toggle('blind', {direction: 'down'}, 1000);
             this.opened = false;
             button.draggable('enable');
             if (button.offset().top + button.outerHeight() >= $(window).outerHeight() - 5) {
-                $(button).animate({ top: $(window).outerHeight() - button.outerHeight() - 10 + 'px' }, 500);
+                $(button).animate({top: $(window).outerHeight() - button.outerHeight() - 10 + 'px'}, 500);
             }
+            // self.showPreview(this.lastMessage);
+            console.log(self.lastMessage);
         },
         reposition: function () {
             let self = this;
@@ -236,14 +237,14 @@ jQuery(document).ready(function ($) {
             let windowHeight = $(window).outerHeight();
             let windowWidth = $(window).outerWidth();
             if (body.offset().top <= 5) {
-                $(body).animate({ top: '10px' }, 500);
+                $(body).animate({top: '10px'}, 500);
             } else if (body.offset().top + body.outerHeight() > windowHeight) {
-                $(body).animate({ top: windowHeight - body.outerHeight() - 5 + 'px' }, 500);
+                $(body).animate({top: windowHeight - body.outerHeight() - 5 + 'px'}, 500);
             }
             if (body.offset().left < 0) {
-                $(body).animate({ left: '10px' }, 500);
+                $(body).animate({left: '10px'}, 500);
             } else if (body.offset().left + body.outerWidth() > windowWidth) {
-                $(body).animate({ left: windowWidth - body.outerWidth() - 5 + 'px' }, 500);
+                $(body).animate({left: windowWidth - body.outerWidth() - 5 + 'px'}, 500);
             }
         },
         addMessage: function (messageDto) {
@@ -253,7 +254,7 @@ jQuery(document).ready(function ($) {
             let self = this;
             self.messageQueue++;
             setTimeout(function () {
-                let options = { direction: '' };
+                let options = {direction: ''};
                 sender === 'bot' ? (options.direction = 'left', self.lastMessage = value) : options.direction = 'right';
                 switch (type) {
                     case ContentType.CHOICE:
@@ -306,13 +307,13 @@ jQuery(document).ready(function ($) {
                 });
                 $(choiceContainer).append(choiceButton);
             });
-            $(choiceContainer).appendTo('#widget_queue').show('drop', { direction: 'left' }, 600);
+            $(choiceContainer).appendTo('#widget_queue').show('drop', {direction: 'left'}, 600);
         },
         scrollQuery: function (timeout) {
-            $('#widget_queue').animate({ scrollTop: $('#widget_queue')[0].scrollHeight }, timeout);
+            $('#widget_queue').animate({scrollTop: $('#widget_queue')[0].scrollHeight}, timeout);
         },
         showPreview: function (text) {
-            let options = { direction: 'left' };
+            let options = {direction: 'left'};
             $('#preview_container').hide('drop', options, 600);
             setTimeout(function () {
                 $('#preview_container').empty().append(text).show('fold', options, 600);
@@ -358,23 +359,23 @@ jQuery(document).ready(function ($) {
                 let lightbox = $('#widget_lightbox');
                 $(lightbox).empty();
                 $(this).clone().appendTo(lightbox);
-                $(lightbox).show('blind', { direction: 'up' }, 700);
+                $(lightbox).show('blind', {direction: 'up'}, 700);
                 $('#modal_overlay').show('explode', 800);
             });
             image.addEventListener('load', function () {
                 setTimeout(function () {
-                    $(image).appendTo('#widget_queue').show('drop', { direction: 'left' }, 600);
+                    $(image).appendTo('#widget_queue').show('drop', {direction: 'left'}, 600);
                 }, 600);
             });
         }
     };
 
     chat.initialize();
-    let timeout = 5000;
-
-    let idleTimer = setTimeout(function () {
-        chat.idleAction(timeout);
-    }, timeout);
+    // let timeout = 5000;
+    //
+    // let idleTimer = setTimeout(function () {
+    //     chat.idleAction(timeout);
+    // }, timeout);
 
     $('#human_connect').on('click', function () {
         const msg = ModelFactory.messageDtoBuilder('CONNECT_WITH_HUMAN', ContentType.EVENT, SenderType.USER)
@@ -385,7 +386,7 @@ jQuery(document).ready(function ($) {
 
     $('#widget_input_field').keypress(function (e) {
         if (!lStorage.has(lStorage.keys.INT_USER)) {
-            chat.socket.emit(WS_ENDPOINTS.INIT_USER_HIDDEN, { id: null })
+            chat.socket.emit(WS_ENDPOINTS.INIT_USER_HIDDEN, {id: null})
         }
     });
 
@@ -419,7 +420,7 @@ jQuery(document).ready(function ($) {
         $(this).hide('explode', 800);
     });
 
-    const socket = io('http://localhost:3000', { path: '/chat/socket.io' });
+    const socket = io('https://kh-gis-chat-bot.intetics.com', {path: '/chat/socket.io'});
     chat.socket = socket;
     chat.socket.on(WS_ENDPOINTS.CONNECT, chat.connect);
     chat.socket.on(WS_ENDPOINTS.INIT_BOT, chat.initBot);
