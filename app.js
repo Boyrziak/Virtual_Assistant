@@ -260,7 +260,7 @@ jQuery(document).ready(function ($) {
                         self.showChoice(value);
                         break;
                     case ContentType.EVENT:
-                        self.showEvent(value);
+                        self.showEvent(value, sender, options);
                         break;
                     case ContentType.TEXT:
                         value.text.forEach(t => self.showText(t, sender, options));
@@ -276,6 +276,7 @@ jQuery(document).ready(function ($) {
         },
         showEvent: function (event, sender, options) {
             let self = this;
+
             self.showText(event.name, sender, options);
         },
         showText: function (text, sender, options) {
