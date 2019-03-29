@@ -1,4 +1,4 @@
-jQuery(document).ready(function($){
+jQuery(document).ready(function ($) {
     $('#widget_button').draggable({
         containment: 'window'
     });
@@ -25,7 +25,7 @@ jQuery(document).ready(function($){
         RESET: 'reset'
     };
     const lStorage = {
-        get: function(key) {
+        get: function (key) {
             return JSON.parse(localStorage.getItem(key));
         },
         keys: {
@@ -33,16 +33,16 @@ jQuery(document).ready(function($){
             INIT_STATUS: 'init-status'
 
         },
-        set: function(key, item) {
+        set: function (key, item) {
             localStorage.setItem(key, JSON.stringify(item));
         },
-        remove: function(key) {
+        remove: function (key) {
             localStorage.removeItem(key);
         },
-        clear: function() {
+        clear: function () {
             localStorage.clear();
         },
-        has: function(key) {
+        has: function (key) {
             return localStorage.getItem(key) !== null;
         }
 
@@ -59,14 +59,14 @@ jQuery(document).ready(function($){
         currentLocation: location.href,
         connect: function () {
             console.log('Connected');
-            socket.emit(S_CHANNEL.INIT_BOT, { id: 16 });
+            socket.emit(S_CHANNEL.INIT_BOT, {id: 16});
             if (lStorage.has(lStorage.keys.INT_USER) && lStorage.get(lStorage.keys.INIT_STATUS) === INIT_STATUS.INITIALIZED) {
                 //return history for existing user
                 const user = lStorage.get(lStorage.keys.INT_USER);
                 chat.user = user;
                 socket.emit(S_CHANNEL.INIT_HISTORY, user);
             } else {
-                socket.emit(S_CHANNEL.INIT_USER, { name: 'Guest' });
+                socket.emit(S_CHANNEL.INIT_USER, {name: 'Guest'});
             }
 
         },
@@ -90,7 +90,7 @@ jQuery(document).ready(function($){
         },
         initHistory: function (data) {
             console.log(`get HISTORY init response with: ${JSON.stringify(data)}`);
-            data.forEach(d => chat.addMessage(d.content, d.senderType === 'bot' ? 'bot' : 'guest'));
+            data.forEach(d => chat.addMessage(d.content, d.senderType === 'bot' ? 'bot' : 'user'));
             chat.socket.emit(S_CHANNEL.WELCOME_EVENT_RETURN, chat.user);
         },
         chatException: function (data) {
@@ -99,11 +99,14 @@ jQuery(document).ready(function($){
         chatDissconnect: function () {
             console.log('Disconnected');
         },
-        open: function() {
+        open: function () {
             let button = $('#widget_button');
             let self = this;
             let body = $('#widget_body');
-            body.css({top: button.offset().top - body.outerHeight() - 40 + 'px', left: button.offset().left - body.outerWidth() + 100 + 'px'});
+            body.css({
+                top: button.offset().top - body.outerHeight() - 40 + 'px',
+                left: button.offset().left - body.outerWidth() + 100 + 'px'
+            });
             button.addClass('clicked');
             body.addClass('opened');
             body.toggle('blind', {direction: 'down'}, 1000);
@@ -120,7 +123,10 @@ jQuery(document).ready(function($){
             let body = $('#widget_body');
             let button = $('#widget_button');
             let self = this;
-            button.css({top: body.offset().top + body.outerHeight() + 40 + 'px', left: body.offset().left + body.outerWidth() - button.outerWidth()});
+            button.css({
+                top: body.offset().top + body.outerHeight() + 40 + 'px',
+                left: body.offset().left + body.outerWidth() - button.outerWidth()
+            });
             button.removeClass('clicked');
             body.removeClass('opened');
             body.toggle('blind', {direction: 'down'}, 1000);
@@ -132,7 +138,7 @@ jQuery(document).ready(function($){
             // self.showPreview(this.lastMessage);
             console.log(self.lastMessage);
         },
-        reposition: function(){
+        reposition: function () {
             let self = this;
             let body = $('#widget_body');
             let windowHeight = $(window).outerHeight();
@@ -140,31 +146,64 @@ jQuery(document).ready(function($){
             if (body.offset().top <= 5) {
                 $(body).animate({top: '10px'}, 500);
             } else if (body.offset().top + body.outerHeight() > windowHeight) {
-                $(body).animate({top: windowHeight - body.outerHeight() - 5 +'px'}, 500);
+                $(body).animate({top: windowHeight - body.outerHeight() - 5 + 'px'}, 500);
             }
             if (body.offset().left < 0) {
                 $(body).animate({left: '10px'}, 500);
             } else if (body.offset().left + body.outerWidth() > windowWidth) {
-                $(body).animate({left: windowWidth - body.outerWidth() - 5 +'px'}, 500);
+                $(body).animate({left: windowWidth - body.outerWidth() - 5 + 'px'}, 500);
             }
         },
-        addMessage: function (text, sender) {
+        addMessage: function (value, sender, type) {
             let self = this;
             self.messageQueue++;
             setTimeout(function () {
                 let options = {direction: ''};
-                sender === 'bot' ? (options.direction = 'left', self.lastMessage = text) : options.direction = 'right';
-                let newMessage = document.createElement('div');
-                $(newMessage).addClass('widget_message ' + sender + '_message');
-                $(newMessage).append(text);
-                $(newMessage).appendTo('#widget_queue').show('drop', options, 600);
-                if (!self.opened) {
-                    self.showPreview(text);
+                sender === 'bot' ? (options.direction = 'left', self.lastMessage = value) : options.direction = 'right';
+                switch (type) {
+                    case 'choice':
+                        self.showChoice(value);
+                        break;
+                    case 'text':
+                        self.showText(value, sender, options);
+                        break;
+                    case 'image':
+                        self.showImage(value);
+                        break;
                 }
                 self.messageQueue--;
                 self.messageQueue === 0 ?
                     self.scrollQuery(400) : null;
             }, 600);
+        },
+        showText: function (text, sender, options) {
+            let self = this;
+            let newMessage = document.createElement('div');
+            $(newMessage).addClass('widget_message ' + sender + '_message');
+            $(newMessage).append(text);
+            $(newMessage).appendTo('#widget_queue').show('drop', options, 600);
+            if (!self.opened) {
+                self.showPreview(text);
+            }
+        },
+        showChoice: function (choices) {
+            let self = this;
+            let choiceContainer = document.createElement('div');
+            $(choiceContainer).addClass('choice_container');
+            choices.forEach(function (choice) {
+                let choiceButton = document.createElement('span');
+                $(choiceButton).addClass('choice_button');
+                $(choiceButton).text(choice['value']);
+                //Здесь обработчик на нажатие кнопки
+                choiceButton.addEventListener('click', function () {
+                    console.log($(this).text());
+                    $(this).addClass('chosen');
+                    self.addMessage($(this).text(), 'user', 'text');
+                    $(choiceContainer).remove();
+                });
+                $(choiceContainer).append(choiceButton);
+            });
+            $(choiceContainer).appendTo('#widget_queue').show('drop', {direction: 'left'}, 600);
         },
         scrollQuery: function (timeout) {
             $('#widget_queue').animate({scrollTop: $('#widget_queue')[0].scrollHeight}, timeout);
@@ -174,11 +213,11 @@ jQuery(document).ready(function($){
             $('#preview_container').hide('drop', options, 600);
             setTimeout(function () {
                 $('#preview_container').empty().append(text).show('fold', options, 600);
-            },600);
+            }, 600);
         },
         initialize: function () {
         },
-        clearHistory: function() {
+        clearHistory: function () {
             chat.socket.emit(S_CHANNEL.CLEAR_USER_DATA, {
                 message: 'clear my data',
                 user: chat.user,
@@ -191,13 +230,13 @@ jQuery(document).ready(function($){
             lStorage.set(lStorage.keys.INIT_STATUS, INIT_STATUS.RESET);
             chat.user = null;
             data.forEach(d => chat.addMessage(d, 'bot'));
-            chat.socket.emit(S_CHANNEL.INIT_BOT, { id: 16 });
-            chat.socket.emit(S_CHANNEL.INIT_USER, { name: 'Guest' });
+            chat.socket.emit(S_CHANNEL.INIT_BOT, {id: 16});
+            chat.socket.emit(S_CHANNEL.INIT_USER, {name: 'Guest'});
         },
-        welcomeEvent: function(data) {
+        welcomeEvent: function (data) {
             data.forEach(d => chat.addMessage(d, 'bot'));
         },
-        welcomeReturnEvent: function(data) {
+        welcomeReturnEvent: function (data) {
             data.forEach(d => chat.addMessage(d, 'bot'));
         },
         createResponse: function (text) {
@@ -213,46 +252,27 @@ jQuery(document).ready(function($){
           }, timeout);
         },
         getCurrentLocation: function () {
-          this.currentLocation = location.href;
-          return this.currentLocation;
+            this.currentLocation = location.href;
+            return this.currentLocation;
         },
-        showImage: function (category, quantity) {
+        showImage: function (card) {
             let self = this;
-            let headers = new Headers();
-            headers.append('Authorization', self.APIkey);
-            let myInit = {
-                method: 'GET',
-                headers: headers
-            };
-            let request =  new Request('https://api.pexels.com/v1/search?query=' + category + '+query&per_page=50&page=1', myInit);
-            fetch(request).then(function (response) {
-                return response.json();
-            }).then(function (jsonResponse) {
-                console.log(jsonResponse);
-                if (jsonResponse.total_results > 0) {
-                    for (let i = 0; i < quantity; i++) {
-                        let randomImage = Math.floor(Math.random() * 50);
-                        let image = new Image();
-                        image.src = jsonResponse.photos[randomImage].src.large;
-                        $(image).addClass('message_image');
-                        image.addEventListener('click', function () {
-                            let lightbox = $('#widget_lightbox');
-                            $(lightbox).empty();
-                            $(this).clone().appendTo(lightbox);
-                            $(lightbox).show('blind', {direction: 'up'}, 700);
-                            $('#modal_overlay').show('explode', 800);
-                        });
-                        self.addMessage(image, 'bot');
-                        image.addEventListener('load', function () {
-                            console.log($(image).outerHeight());
-                            setTimeout(function () {
-                                $('#widget_queue').animate({scrollTop: 150}, 700);
-                            }, 600);
-                        });
-                    }
-                } else {
-                    self.addMessage('Sorry, i was not able to find the images you requested', 'bot');
-                }
+            let image = new Image();
+            image.src = card['src'];
+            $(image).addClass('message_image');
+            image.addEventListener('click', function () {
+                let lightbox = $('#widget_lightbox');
+                $(lightbox).empty();
+                $(this).clone().appendTo(lightbox);
+                $(lightbox).show('blind', {direction: 'up'}, 700);
+                $('#modal_overlay').show('explode', 800);
+            });
+            self.addMessage(image, 'bot');
+            image.addEventListener('load', function () {
+                console.log($(image).outerHeight());
+                setTimeout(function () {
+                    $('#widget_queue').animate({scrollTop: 150}, 700);
+                }, 600);
             });
         }
     };
@@ -266,23 +286,23 @@ jQuery(document).ready(function($){
 
     $('#human_connect').on('click', function () {
         const content = 'connect with human';
-        chat.addMessage(content, 'guest')
+        chat.addMessage(content, 'user')
         chat.socket.emit('message', {
             message: content,
             user: chat.user,
         })
     });
 
-    $('#widget_input').keydown(function (e) {
-        if (e.keyCode == 13) {
+    $('#widget_input_field').keydown(function (e) {
+        if (e.keyCode === 13) {
             e.preventDefault();
-            chat.addMessage($(this).text(), 'guest');
+            chat.addMessage($(this).text(), 'user');
             chat.createResponse($(this).text());
             $(this).empty();
         }
     });
 
-    $('#widget_button').on('click', function(){
+    $('#widget_button').on('click', function () {
         chat.open();
     });
 
@@ -291,7 +311,7 @@ jQuery(document).ready(function($){
     $('#clear_history').on('click', chat.clearHistory);
 
     let resizeTimer;
-    $(window).resize(function (){
+    $(window).resize(function () {
         clearTimeout(resizeTimer);
         resizeTimer = setTimeout(chat.reposition, 500);
     });
@@ -300,8 +320,8 @@ jQuery(document).ready(function($){
         let lightbox = $('#widget_lightbox');
         $(lightbox).empty();
         $(this).clone().appendTo(lightbox);
-       $(lightbox).show('blind', {direction: 'up'}, 700);
-       $('#modal_overlay').show('explode', 800);
+        $(lightbox).show('blind', {direction: 'up'}, 700);
+        $('#modal_overlay').show('explode', 800);
     });
 
     $('#modal_overlay').on('click', function () {
@@ -317,37 +337,26 @@ jQuery(document).ready(function($){
         }, timeout);
     });
 
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    const SpeechGrammarList = window.SpeechGrammarList || window.webkitSpeechGrammarList;
-    const SpeechRecognitionEvent = window.SpeechRecognitionEvent || window.webkitSpeechRecognitionEvent;
-    const colors = {
-        red: 'red',
-        orange: 'orange',
-        yellow: 'yellow',
-        green: 'green',
-        blue: 'blue',
-        darkblue: 'darkblue',
-        violet: 'violet'
-    };
-    const colorsList = Object.keys(colors);
-    const recognition = new SpeechRecognition();
-    const speechRecognitionList = new SpeechGrammarList();
-    speechRecognitionList.addFromString(grammar, 1);
-    recognition.grammars = speechRecognitionList;
-//recognition.continuous = false;
-    recognition.lang = 'en-EN';
-    recognition.interimResults = false;
-    recognition.maxAlternatives = 1;
-
-    $('#audio_input').on('click', function () {
-        console.log('Recognition started');
-        recognition.start();
-        recognition.onresult = (event) => {
-            event
-            const speechToText = event.results[0][0].transcript;
-            console.log(speechToText);
-        }
-    });
+    // if(window.SpeechRecognition || window.webkitSpeechRecognition || window.mozSpeechRecognition || window.msSpeechRecognition){
+    //     console.log('Браузер поддерживает данную технологию');
+    // }else{
+    //     console.log('Не поддерживается данным браузером');
+    // }
+    // let SpeechRecognition = new (window.SpeechRecognition || window.webkitSpeechRecognition || window.mozSpeechRecognition || window.msSpeechRecognition)();
+    // SpeechRecognition.lang = "en-EN";
+    // SpeechRecognition.onresult = function(event){
+    //     console.log(event);
+    // };
+    // SpeechRecognition.onend = function(){
+    //     SpeechRecognition.start();
+    // };
+    //
+    // let recording = false;
+    //
+    // $('#audio_input').on('click', function () {
+    //         console.log('Recognition started');
+    //         SpeechRecognition.start();
+    // });
 
     const socket = io('https://kh-gis-chat-bot.intetics.com', {path: '/chat/socket.io'});
     chat.socket = socket;
