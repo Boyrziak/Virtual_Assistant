@@ -299,6 +299,20 @@ body {
     transition: .5s ease-out;
 }
 
+.connection_indicator {
+    left: 10px;
+    font-size: 18px;
+    position: absolute;
+    animation: glowing 2000ms infinite;
+}
+
+@keyframes glowing {
+    0% { text-shadow: 0 0 0px; }
+    40% { text-shadow: 0 0 10px; }
+    60% { text-shadow: 0 0 10px; }
+    100% { text-shadow: 0 0 0px; }
+}
+
 #audio_input {
     position: absolute;
     left: 3%;

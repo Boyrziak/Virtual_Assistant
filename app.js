@@ -134,6 +134,7 @@ jQuery(document).ready(function ($) {
         connect: function () {
             console.log('Connected');
             socket.emit(WS_ENDPOINTS.INIT_BOT, {id: 1});
+            $('.connection_indicator').css('color', 'green');
             if (lStorage.has(lStorage.keys.INT_USER)) {
                 //return history for existing user
                 const user = lStorage.get(lStorage.keys.INT_USER);
@@ -191,6 +192,7 @@ jQuery(document).ready(function ($) {
         },
         chatDisconnect: function () {
             console.log('Disconnected');
+            $('.connection_indicator').css('color', 'red');
         },
         open: function () {
             let button = $('#widget_button');
