@@ -135,6 +135,8 @@ jQuery(document).ready(function ($) {
             console.log('Connected');
             socket.emit(WS_ENDPOINTS.INIT_BOT, {id: 1});
             $('.connection_indicator').css('color', 'green');
+            $('#widget_input_field').attr('placeholder', 'Enter your message...');
+            $('#widget_input_field').attr('contenteditable','true');
             if (lStorage.has(lStorage.keys.INT_USER)) {
                 //return history for existing user
                 const user = lStorage.get(lStorage.keys.INT_USER);
