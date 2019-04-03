@@ -9,6 +9,44 @@ jQuery(document).ready(function ($) {
 
     // Model part
 
+    class MessageWrapper {
+        constructor(text, card, event, choice, carousel) {
+                this.text = text;
+                this.card = card;
+                this.event = event;
+                this.choice = choice;
+                this.carousel = carousel;
+            }
+    }
+
+    class Text {
+        constructor(text) {
+            this.text = text;
+        }
+        
+    }
+
+    class Event {
+        constructor(name, languageCode, parameters) {
+            this.name = name;
+            this.languageCode = languageCode;
+            this.parameters = parameters;
+        }
+    }
+
+    class Choice {
+        constructor(buttons) {
+            this.buttons = buttons;
+        }
+    }
+
+    class Button {
+        constructor(text, postback) {
+            this.text = text;
+            this.postback = postback;
+        }
+    }
+
     class MessageContent {
         constructor(messages, currentUri) {
             this.messages = messages;
@@ -31,37 +69,25 @@ jQuery(document).ready(function ($) {
             }
         };
 
-        static messageDtoBuilder(content, type, senderType) {
-            let _content = null;
-            switch (type) {
-                case ContentType.TEXT:
-                    _content = new ContentText([content]);
-                    break;
-                case ContentType.EVENT:
-                    _content = new ContentEvent(content);
-                    break;
-                default:
-                    _content = null;
-                    break;
-            }
-            const messageContent = new MessageContent(_content, type)
-            return new MessageDto(messageContent, senderType, chat.user)
+        static messageDtoBuilderText(content, senderType) {
+            const _content = new MessageWrapper();
+            _content.text = new Text();
+            _content.text.text = [content];
+            const messageContent = new MessageContent(_content, chat.getCurrentLocation());
+            return new MessageDto(messageContent, senderType, chat.user);
         }
 
-        static getMessageDto(messageContent) {
-            return new MessageDto(messageContent, senderType, chat.user)
+        static messageDtoBuilderEvent(content, senderType) {
+            const _content = new MessageWrapper();
+            _content.event = new Event();
+            _content.event.name = content;
+            const messageContent = new MessageContent(_content, chat.getCurrentLocation());
+            return new MessageDto(messageContent, senderType, chat.user);
         }
+
     }
 
     // Model part end
-
-    const ContentType = Object.freeze({
-        TEXT: 'text',
-        EVENT: 'event',
-        CARD: 'card',
-        CHOICE: 'choice',
-        CAROUSEL: 'carousel'
-    });
 
     const SenderType = Object.freeze({
         USER: 'user',
@@ -81,11 +107,7 @@ jQuery(document).ready(function ($) {
         DISCONNECT: 'disconnect',
         EXCEPTION: 'exception',
     };
-    const INIT_STATUS = {
-        INITIALIZED: 'initialized',
-        NON_INITIALIZED: 'non-initialized',
-        RESET: 'reset'
-    };
+
     const lStorage = {
         get: function (key) {
             return JSON.parse(localStorage.getItem(key));
@@ -121,17 +143,18 @@ jQuery(document).ready(function ($) {
         currentLocation: location.href,
         connect: function () {
             console.log('Connected');
-            socket.emit(WS_ENDPOINTS.INIT_BOT, {id: 1});
+            socket.emit(WS_ENDPOINTS.INIT_BOT, { id: 1 });
             $('.connection_indicator').css('color', 'green');
             $('#widget_input_field').attr('placeholder', 'Enter your message...');
-            $('#widget_input_field').attr('contenteditable','true');
+            $('#widget_input_field').attr('contenteditable', 'true');
             if (lStorage.has(lStorage.keys.INT_USER)) {
                 //return history for existing user
                 const user = lStorage.get(lStorage.keys.INT_USER);
                 chat.user = user;
-                console.log('request to init history');
+                /* console.log('request to init history');
                 console.log(chat.user);
-                socket.emit(WS_ENDPOINTS.INIT_HISTORY, user);
+                socket.emit(WS_ENDPOINTS.INIT_HISTORY, user); */
+                socket.emit(WS_ENDPOINTS.INIT_USER, ModelFactory.getUserObject(user.id));
             } else {
                 socket.emit(WS_ENDPOINTS.INIT_USER, ModelFactory.getUserObject(null));
             }
@@ -146,34 +169,28 @@ jQuery(document).ready(function ($) {
             chat.user = user;
             lStorage.set(lStorage.keys.INT_USER, user);
             console.log(`get init-user response with: ${user}`);
-            // welcome event
-            const welcomeEvent = {
-                type: ContentType.EVENT,
-                content: {
-                    name: 'WELCOME'
-                }
-            };
-            socket.emit(WS_ENDPOINTS.MESSAGE, {
-                userDto: lStorage.get(lStorage.keys.INT_USER),
-                message: welcomeEvent
-            });
+            console.log(`starting to init history`);
+            socket.emit(WS_ENDPOINTS.INIT_HISTORY, user);
+            socket.emit(WS_ENDPOINTS.MESSAGE, ModelFactory.messageDtoBuilderEvent('WELCOME', SenderType.USER));
         },
         initUserHidden: function (user) {
             chat.user = user;
             lStorage.set(lStorage.keys.INT_USER, user);
             console.log(`get init-user response with: ${user}`);
         },
-        chatMessage: function (data) {
-            console.log(data);
-            chat.addMessage(data);
+        chatMessage: function (message) {
+            console.log('New message reived:');
+            console.log(message);
+            chat.addMessage(message);
         },
         initHistory: function (history) {
+            console.log('init history process with data:');
+            console.log(history);
             if (history != null) {
                 history.forEach(m => chat.addMessage(m));
-                chat.socket.emit(WS_ENDPOINTS.MESSAGE, ModelFactory.messageDtoBuilder('WELCOME', ContentType.EVENT, SenderType.USER));
+                chat.socket.emit(WS_ENDPOINTS.MESSAGE, ModelFactory.messageDtoBuilderEvent('WELCOME', SenderType.USER));
             } else {
                 console.log('init history null');
-                console.log(history);
             }
 
         },
@@ -184,7 +201,7 @@ jQuery(document).ready(function ($) {
             console.log('Disconnected');
             $('.connection_indicator').css('color', 'red');
             $('#widget_input_field').attr('placeholder', 'Sorry, assitant can not be reached right now');
-            $('#widget_input_field').attr('contenteditable','false');
+            $('#widget_input_field').attr('contenteditable', 'false');
         },
         open: function () {
             let button = $('#widget_button');
@@ -196,9 +213,9 @@ jQuery(document).ready(function ($) {
             });
             button.addClass('clicked');
             body.addClass('opened');
-            body.toggle('blind', {direction: 'down'}, 1000);
+            body.toggle('blind', { direction: 'down' }, 1000);
             if (body.offset().top <= 5) {
-                $(body).animate({top: '10px'}, 500);
+                $(body).animate({ top: '10px' }, 500);
             }
             button.draggable('disable');
             $('#widget_input').empty();
@@ -216,11 +233,11 @@ jQuery(document).ready(function ($) {
             });
             button.removeClass('clicked');
             body.removeClass('opened');
-            body.toggle('blind', {direction: 'down'}, 1000);
+            body.toggle('blind', { direction: 'down' }, 1000);
             this.opened = false;
             button.draggable('enable');
             if (button.offset().top + button.outerHeight() >= $(window).outerHeight() - 5) {
-                $(button).animate({top: $(window).outerHeight() - button.outerHeight() - 10 + 'px'}, 500);
+                $(button).animate({ top: $(window).outerHeight() - button.outerHeight() - 10 + 'px' }, 500);
             }
             // self.showPreview(this.lastMessage);
             console.log(self.lastMessage);
@@ -231,14 +248,14 @@ jQuery(document).ready(function ($) {
             let windowHeight = $(window).outerHeight();
             let windowWidth = $(window).outerWidth();
             if (body.offset().top <= 5) {
-                $(body).animate({top: '10px'}, 500);
+                $(body).animate({ top: '10px' }, 500);
             } else if (body.offset().top + body.outerHeight() > windowHeight) {
-                $(body).animate({top: windowHeight - body.outerHeight() - 5 + 'px'}, 500);
+                $(body).animate({ top: windowHeight - body.outerHeight() - 5 + 'px' }, 500);
             }
             if (body.offset().left < 0) {
-                $(body).animate({left: '10px'}, 500);
+                $(body).animate({ left: '10px' }, 500);
             } else if (body.offset().left + body.outerWidth() > windowWidth) {
-                $(body).animate({left: windowWidth - body.outerWidth() - 5 + 'px'}, 500);
+                $(body).animate({ left: windowWidth - body.outerWidth() - 5 + 'px' }, 500);
             }
         },
         setCookie: function (name, value, options) {
@@ -281,28 +298,29 @@ jQuery(document).ready(function ($) {
             })
         },
         addMessage: function (messageDto) {
-            const type = messageDto.message.type;
             const sender = messageDto.senderType;
-            const value = messageDto.message.content;
             let self = this;
             self.messageQueue++;
             setTimeout(function () {
-                let options = {direction: ''};
+                let options = { direction: '' };
                 sender === 'bot' ? (options.direction = 'left', self.lastMessage = value) : options.direction = 'right';
-                switch (type) {
-                    case ContentType.CHOICE:
-                        self.showChoice(value);
-                        break;
-                    case ContentType.EVENT:
-                        self.showEvent(value, sender, options);
-                        break;
-                    case ContentType.TEXT:
-                        value.text.forEach(t => self.showText(t, sender, options));
-                        break;
-                    case ContentType.CARD:
-                        self.showImage(value);
-                        break;
-                }
+                messageDto.message.messages.forEach(mw => {
+                    if (mw['text'] != null) {
+                        mw.text.forEach(t => self.showText(t, sender, options));
+                    }
+                    if (mw['event'] != null) {
+                        self.showEvent(mw.event, sender, options);
+                    }
+                    if (mw['choice'] != null) {
+                        self.showChoice(mv.choice);
+                    }
+                    if (mw['card'] != null) {
+                        self.showCard(mv.card)
+                    }
+                    if (mw['carousel'] != null) {
+                        throw new Error('There is no implementation for rendering CAROUSEL');
+                    }
+                });
                 self.messageQueue--;
                 self.messageQueue === 0 ?
                     self.scrollQuery(400) : null;
@@ -335,18 +353,18 @@ jQuery(document).ready(function ($) {
                 choiceButton.addEventListener('click', function () {
                     console.log($(this).text());
                     $(this).addClass('chosen');
-                    self.addMessage(ModelFactory.messageDtoBuilder($(this).text(), ContentType.TEXT, SenderType.USER));
+                    self.addMessage(ModelFactory.messageDtoBuilderText($(this).text(), SenderType.USER));
                     $(choiceContainer).remove();
                 });
                 $(choiceContainer).append(choiceButton);
             });
-            $(choiceContainer).appendTo('#widget_queue').show('drop', {direction: 'left'}, 600);
+            $(choiceContainer).appendTo('#widget_queue').show('drop', { direction: 'left' }, 600);
         },
         scrollQuery: function (timeout) {
-            $('#widget_queue').animate({scrollTop: $('#widget_queue')[0].scrollHeight}, timeout);
+            $('#widget_queue').animate({ scrollTop: $('#widget_queue')[0].scrollHeight }, timeout);
         },
         showPreview: function (text) {
-            let options = {direction: 'left'};
+            let options = { direction: 'left' };
             $('#preview_container').hide('drop', options, 600);
             setTimeout(function () {
                 $('#preview_container').empty().append(text).show('fold', options, 600);
@@ -355,7 +373,7 @@ jQuery(document).ready(function ($) {
         initialize: function () {
         },
         clearHistoryRequest: function () {
-            chat.socket.emit(WS_ENDPOINTS.MESSAGE, ModelFactory.messageDtoBuilder('CLEAR_USER_DATA', ContentType.EVENT, SenderType.USER));
+            chat.socket.emit(WS_ENDPOINTS.MESSAGE, ModelFactory.messageDtoBuilderEvent('CLEAR_USER_DATA', SenderType.USER));
         },
         clearUserDataHandler: function (data) {
             console.log('Clear History data => ', data);
@@ -369,9 +387,6 @@ jQuery(document).ready(function ($) {
             $('#widget_queue').empty();
             lStorage.clear();
             delete chat.user;
-        },
-        createResponse: function (content, contentType) {
-            chat.socket.emit(WS_ENDPOINTS.MESSAGE, ModelFactory.messageDtoBuilder(content, contentType, SenderType.USER));
         },
         idleAction: function (timeout) {
             console.log('Idle for ' + timeout + ' seconds');
@@ -392,12 +407,12 @@ jQuery(document).ready(function ($) {
                 let lightbox = $('#widget_lightbox');
                 $(lightbox).empty();
                 $(this).clone().appendTo(lightbox);
-                $(lightbox).show('blind', {direction: 'up'}, 700);
+                $(lightbox).show('blind', { direction: 'up' }, 700);
                 $('#modal_overlay').show('explode', 800);
             });
             image.addEventListener('load', function () {
                 setTimeout(function () {
-                    $(image).appendTo('#widget_queue').show('drop', {direction: 'left'}, 600);
+                    $(image).appendTo('#widget_queue').show('drop', { direction: 'left' }, 600);
                 }, 600);
             });
         }
@@ -419,7 +434,7 @@ jQuery(document).ready(function ($) {
 
     $('#widget_input_field').keypress(function (e) {
         if (!lStorage.has(lStorage.keys.INT_USER)) {
-            chat.socket.emit(WS_ENDPOINTS.INIT_USER_HIDDEN, {id: null})
+            chat.socket.emit(WS_ENDPOINTS.INIT_USER_HIDDEN, { id: null })
         }
     });
 
@@ -429,7 +444,7 @@ jQuery(document).ready(function ($) {
             const textContent = $(this).text();
             const messageDto = ModelFactory.messageDtoBuilder(textContent, ContentType.TEXT, SenderType.USER)
             chat.addMessage(messageDto);
-            chat.createResponse(textContent, ContentType.TEXT);
+            chat.socket.emit(WS_ENDPOINTS.MESSAGE, messageDto);
             $(this).empty();
         }
     });
@@ -453,7 +468,7 @@ jQuery(document).ready(function ($) {
         $(this).hide('explode', 800);
     });
 
-    const socket = io('http://localhost:3000', {path: '/chat/socket.io'});
+    const socket = io('http://localhost:3000', { path: '/chat/socket.io' });
     chat.socket = socket;
     chat.socket.on(WS_ENDPOINTS.CONNECT, chat.connect);
     chat.socket.on(WS_ENDPOINTS.INIT_BOT, chat.initBot);
