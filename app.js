@@ -193,6 +193,8 @@ jQuery(document).ready(function ($) {
         chatDisconnect: function () {
             console.log('Disconnected');
             $('.connection_indicator').css('color', 'red');
+            $('#widget_input_field').attr('placeholder', 'Sorry, assitant can not be reached right now');
+            $('#widget_input_field').attr('contenteditable','false');
         },
         open: function () {
             let button = $('#widget_button');
