@@ -10,27 +10,15 @@ jQuery(document).ready(function ($) {
     // Model part
 
     class MessageContent {
-        constructor(content, type) {
-            this.content = content;
-            this.type = type;
+        constructor(messages, currentUri) {
+            this.messages = messages;
+            this.currentUri = currentUri;
         }
     };
 
-    class ContentText {
-        constructor(text) {
-            this.text = text;
-        }
-    }
-
-    class ContentEvent {
-        constructor(name) {
-            this.name = name;
-        }
-    }
-
     class MessageDto {
-        constructor(message, userDto, senderType) {
-            this.message = message;
+        constructor(message, senderType, userDto) {
+            this.message = message; // MessageContent
             this.userDto = userDto;
             this.senderType = senderType;
         }
@@ -57,11 +45,11 @@ jQuery(document).ready(function ($) {
                     break;
             }
             const messageContent = new MessageContent(_content, type)
-            return new MessageDto(messageContent, chat.user, senderType)
+            return new MessageDto(messageContent, senderType, chat.user)
         }
 
         static getMessageDto(messageContent) {
-            return new MessageDto(messageContent, chat.user, senderType)
+            return new MessageDto(messageContent, senderType, chat.user)
         }
     }
 
@@ -465,7 +453,7 @@ jQuery(document).ready(function ($) {
         $(this).hide('explode', 800);
     });
 
-    const socket = io('https://kh-gis-chat-bot.intetics.com', {path: '/chat/socket.io'});
+    const socket = io('http://localhost:3000', {path: '/chat/socket.io'});
     chat.socket = socket;
     chat.socket.on(WS_ENDPOINTS.CONNECT, chat.connect);
     chat.socket.on(WS_ENDPOINTS.INIT_BOT, chat.initBot);
