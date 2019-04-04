@@ -20,7 +20,7 @@ body {
     align-items: center;
     font-size: 45px;
     cursor: pointer;
-    position: absolute;
+    position: fixed;
     bottom: 50px;
     right: 50px;
     -webkit-box-shadow: -5px -5px 0px 0px rgba(168, 98, 49, 1);
@@ -73,7 +73,7 @@ body {
     box-sizing: border-box;
     right: 10px;
     bottom: 120px;
-    position: absolute;
+    position: fixed;
     border-radius: 15px 15px 0px 0px;
 }
 
