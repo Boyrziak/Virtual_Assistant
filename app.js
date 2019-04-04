@@ -352,12 +352,12 @@ jQuery(document).ready(function ($) {
             choice.buttons.forEach(function (button) {
                 let choiceButton = document.createElement('span');
                 $(choiceButton).addClass('choice_button');
-                $(choiceButton).text(button['text']);
+                $(choiceButton).text(button.text);
                 //Здесь обработчик на нажатие кнопки
                 choiceButton.addEventListener('click', function () {
                     console.log($(this).text());
                     $(this).addClass('chosen');
-                    const chosenValue = ModelFactory.messageDtoBuilderText($(this).text(), SenderType.USER);
+                    const chosenValue = ModelFactory.messageDtoBuilderText(button.postback, SenderType.USER);
                     chat.socket.emit(WS_ENDPOINTS.MESSAGE, chosenValue);
                     self.addMessage(chosenValue);
                     $(choiceContainer).remove();
