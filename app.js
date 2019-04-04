@@ -11,19 +11,19 @@ jQuery(document).ready(function ($) {
 
     class MessageWrapper {
         constructor(text, card, event, choice, carousel) {
-                this.text = text;
-                this.card = card;
-                this.event = event;
-                this.choice = choice;
-                this.carousel = carousel;
-            }
+            this.text = text;
+            this.card = card;
+            this.event = event;
+            this.choice = choice;
+            this.carousel = carousel;
+        }
     }
 
     class Text {
         constructor(text) {
             this.text = text;
         }
-        
+
     }
 
     class Event {
@@ -70,17 +70,17 @@ jQuery(document).ready(function ($) {
         };
 
         static messageDtoBuilderText(content, senderType) {
-            const _content = new MessageWrapper();
-            _content.text = new Text();
-            _content.text.text = [content];
+            const _content = [new MessageWrapper()];
+            _content[0].text = new Text();
+            _content[0].text.text = [content];
             const messageContent = new MessageContent(_content, chat.getCurrentLocation());
             return new MessageDto(messageContent, senderType, chat.user);
         }
 
         static messageDtoBuilderEvent(content, senderType) {
-            const _content = new MessageWrapper();
-            _content.event = new Event();
-            _content.event.name = content;
+            const _content = [new MessageWrapper()];
+            _content[0].event = new Event();
+            _content[0].event.name = content;
             const messageContent = new MessageContent(_content, chat.getCurrentLocation());
             return new MessageDto(messageContent, senderType, chat.user);
         }
@@ -303,19 +303,23 @@ jQuery(document).ready(function ($) {
             self.messageQueue++;
             setTimeout(function () {
                 let options = { direction: '' };
-                sender === 'bot' ? (options.direction = 'left', self.lastMessage = value) : options.direction = 'right';
+
                 messageDto.message.messages.forEach(mw => {
                     if (mw['text'] != null) {
-                        mw.text.forEach(t => self.showText(t, sender, options));
+                        mw.text.text.forEach(t => {
+                            sender === 'bot' ? (options.direction = 'left', self.lastMessage = t) : options.direction = 'right';
+                            self.showText(t, sender, options);
+                        });
                     }
                     if (mw['event'] != null) {
+                        sender === 'bot' ? (options.direction = 'left', self.lastMessage = mw.event.name) : options.direction = 'right';
                         self.showEvent(mw.event, sender, options);
                     }
                     if (mw['choice'] != null) {
-                        self.showChoice(mv.choice);
+                        self.showChoice(mw.choice);
                     }
                     if (mw['card'] != null) {
-                        self.showCard(mv.card)
+                        self.showCard(mw.card)
                     }
                     if (mw['carousel'] != null) {
                         throw new Error('There is no implementation for rendering CAROUSEL');
@@ -341,19 +345,21 @@ jQuery(document).ready(function ($) {
                 self.showPreview(text);
             }
         },
-        showChoice: function (choices) {
+        showChoice: function (choice) {
             let self = this;
             let choiceContainer = document.createElement('div');
             $(choiceContainer).addClass('choice_container');
-            choices.forEach(function (choice) {
+            choice.buttons.forEach(function (button) {
                 let choiceButton = document.createElement('span');
                 $(choiceButton).addClass('choice_button');
-                $(choiceButton).text(choice['value']);
+                $(choiceButton).text(button['text']);
                 //Здесь обработчик на нажатие кнопки
                 choiceButton.addEventListener('click', function () {
                     console.log($(this).text());
                     $(this).addClass('chosen');
-                    self.addMessage(ModelFactory.messageDtoBuilderText($(this).text(), SenderType.USER));
+                    const chosenValue = ModelFactory.messageDtoBuilderText($(this).text(), SenderType.USER);
+                    chat.socket.emit(WS_ENDPOINTS.MESSAGE, chosenValue);
+                    self.addMessage(chosenValue);
                     $(choiceContainer).remove();
                 });
                 $(choiceContainer).append(choiceButton);
@@ -426,7 +432,7 @@ jQuery(document).ready(function ($) {
     // }, timeout);
 
     $('#human_connect').on('click', function () {
-        const msg = ModelFactory.messageDtoBuilder('CONNECT_WITH_HUMAN', ContentType.EVENT, SenderType.USER)
+        const msg = ModelFactory.messageDtoBuilderEvent('CONNECT_WITH_HUMAN', SenderType.USER)
         chat.addMessage(msg)
         chat.socket.emit('message', msg);
         // chat.socket.emit('message', ModelFactory.messageDtoBuilder('NO_REPLY', ContentType.EVENT, SenderType.USER));
@@ -442,7 +448,7 @@ jQuery(document).ready(function ($) {
         if (e.keyCode === 13) {
             e.preventDefault();
             const textContent = $(this).text();
-            const messageDto = ModelFactory.messageDtoBuilder(textContent, ContentType.TEXT, SenderType.USER)
+            const messageDto = ModelFactory.messageDtoBuilderText(textContent, SenderType.USER)
             chat.addMessage(messageDto);
             chat.socket.emit(WS_ENDPOINTS.MESSAGE, messageDto);
             $(this).empty();
