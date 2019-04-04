@@ -132,6 +132,7 @@ jQuery(document).ready(function ($) {
 
     };
     let chat = {
+        nextMessageTimer: null,
         socket: {},
         opened: false,
         active: false,
@@ -171,17 +172,23 @@ jQuery(document).ready(function ($) {
             console.log(`get init-user response with: ${user}`);
             console.log(`starting to init history`);
             socket.emit(WS_ENDPOINTS.INIT_HISTORY, user);
-            socket.emit(WS_ENDPOINTS.MESSAGE, ModelFactory.messageDtoBuilderEvent('WELCOME', SenderType.USER));
+            // socket.emit(WS_ENDPOINTS.MESSAGE, ModelFactory.messageDtoBuilderEvent('WELCOME', SenderType.USER));
         },
         initUserHidden: function (user) {
             chat.user = user;
             lStorage.set(lStorage.keys.INT_USER, user);
             console.log(`get init-user response with: ${user}`);
         },
-        chatMessage: function (message) {
+        chatMessage: function (messageDto) {
             console.log('New message reived:');
-            console.log(message);
-            chat.addMessage(message);
+            console.log(messageDto);
+            const delayArr = messageDto.message.messages.filter(mw => mw.hasOwnProperty('payload') && mw.payload.hasOwnProperty('type') && mw.payload.type === 'delay');
+            if (delayArr.length > 0) {
+                const delay = delayArr[0].payload.delayValue;
+                chat.sendNextMessageEvent(delay);
+                console.log(delayArr[0]);
+            }
+            chat.addMessage(messageDto);
         },
         initHistory: function (history) {
             console.log('init history process with data:');
@@ -394,6 +401,17 @@ jQuery(document).ready(function ($) {
             lStorage.clear();
             delete chat.user;
         },
+        sendNextMessageEvent(delay) {
+            chat.nextMessageTimer = setTimeout(function(){
+                chat.socket.emit(WS_ENDPOINTS.MESSAGE, ModelFactory.messageDtoBuilderEvent('NEXT_MESSAGE', SenderType.USER));
+            }, delay);
+        },
+        cancelNextMessageEvent() {
+            if (chat.nextMessageTimer) {
+                clearTimeout(chat.nextMessageTimer);
+            }
+            chat.nextMessageTimer = 0;
+        },
         idleAction: function (timeout) {
             console.log('Idle for ' + timeout + ' seconds');
             idleTimer = setTimeout(function () {
@@ -434,7 +452,7 @@ jQuery(document).ready(function ($) {
     $('#human_connect').on('click', function () {
         const msg = ModelFactory.messageDtoBuilderEvent('CONNECT_WITH_HUMAN', SenderType.USER)
         chat.addMessage(msg)
-        chat.socket.emit('message', msg);
+        chat.socket.emit(WS_ENDPOINTS.MESSAGE, msg);
         // chat.socket.emit('message', ModelFactory.messageDtoBuilder('NO_REPLY', ContentType.EVENT, SenderType.USER));
     });
 
@@ -451,6 +469,7 @@ jQuery(document).ready(function ($) {
             const messageDto = ModelFactory.messageDtoBuilderText(textContent, SenderType.USER)
             chat.addMessage(messageDto);
             chat.socket.emit(WS_ENDPOINTS.MESSAGE, messageDto);
+            chat.cancelNextMessageEvent();
             $(this).empty();
         }
     });
