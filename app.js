@@ -186,7 +186,8 @@ jQuery(document).ready(function ($) {
             const delayArr = messageDto.message.messages.filter(mw => mw.hasOwnProperty('payload') && mw.payload.hasOwnProperty('type') && mw.payload.type === 'delay');
             if (delayArr.length > 0) {
                 const delay = delayArr[0].payload.delayValue;
-                chat.sendNextMessageEvent(delay);
+                const eventName = delayArr[0].payload.eventName;
+                chat.sendNextMessageEvent(delay, eventName);
                 console.log(delayArr[0]);
             }
             chat.addMessage(messageDto);
@@ -321,7 +322,9 @@ jQuery(document).ready(function ($) {
                     }
                     if (mw['event'] != null) {
                         sender === 'bot' ? (options.direction = 'left', self.lastMessage = mw.event.name) : options.direction = 'right';
-                        self.showEvent(mw.event, sender, options);
+                        if (mw.event.hasOwnProperty('display')) {
+                            self.showEvent(mw.event, sender, options);
+                        }
                     }
                     if (mw['choice'] != null) {
                         self.showChoice(mw.choice);
@@ -340,9 +343,7 @@ jQuery(document).ready(function ($) {
         },
         showEvent: function (event, sender, options) {
             let self = this;
-            if (event.hasOwnProperty('display')) {
-                self.showText(event.display, sender, options);
-            }            
+            self.showText(event.display, sender, options);
         },
         showText: function (text, sender, options) {
             let self = this;
@@ -366,9 +367,16 @@ jQuery(document).ready(function ($) {
                 choiceButton.addEventListener('click', function () {
                     console.log($(this).text());
                     $(this).addClass('chosen');
-                    const chosenValue = ModelFactory.messageDtoBuilderText(button.postback, SenderType.USER);
-                    chat.socket.emit(WS_ENDPOINTS.MESSAGE, chosenValue);
-                    self.addMessage(chosenValue);
+                    if (button.postback.startsWith('CALL+')) {
+                        const functionName = button.postback.substr(button.postback.indexOf('+') + 1);
+                        if (chat.hasOwnProperty(functionName)) {
+                            chat[functionName]();
+                        }
+                    } else {
+                        const chosenValue = ModelFactory.messageDtoBuilderText(button.postback, SenderType.USER);
+                        chat.socket.emit(WS_ENDPOINTS.MESSAGE, chosenValue);
+                        self.addMessage(chosenValue);
+                    }
                     $(choiceContainer).remove();
                 });
                 $(choiceContainer).append(choiceButton);
@@ -387,8 +395,9 @@ jQuery(document).ready(function ($) {
         },
         initialize: function () {
         },
-        clearHistoryRequest: function () {
+        deleteMyDataRequest: function () {
             chat.socket.emit(WS_ENDPOINTS.MESSAGE, ModelFactory.messageDtoBuilderEvent('CLEAR_USER_DATA', SenderType.USER, 'clear my data'));
+            chat.cancelNextMessageEvent();
         },
         clearUserDataHandler: function (data) {
             console.log('Clear History data => ', data);
@@ -403,9 +412,9 @@ jQuery(document).ready(function ($) {
             lStorage.clear();
             delete chat.user;
         },
-        sendNextMessageEvent(delay) {
-            chat.nextMessageTimer = setTimeout(function(){
-                chat.socket.emit(WS_ENDPOINTS.MESSAGE, ModelFactory.messageDtoBuilderEvent('NEXT_MESSAGE', SenderType.USER));
+        sendNextMessageEvent(delay, eventName) {
+            chat.nextMessageTimer = setTimeout(function () {
+                chat.socket.emit(WS_ENDPOINTS.MESSAGE, ModelFactory.messageDtoBuilderEvent(eventName, SenderType.USER));
             }, delay);
         },
         cancelNextMessageEvent() {
@@ -441,6 +450,13 @@ jQuery(document).ready(function ($) {
                     $(image).appendTo('#widget_queue').show('drop', { direction: 'left' }, 600);
                 }, 600);
             });
+        },
+        connectWithHuman() {
+            const msg = ModelFactory.messageDtoBuilderEvent('CONNECT_WITH_HUMAN', SenderType.USER, 'connect with human');
+            chat.addMessage(msg);
+            chat.socket.emit(WS_ENDPOINTS.MESSAGE, msg);
+            chat.cancelNextMessageEvent();
+            // chat.socket.emit('message', ModelFactory.messageDtoBuilder('NO_REPLY', ContentType.EVENT, SenderType.USER));
         }
     };
 
@@ -452,10 +468,7 @@ jQuery(document).ready(function ($) {
     // }, timeout);
 
     $('#human_connect').on('click', function () {
-        const msg = ModelFactory.messageDtoBuilderEvent('CONNECT_WITH_HUMAN', SenderType.USER, 'connect with human');
-        chat.addMessage(msg);
-        chat.socket.emit(WS_ENDPOINTS.MESSAGE, msg);
-        // chat.socket.emit('message', ModelFactory.messageDtoBuilder('NO_REPLY', ContentType.EVENT, SenderType.USER));
+        chat.connectWithHuman();
     });
 
     $('#widget_input_field').keypress(function (e) {
@@ -482,7 +495,7 @@ jQuery(document).ready(function ($) {
 
     $('.close_widget').on('click', chat.close);
 
-    $('#clear_history').on('click', chat.clearHistoryRequest);
+    $('#clear_history').on('click', chat.deleteMyDataRequest);
 
     let resizeTimer;
     $(window).resize(function () {
