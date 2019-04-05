@@ -27,10 +27,11 @@ jQuery(document).ready(function ($) {
     }
 
     class Event {
-        constructor(name, languageCode, parameters) {
+        constructor(name, languageCode, parameters, display) {
             this.name = name;
             this.languageCode = languageCode;
             this.parameters = parameters;
+            this.display = display;
         }
     }
 
@@ -77,14 +78,14 @@ jQuery(document).ready(function ($) {
             return new MessageDto(messageContent, senderType, chat.user);
         }
 
-        static messageDtoBuilderEvent(content, senderType) {
+        static messageDtoBuilderEvent(content, senderType, display) {
             const _content = [new MessageWrapper()];
             _content[0].event = new Event();
             _content[0].event.name = content;
+            _content[0].event.display = display || undefined;
             const messageContent = new MessageContent(_content, chat.getCurrentLocation());
             return new MessageDto(messageContent, senderType, chat.user);
         }
-
     }
 
     // Model part end
@@ -339,8 +340,9 @@ jQuery(document).ready(function ($) {
         },
         showEvent: function (event, sender, options) {
             let self = this;
-
-            self.showText(event.name, sender, options);
+            if (event.hasOwnProperty('display')) {
+                self.showText(event.display, sender, options);
+            }            
         },
         showText: function (text, sender, options) {
             let self = this;
@@ -386,7 +388,7 @@ jQuery(document).ready(function ($) {
         initialize: function () {
         },
         clearHistoryRequest: function () {
-            chat.socket.emit(WS_ENDPOINTS.MESSAGE, ModelFactory.messageDtoBuilderEvent('CLEAR_USER_DATA', SenderType.USER));
+            chat.socket.emit(WS_ENDPOINTS.MESSAGE, ModelFactory.messageDtoBuilderEvent('CLEAR_USER_DATA', SenderType.USER, 'clear my data'));
         },
         clearUserDataHandler: function (data) {
             console.log('Clear History data => ', data);
@@ -450,15 +452,15 @@ jQuery(document).ready(function ($) {
     // }, timeout);
 
     $('#human_connect').on('click', function () {
-        const msg = ModelFactory.messageDtoBuilderEvent('CONNECT_WITH_HUMAN', SenderType.USER)
-        chat.addMessage(msg)
+        const msg = ModelFactory.messageDtoBuilderEvent('CONNECT_WITH_HUMAN', SenderType.USER, 'connect with human');
+        chat.addMessage(msg);
         chat.socket.emit(WS_ENDPOINTS.MESSAGE, msg);
         // chat.socket.emit('message', ModelFactory.messageDtoBuilder('NO_REPLY', ContentType.EVENT, SenderType.USER));
     });
 
     $('#widget_input_field').keypress(function (e) {
         if (!lStorage.has(lStorage.keys.INT_USER)) {
-            chat.socket.emit(WS_ENDPOINTS.INIT_USER_HIDDEN, { id: null })
+            chat.socket.emit(WS_ENDPOINTS.INIT_USER_HIDDEN, { id: null });
         }
     });
 
@@ -466,7 +468,7 @@ jQuery(document).ready(function ($) {
         if (e.keyCode === 13) {
             e.preventDefault();
             const textContent = $(this).text();
-            const messageDto = ModelFactory.messageDtoBuilderText(textContent, SenderType.USER)
+            const messageDto = ModelFactory.messageDtoBuilderText(textContent, SenderType.USER);
             chat.addMessage(messageDto);
             chat.socket.emit(WS_ENDPOINTS.MESSAGE, messageDto);
             chat.cancelNextMessageEvent();
