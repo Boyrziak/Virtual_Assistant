@@ -330,7 +330,7 @@ jQuery(document).ready(function ($) {
                         self.showChoice(mw.choice);
                     }
                     if (mw['card'] != null) {
-                        self.showCard(mw.card)
+                        self.showCard(mw.card);
                     }
                     if (mw['carousel'] != null) {
                         throw new Error('There is no implementation for rendering CAROUSEL');
@@ -436,7 +436,7 @@ jQuery(document).ready(function ($) {
         showCard: function (card) {
             let self = this;
             let image = new Image();
-            image.src = card['src'];
+            image.src = card['imageUri'];
             $(image).addClass('message_image');
             image.addEventListener('click', function () {
                 let lightbox = $('#widget_lightbox');
