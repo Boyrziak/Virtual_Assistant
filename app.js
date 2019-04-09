@@ -333,6 +333,7 @@ jQuery(document).ready(function ($) {
                         self.showCard(mw.card);
                     }
                     if (mw['carousel'] != null) {
+                        console.log(mw.carousel);
                         throw new Error('There is no implementation for rendering CAROUSEL');
                     }
                 });
