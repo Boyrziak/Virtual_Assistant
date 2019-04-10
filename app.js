@@ -129,7 +129,7 @@ jQuery(document).ready(function ($) {
         }
 
     };
-    let chat = {
+    const chat = {
         nextMessageTimer: null,
         socket: {},
         opened: false,
@@ -208,9 +208,9 @@ jQuery(document).ready(function ($) {
             $('#widget_input_field').attr('contenteditable', 'false');
         },
         open: function () {
-            let button = $('#widget_button');
-            let self = this;
-            let body = $('#widget_body');
+            const button = $('#widget_button');
+            const self = this;
+            const body = $('#widget_body');
             body.css({
                 top: button.offset().top - body.outerHeight() - 40 + 'px',
                 left: button.offset().left - body.outerWidth() + 100 + 'px'
@@ -230,9 +230,9 @@ jQuery(document).ready(function ($) {
             self.scrollQuery(1200);
         },
         close: function () {
-            let body = $('#widget_body');
-            let button = $('#widget_button');
-            let self = this;
+            const body = $('#widget_body');
+            const button = $('#widget_button');
+            const self = this;
             button.css({
                 top: body.offset().top + body.outerHeight() + 40 + 'px',
                 left: body.offset().left + body.outerWidth() - button.outerWidth()
@@ -251,9 +251,9 @@ jQuery(document).ready(function ($) {
             console.log(self.lastMessage);
         },
         reposition: function () {
-            let body = $('#widget_body');
-            let windowHeight = $(window).outerHeight();
-            let windowWidth = $(window).outerWidth();
+            const body = $('#widget_body');
+            const windowHeight = $(window).outerHeight();
+            const windowWidth = $(window).outerWidth();
             if (body.offset().top <= 5) {
                 $(body).animate({ top: '10px' }, 500);
             } else if (body.offset().top + body.outerHeight() > windowHeight) {
@@ -308,10 +308,10 @@ jQuery(document).ready(function ($) {
         },
         addMessage: function (messageDto) {
             const sender = messageDto.senderType;
-            let self = this;
+            const self = this;
             self.messageQueue++;
             setTimeout(function () {
-                let options = { direction: '' };
+                const options = { direction: '' };
 
                 messageDto.message.messages.forEach(mw => {
                     if (mw['text'] != null) {
@@ -352,12 +352,12 @@ jQuery(document).ready(function ($) {
             }, 600);
         },
         showEvent: function (event, sender, options) {
-            let self = this;
+            const self = this;
             self.showText(event.display, sender, options);
         },
         showText: function (text, sender, options) {
-            let self = this;
-            let newMessage = document.createElement('div');
+            const self = this;
+            const newMessage = document.createElement('div');
             $(newMessage).addClass('widget_message ' + sender + '_message');
             $(newMessage).append(text);
             $(newMessage).appendTo('#widget_queue').show('drop', options, 600);
@@ -366,11 +366,11 @@ jQuery(document).ready(function ($) {
             }
         },
         showChoice: function (choice) {
-            let self = this;
-            let choiceContainer = document.createElement('div');
+            const self = this;
+            const choiceContainer = document.createElement('div');
             $(choiceContainer).addClass('choice_container');
             choice.buttons.forEach(function (button) {
-                let choiceButton = document.createElement('span');
+                const choiceButton = document.createElement('span');
                 $(choiceButton).addClass('choice_button');
                 $(choiceButton).text(button.text);
                 // Здесь обработчик на нажатие кнопки
@@ -397,7 +397,7 @@ jQuery(document).ready(function ($) {
             $('#widget_queue').animate({ scrollTop: $('#widget_queue')[0].scrollHeight }, timeout);
         },
         showPreview: function (text) {
-            let options = { direction: 'left' };
+            const options = { direction: 'left' };
             $('#preview_container').hide('drop', options, 600);
             setTimeout(function () {
                 $('#preview_container').empty().append(text).show('fold', options, 600);
@@ -454,11 +454,11 @@ jQuery(document).ready(function ($) {
             return this.currentLocation;
         },
         showCard: function (card) {
-            let image = new Image();
+            const image = new Image();
             image.src = card['imageUri'];
             $(image).addClass('message_image');
             image.addEventListener('click', function () {
-                let lightbox = $('#widget_lightbox');
+                const lightbox = $('#widget_lightbox');
                 $(lightbox).empty();
                 $(this).clone().appendTo(lightbox);
                 $(lightbox).show('blind', { direction: 'up' }, 700);
