@@ -1,5 +1,4 @@
-
-
+// eslint-disable-next-line no-undef
 jQuery(document).ready(function ($) {
     $('#widget_button').draggable({
         containment: 'window'
@@ -23,8 +22,7 @@ jQuery(document).ready(function ($) {
         constructor(text) {
             this.text = text;
         }
-
-    }
+    };
 
     class Event {
         constructor(name, languageCode, parameters, display) {
@@ -35,8 +33,8 @@ jQuery(document).ready(function ($) {
         }
     }
 
-    class Choice {
-        constructor(buttons) {
+    /* class Choice {
+        constructor (buttons) {
             this.buttons = buttons;
         }
     }
@@ -46,7 +44,7 @@ jQuery(document).ready(function ($) {
             this.text = text;
             this.postback = postback;
         }
-    }
+    } */
 
     class MessageContent {
         constructor(messages, currentUri) {
@@ -67,7 +65,7 @@ jQuery(document).ready(function ($) {
         static getUserObject(id) {
             return {
                 id: id
-            }
+            };
         };
 
         static messageDtoBuilderText(content, senderType) {
@@ -92,9 +90,8 @@ jQuery(document).ready(function ($) {
 
     const SenderType = Object.freeze({
         USER: 'user',
-        BOT: 'bot',
+        BOT: 'bot'
     });
-
 
     const WS_ENDPOINTS = {
         INIT_USER: 'init-user',
@@ -106,7 +103,7 @@ jQuery(document).ready(function ($) {
         MESSAGE: 'message',
         CONNECT: 'connect',
         DISCONNECT: 'disconnect',
-        EXCEPTION: 'exception',
+        EXCEPTION: 'exception'
     };
 
     const lStorage = {
@@ -150,7 +147,7 @@ jQuery(document).ready(function ($) {
             $('#widget_input_field').attr('placeholder', 'Enter your message...');
             $('#widget_input_field').attr('contenteditable', 'true');
             if (lStorage.has(lStorage.keys.INT_USER)) {
-                //return history for existing user
+                // return history for existing user
                 const user = lStorage.get(lStorage.keys.INT_USER);
                 chat.user = user;
                 /* console.log('request to init history');
@@ -160,7 +157,6 @@ jQuery(document).ready(function ($) {
             } else {
                 socket.emit(WS_ENDPOINTS.INIT_USER, ModelFactory.getUserObject(null));
             }
-
         },
         initBot: function (bot) {
             chat.bot = bot;
@@ -201,7 +197,6 @@ jQuery(document).ready(function ($) {
             } else {
                 console.log('init history null');
             }
-
         },
         chatException: function (data) {
             console.log('exception: ', data);
@@ -256,7 +251,6 @@ jQuery(document).ready(function ($) {
             console.log(self.lastMessage);
         },
         reposition: function () {
-            let self = this;
             let body = $('#widget_body');
             let windowHeight = $(window).outerHeight();
             let windowWidth = $(window).outerWidth();
@@ -276,7 +270,7 @@ jQuery(document).ready(function ($) {
 
             var expires = options.expires;
 
-            if (typeof expires == "number" && expires) {
+            if (typeof expires === 'number' && expires) {
                 var d = new Date();
                 d.setTime(d.getTime() + expires * 1000);
                 expires = options.expires = d;
@@ -287,13 +281,13 @@ jQuery(document).ready(function ($) {
 
             value = encodeURIComponent(value);
 
-            var updatedCookie = name + "=" + value;
+            var updatedCookie = name + '=' + value;
 
             for (var propName in options) {
-                updatedCookie += "; " + propName;
+                updatedCookie += '; ' + propName;
                 var propValue = options[propName];
                 if (propValue !== true) {
-                    updatedCookie += "=" + propValue;
+                    updatedCookie += '=' + propValue;
                 }
             }
 
@@ -301,14 +295,16 @@ jQuery(document).ready(function ($) {
         },
         getCookie: function (name) {
             var matches = document.cookie.match(new RegExp(
-                "(?:^|; )" + name.replace(/([\.$?*|{}\(\)\[\]\\\/\+^])/g, '\\$1') + "=([^;]*)"
+                // eslint-disable-next-line no-useless-escape
+                '(?:^|; )' + name.replace(/([\.$?*|{}\(\)\[\]\\\/\+^])/g, '\\$1') + '=([^;]*)'
             ));
             return matches ? decodeURIComponent(matches[1]) : undefined;
         },
         deleteCookie: function (name) {
-            setCookie(name, "", {
+            const self = this;
+            self.setCookie(name, '', {
                 expires: -1
-            })
+            });
         },
         addMessage: function (messageDto) {
             const sender = messageDto.senderType;
@@ -320,12 +316,22 @@ jQuery(document).ready(function ($) {
                 messageDto.message.messages.forEach(mw => {
                     if (mw['text'] != null) {
                         mw.text.text.forEach(t => {
-                            sender === 'bot' ? (options.direction = 'left', self.lastMessage = t) : options.direction = 'right';
+                            if (sender === 'bot') {
+                                options.direction = 'left';
+                                self.lastMessage = t;
+                            } else {
+                                options.direction = 'right';
+                            }
                             self.showText(t, sender, options);
                         });
                     }
                     if (mw['event'] != null) {
-                        sender === 'bot' ? (options.direction = 'left', self.lastMessage = mw.event.name) : options.direction = 'right';
+                        if (sender === 'bot') {
+                            options.direction = 'left';
+                            self.lastMessage = mw.event.name;
+                        } else {
+                            options.direction = 'right';
+                        }
                         if (mw.event.hasOwnProperty('display')) {
                             self.showEvent(mw.event, sender, options);
                         }
@@ -342,8 +348,7 @@ jQuery(document).ready(function ($) {
                     }
                 });
                 self.messageQueue--;
-                self.messageQueue === 0 ?
-                    self.scrollQuery(400) : null;
+                if (self.messageQueue === 0) self.scrollQuery(400);
             }, 600);
         },
         showEvent: function (event, sender, options) {
@@ -368,7 +373,7 @@ jQuery(document).ready(function ($) {
                 let choiceButton = document.createElement('span');
                 $(choiceButton).addClass('choice_button');
                 $(choiceButton).text(button.text);
-                //Здесь обработчик на нажатие кнопки
+                // Здесь обработчик на нажатие кнопки
                 choiceButton.addEventListener('click', function () {
                     console.log($(this).text());
                     $(this).addClass('chosen');
@@ -399,12 +404,12 @@ jQuery(document).ready(function ($) {
             }, 600);
         },
         initialize: function () {
-            if(lStorage.has('previousUrl') && (chat.getCurrentLocation() !== lStorage.get('previousUrl'))) {
+            if (lStorage.has('previousUrl') && (chat.getCurrentLocation() !== lStorage.get('previousUrl'))) {
                 console.log('new url detected');
             }
             lStorage.set('previousUrl', chat.getCurrentLocation());
 
-            if(lStorage.has('isWidgetOpened')) {
+            if (lStorage.has('isWidgetOpened')) {
                 if (JSON.parse(lStorage.get('isWidgetOpened'))) {
                     chat.open();
                 }
@@ -427,12 +432,12 @@ jQuery(document).ready(function ($) {
             lStorage.clear();
             delete chat.user;
         },
-        sendNextMessageEvent(delay, eventName) {
+        sendNextMessageEvent: function (delay, eventName) {
             chat.nextMessageTimer = setTimeout(function () {
                 chat.socket.emit(WS_ENDPOINTS.MESSAGE, ModelFactory.messageDtoBuilderEvent(eventName, SenderType.USER));
             }, delay);
         },
-        cancelNextMessageEvent() {
+        cancelNextMessageEvent: function () {
             if (chat.nextMessageTimer) {
                 clearTimeout(chat.nextMessageTimer);
             }
@@ -440,7 +445,7 @@ jQuery(document).ready(function ($) {
         },
         idleAction: function (timeout) {
             console.log('Idle for ' + timeout + ' seconds');
-            idleTimer = setTimeout(function () {
+            chat.idleTimer = setTimeout(function () {
                 chat.idleAction(timeout);
             }, timeout);
         },
@@ -449,7 +454,6 @@ jQuery(document).ready(function ($) {
             return this.currentLocation;
         },
         showCard: function (card) {
-            let self = this;
             let image = new Image();
             image.src = card['imageUri'];
             $(image).addClass('message_image');
@@ -466,7 +470,7 @@ jQuery(document).ready(function ($) {
                 }, 600);
             });
         },
-        connectWithHuman() {
+        connectWithHuman: function () {
             const msg = ModelFactory.messageDtoBuilderEvent('CONNECT_WITH_HUMAN', SenderType.USER, 'connect with human');
             chat.addMessage(msg);
             chat.socket.emit(WS_ENDPOINTS.MESSAGE, msg);
@@ -523,6 +527,7 @@ jQuery(document).ready(function ($) {
         $(this).hide('explode', 800);
     });
 
+    // eslint-disable-next-line no-undef
     const socket = io('http://localhost:3000', { path: '/chat/socket.io' });
     chat.socket = socket;
     chat.socket.on(WS_ENDPOINTS.CONNECT, chat.connect);
