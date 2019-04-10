@@ -95,7 +95,7 @@ jQuery(document).ready(function ($) {
 
     const WS_ENDPOINTS = {
         INIT_USER: 'init-user',
-        INIT_USER_HIDDEN: 'init-user-hidden',
+        INIT_USER_COVERTLY: 'init-user-covertly',
         INIT_BOT: 'init-bot',
         INIT_HISTORY: 'init-history',
         CLEAR_HISTORY: 'clear-history',
@@ -111,9 +111,11 @@ jQuery(document).ready(function ($) {
             return JSON.parse(localStorage.getItem(key));
         },
         keys: {
-            INT_USER: 'intUser',
-            INIT_STATUS: 'init-status'
-
+            USER: 'user',
+            BOT: 'bot',
+            HISTORY: 'history',
+            IS_WIDGET_OPEN: 'isWidgetOpen',
+            PREVIOUS_URL: 'previousUrl'
         },
         set: function (key, item) {
             localStorage.setItem(key, JSON.stringify(item));
@@ -126,6 +128,13 @@ jQuery(document).ready(function ($) {
         },
         has: function (key) {
             return localStorage.getItem(key) !== null;
+        },
+        addMessageToHistory: function (message) {
+            let history = this.get(this.keys.HISTORY);
+            history = history == null ? [] : history;
+            history.push(message);
+            this.set(this.keys.HISTORY, history);
+            return history;
         }
 
     };
@@ -142,30 +151,20 @@ jQuery(document).ready(function ($) {
         currentLocation: location.href,
         connect: function () {
             console.log('Connected');
-            socket.emit(WS_ENDPOINTS.INIT_BOT, { id: 1 });
             $('.connection_indicator').css('color', 'green');
             $('#widget_input_field').attr('placeholder', 'Enter your message...');
             $('#widget_input_field').attr('contenteditable', 'true');
-            if (lStorage.has(lStorage.keys.INT_USER)) {
-                // return history for existing user
-                const user = lStorage.get(lStorage.keys.INT_USER);
-                chat.user = user;
-                /* console.log('request to init history');
-                console.log(chat.user);
-                socket.emit(WS_ENDPOINTS.INIT_HISTORY, user); */
-                socket.emit(WS_ENDPOINTS.INIT_USER, ModelFactory.getUserObject(user.id));
-            } else {
-                socket.emit(WS_ENDPOINTS.INIT_USER, ModelFactory.getUserObject(null));
-            }
+            chat.initialize();
         },
         initBot: function (bot) {
             chat.bot = bot;
+            lStorage.set(lStorage.keys.BOT, bot);
             console.log(`Bot has been initialized`);
             console.log(bot);
         },
         initUser: function (user) {
             chat.user = user;
-            lStorage.set(lStorage.keys.INT_USER, user);
+            lStorage.set(lStorage.keys.USER, user);
             console.log(`get init-user response with: ${user}`);
             console.log(`starting to init history`);
             socket.emit(WS_ENDPOINTS.INIT_HISTORY, user);
@@ -173,7 +172,7 @@ jQuery(document).ready(function ($) {
         },
         initUserCovertly: function (user) {
             chat.user = user;
-            lStorage.set(lStorage.keys.INT_USER, user);
+            lStorage.set(lStorage.keys.USER, user);
             console.log(`get init-user response with: ${user}`);
         },
         chatMessage: function (messageDto) {
@@ -187,8 +186,10 @@ jQuery(document).ready(function ($) {
                 console.log(delayArr[0]);
             }
             chat.addMessage(messageDto);
+            lStorage.addMessageToHistory(messageDto);
         },
         initHistory: function (history) {
+            lStorage.set(lStorage.keys.HISTORY, history);
             console.log('init history process with data:');
             console.log(history);
             if (history != null) {
@@ -225,7 +226,7 @@ jQuery(document).ready(function ($) {
             $('#widget_input').empty();
             self.opened = true;
             // TODO update the line below when refactoring the init method
-            lStorage.set('isWidgetOpened', self.opened);
+            lStorage.set(lStorage.keys.IS_WIDGET_OPEN, self.opened);
             $('#preview_container').empty().hide('drop', 600);
             self.scrollQuery(1200);
         },
@@ -242,7 +243,7 @@ jQuery(document).ready(function ($) {
             body.toggle('blind', { direction: 'down' }, 1000);
             this.opened = false;
             // TODO update the line below when refactoring the init method
-            lStorage.set('isWidgetOpened', self.opened);
+            lStorage.set(lStorage.keys.IS_WIDGET_OPEN, self.opened);
             button.draggable('enable');
             if (button.offset().top + button.outerHeight() >= $(window).outerHeight() - 5) {
                 $(button).animate({ top: $(window).outerHeight() - button.outerHeight() - 10 + 'px' }, 500);
@@ -312,7 +313,6 @@ jQuery(document).ready(function ($) {
             self.messageQueue++;
             setTimeout(function () {
                 const options = { direction: '' };
-
                 messageDto.message.messages.forEach(mw => {
                     if (mw['text'] != null) {
                         mw.text.text.forEach(t => {
@@ -403,16 +403,36 @@ jQuery(document).ready(function ($) {
                 $('#preview_container').empty().append(text).show('fold', options, 600);
             }, 600);
         },
+        isSessionExpired: function () {
+            // TODO put over here implementation that return real status of session expiration
+            return !lStorage.has(lStorage.keys.HISTORY);
+        },
         initialize: function () {
-            if (lStorage.has('previousUrl') && (chat.getCurrentLocation() !== lStorage.get('previousUrl'))) {
-                console.log('new url detected');
-            }
-            lStorage.set('previousUrl', chat.getCurrentLocation());
-
-            if (lStorage.has('isWidgetOpened')) {
-                if (JSON.parse(lStorage.get('isWidgetOpened'))) {
-                    chat.open();
+            if (chat.isSessionExpired()) {
+                socket.emit(WS_ENDPOINTS.INIT_BOT, { id: 1 });
+                if (lStorage.has(lStorage.keys.USER)) {
+                    // return history for existing user
+                    const user = lStorage.get(lStorage.keys.USER);
+                    chat.user = user;
+                    socket.emit(WS_ENDPOINTS.INIT_USER, ModelFactory.getUserObject(user.id));
+                } else {
+                    socket.emit(WS_ENDPOINTS.INIT_USER, ModelFactory.getUserObject(null));
                 }
+            } else {
+                chat.bot = lStorage.get(lStorage.keys.BOT);
+                chat.user = lStorage.get(lStorage.keys.USER);
+                if (lStorage.has(lStorage.keys.IS_WIDGET_OPEN) && (chat.getCurrentLocation() !== lStorage.get(lStorage.keys.PREVIOUS_URL))) {
+                    console.log('new url detected');
+                    console.log($('#widget_queue').length);
+                }
+                lStorage.set('previousUrl', chat.getCurrentLocation());
+                if (lStorage.has(lStorage.keys.IS_WIDGET_OPEN)) {
+                    if (JSON.parse(lStorage.get(lStorage.keys.IS_WIDGET_OPEN))) {
+                        chat.open();
+                    }
+                }
+                const history = lStorage.get(lStorage.keys.HISTORY);
+                history.forEach(m => chat.addMessage(m));
             }
         },
         deleteMyDataRequest: function () {
@@ -472,7 +492,6 @@ jQuery(document).ready(function ($) {
         }
     };
 
-    chat.initialize();
     // let timeout = 5000;
     //
     // let idleTimer = setTimeout(function () {
@@ -484,8 +503,8 @@ jQuery(document).ready(function ($) {
     });
 
     $('#widget_input_field').keypress(function (e) {
-        if (!lStorage.has(lStorage.keys.INT_USER)) {
-            chat.socket.emit(WS_ENDPOINTS.INIT_USER_HIDDEN, { id: null });
+        if (!lStorage.has(lStorage.keys.USER)) {
+            chat.socket.emit(WS_ENDPOINTS.INIT_USER_COVERTLY, { id: null });
         }
     });
 
@@ -495,6 +514,7 @@ jQuery(document).ready(function ($) {
             const textContent = $(this).text();
             const messageDto = ModelFactory.messageDtoBuilderText(textContent, SenderType.USER);
             chat.addMessage(messageDto);
+            lStorage.addMessageToHistory(messageDto);
             chat.socket.emit(WS_ENDPOINTS.MESSAGE, messageDto);
             chat.cancelNextMessageEvent();
             $(this).empty();
@@ -526,7 +546,7 @@ jQuery(document).ready(function ($) {
     chat.socket.on(WS_ENDPOINTS.CONNECT, chat.connect);
     chat.socket.on(WS_ENDPOINTS.INIT_BOT, chat.initBot);
     chat.socket.on(WS_ENDPOINTS.INIT_USER, chat.initUser);
-    chat.socket.on(WS_ENDPOINTS.INIT_USER_HIDDEN, chat.initUserCovertly);
+    chat.socket.on(WS_ENDPOINTS.INIT_USER_COVERTLY, chat.initUserCovertly);
     chat.socket.on(WS_ENDPOINTS.CLEAR_HISTORY_CONFIRMATION, chat.clearHistoryConfirmed);
     chat.socket.on(WS_ENDPOINTS.MESSAGE, chat.chatMessage);
     chat.socket.on(WS_ENDPOINTS.INIT_HISTORY, chat.initHistory);
