@@ -419,13 +419,6 @@ jQuery(document).ready(function ($) {
             chat.socket.emit(WS_ENDPOINTS.MESSAGE, ModelFactory.messageDtoBuilderEvent('CLEAR_USER_DATA', SenderType.USER, 'clear my data'));
             chat.cancelNextMessageEvent();
         },
-        clearUserDataHandler: function (data) {
-            console.log('Clear History data => ', data);
-            /* $('#widget_queue').empty();
-            lStorage.clear();
-            delete chat.user;
-            chat.renderContent(data); */
-        },
         clearHistoryConfirmed: function (data) {
             console.log('Clear History confirmed  => ', data);
             $('#widget_queue').empty();
