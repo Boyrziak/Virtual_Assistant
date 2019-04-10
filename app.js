@@ -1,3 +1,5 @@
+
+
 jQuery(document).ready(function ($) {
     $('#widget_button').draggable({
         containment: 'window'
@@ -6,8 +8,6 @@ jQuery(document).ready(function ($) {
         handle: '#widget_header',
         containment: 'window'
     });
-
-    // Model part
 
     class MessageWrapper {
         constructor(text, card, event, choice, carousel) {
@@ -175,13 +175,13 @@ jQuery(document).ready(function ($) {
             socket.emit(WS_ENDPOINTS.INIT_HISTORY, user);
             // socket.emit(WS_ENDPOINTS.MESSAGE, ModelFactory.messageDtoBuilderEvent('WELCOME', SenderType.USER));
         },
-        initUserHidden: function (user) {
+        initUserCovertly: function (user) {
             chat.user = user;
             lStorage.set(lStorage.keys.INT_USER, user);
             console.log(`get init-user response with: ${user}`);
         },
         chatMessage: function (messageDto) {
-            console.log('New message reived:');
+            console.log('New message received:');
             console.log(messageDto);
             const delayArr = messageDto.message.messages.filter(mw => mw.hasOwnProperty('payload') && mw.payload.hasOwnProperty('type') && mw.payload.type === 'delay');
             if (delayArr.length > 0) {
@@ -229,6 +229,8 @@ jQuery(document).ready(function ($) {
             button.draggable('disable');
             $('#widget_input').empty();
             self.opened = true;
+            // TODO update the line below when refactoring the init method
+            lStorage.set('isWidgetOpened', self.opened);
             $('#preview_container').empty().hide('drop', 600);
             self.scrollQuery(1200);
         },
@@ -244,6 +246,8 @@ jQuery(document).ready(function ($) {
             body.removeClass('opened');
             body.toggle('blind', { direction: 'down' }, 1000);
             this.opened = false;
+            // TODO update the line below when refactoring the init method
+            lStorage.set('isWidgetOpened', self.opened);
             button.draggable('enable');
             if (button.offset().top + button.outerHeight() >= $(window).outerHeight() - 5) {
                 $(button).animate({ top: $(window).outerHeight() - button.outerHeight() - 10 + 'px' }, 500);
@@ -371,7 +375,7 @@ jQuery(document).ready(function ($) {
                     if (button.postback.startsWith('CALL+')) {
                         const functionName = button.postback.substr(button.postback.indexOf('+') + 1);
                         if (chat.hasOwnProperty(functionName)) {
-                            chat[functionName]();
+                            chat.functionName();
                         }
                     } else {
                         const chosenValue = ModelFactory.messageDtoBuilderText(button.postback, SenderType.USER);
@@ -395,6 +399,16 @@ jQuery(document).ready(function ($) {
             }, 600);
         },
         initialize: function () {
+            if(lStorage.has('previousUrl') && (chat.getCurrentLocation() !== lStorage.get('previousUrl'))) {
+                console.log('new url detected');
+            }
+            lStorage.set('previousUrl', chat.getCurrentLocation());
+
+            if(lStorage.has('isWidgetOpened')) {
+                if (JSON.parse(lStorage.get('isWidgetOpened'))) {
+                    chat.open();
+                }
+            }
         },
         deleteMyDataRequest: function () {
             chat.socket.emit(WS_ENDPOINTS.MESSAGE, ModelFactory.messageDtoBuilderEvent('CLEAR_USER_DATA', SenderType.USER, 'clear my data'));
@@ -514,7 +528,7 @@ jQuery(document).ready(function ($) {
     chat.socket.on(WS_ENDPOINTS.CONNECT, chat.connect);
     chat.socket.on(WS_ENDPOINTS.INIT_BOT, chat.initBot);
     chat.socket.on(WS_ENDPOINTS.INIT_USER, chat.initUser);
-    chat.socket.on(WS_ENDPOINTS.INIT_USER_HIDDEN, chat.initUserHidden);
+    chat.socket.on(WS_ENDPOINTS.INIT_USER_HIDDEN, chat.initUserCovertly);
     chat.socket.on(WS_ENDPOINTS.CLEAR_HISTORY_CONFIRMATION, chat.clearHistoryConfirmed);
     chat.socket.on(WS_ENDPOINTS.MESSAGE, chat.chatMessage);
     chat.socket.on(WS_ENDPOINTS.INIT_HISTORY, chat.initHistory);
