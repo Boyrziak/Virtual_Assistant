@@ -365,6 +365,13 @@ jQuery(document).ready(function ($) {
                 self.showPreview(text);
             }
         },
+        onRespond: function (messageDto) {
+            const self = this;
+            chat.socket.emit(WS_ENDPOINTS.MESSAGE, messageDto);
+            self.addMessage(messageDto);
+            self.cancelNextMessageEvent();
+            lStorage.addMessageToHistory(messageDto);
+        },
         showChoice: function (choice) {
             const self = this;
             const choiceContainer = document.createElement('div');
@@ -384,8 +391,7 @@ jQuery(document).ready(function ($) {
                         }
                     } else {
                         const chosenValue = ModelFactory.messageDtoBuilderText(button.postback, SenderType.USER);
-                        chat.socket.emit(WS_ENDPOINTS.MESSAGE, chosenValue);
-                        self.addMessage(chosenValue);
+                        self.onRespond(chosenValue);
                     }
                     $(choiceContainer).remove();
                 });
@@ -407,8 +413,18 @@ jQuery(document).ready(function ($) {
             // TODO put over here implementation that return real status of session expiration
             return !lStorage.has(lStorage.keys.HISTORY);
         },
+        isUserReactedExplicitly: function (lastUserMessage) {
+            const msg = lastUserMessage.message.messages[0];
+            return msg.hasOwnProperty('text') || (msg.hasOwnProperty('event') && msg.event.hasOwnProperty('display'));
+        },
         onUrlChanged: function () {
             lStorage.set('previousUrl', chat.getCurrentLocation());
+            const userHistory = lStorage.get(lStorage.keys.HISTORY).filter(m => m.senderType === 'user');
+            if (!chat.isUserReactedExplicitly(userHistory[userHistory.length - 1])) {
+                const messageFto = ModelFactory.messageDtoBuilderEvent('URL-CHANGED-EVENT', SenderType.USER);
+                chat.onRespond(messageFto);
+                console.log('URL-CHANGED-EVENT sent');
+            }
             console.log('new url detected');
             console.log($('#widget_queue').length);
         },
@@ -439,7 +455,8 @@ jQuery(document).ready(function ($) {
             }
         },
         deleteMyDataRequest: function () {
-            chat.socket.emit(WS_ENDPOINTS.MESSAGE, ModelFactory.messageDtoBuilderEvent('CLEAR_USER_DATA', SenderType.USER, 'clear my data'));
+            const messageDto = ModelFactory.messageDtoBuilderEvent('CLEAR_USER_DATA', SenderType.USER, 'clear my data');
+            chat.onRespond(messageDto);
             chat.cancelNextMessageEvent();
         },
         clearHistoryConfirmed: function (data) {
@@ -450,7 +467,8 @@ jQuery(document).ready(function ($) {
         },
         sendNextMessageEvent: function (delay, eventName) {
             chat.nextMessageTimer = setTimeout(function () {
-                chat.socket.emit(WS_ENDPOINTS.MESSAGE, ModelFactory.messageDtoBuilderEvent(eventName, SenderType.USER));
+                const messageDto = ModelFactory.messageDtoBuilderEvent(eventName, SenderType.USER);
+                chat.onRespond(messageDto);
             }, delay);
         },
         cancelNextMessageEvent: function () {
@@ -488,10 +506,8 @@ jQuery(document).ready(function ($) {
         },
         connectWithHuman: function () {
             const msg = ModelFactory.messageDtoBuilderEvent('CONNECT_WITH_HUMAN', SenderType.USER, 'connect with human');
-            chat.addMessage(msg);
-            chat.socket.emit(WS_ENDPOINTS.MESSAGE, msg);
+            chat.onRespond(msg);
             chat.cancelNextMessageEvent();
-            // chat.socket.emit('message', ModelFactory.messageDtoBuilder('NO_REPLY', ContentType.EVENT, SenderType.USER));
         }
     };
 
@@ -516,10 +532,7 @@ jQuery(document).ready(function ($) {
             e.preventDefault();
             const textContent = $(this).text();
             const messageDto = ModelFactory.messageDtoBuilderText(textContent, SenderType.USER);
-            chat.addMessage(messageDto);
-            lStorage.addMessageToHistory(messageDto);
-            chat.socket.emit(WS_ENDPOINTS.MESSAGE, messageDto);
-            chat.cancelNextMessageEvent();
+            chat.onRespond(messageDto);
             $(this).empty();
         }
     });
