@@ -407,6 +407,11 @@ jQuery(document).ready(function ($) {
             // TODO put over here implementation that return real status of session expiration
             return !lStorage.has(lStorage.keys.HISTORY);
         },
+        onUrlChanged: function () {
+            lStorage.set('previousUrl', chat.getCurrentLocation());
+            console.log('new url detected');
+            console.log($('#widget_queue').length);
+        },
         initialize: function () {
             if (chat.isSessionExpired()) {
                 socket.emit(WS_ENDPOINTS.INIT_BOT, { id: 1 });
@@ -421,11 +426,6 @@ jQuery(document).ready(function ($) {
             } else {
                 chat.bot = lStorage.get(lStorage.keys.BOT);
                 chat.user = lStorage.get(lStorage.keys.USER);
-                if (lStorage.has(lStorage.keys.IS_WIDGET_OPEN) && (chat.getCurrentLocation() !== lStorage.get(lStorage.keys.PREVIOUS_URL))) {
-                    console.log('new url detected');
-                    console.log($('#widget_queue').length);
-                }
-                lStorage.set('previousUrl', chat.getCurrentLocation());
                 if (lStorage.has(lStorage.keys.IS_WIDGET_OPEN)) {
                     if (JSON.parse(lStorage.get(lStorage.keys.IS_WIDGET_OPEN))) {
                         chat.open();
@@ -433,6 +433,9 @@ jQuery(document).ready(function ($) {
                 }
                 const history = lStorage.get(lStorage.keys.HISTORY);
                 history.forEach(m => chat.addMessage(m));
+                if (lStorage.has(lStorage.keys.IS_WIDGET_OPEN) && (chat.getCurrentLocation() !== lStorage.get(lStorage.keys.PREVIOUS_URL))) {
+                    chat.onUrlChanged();
+                }
             }
         },
         deleteMyDataRequest: function () {
