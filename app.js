@@ -332,7 +332,9 @@ jQuery(document).ready(function ($) {
                         } else {
                             options.direction = 'right';
                         }
-                        if (mw.event.hasOwnProperty('display')) {
+                        if (mw.event['display'] != null) {
+                            console.log('____________________________SHOW EVENT ______________________________');
+                            console.log(mw.event);
                             self.showEvent(mw.event, sender, options);
                         }
                     }
@@ -366,10 +368,9 @@ jQuery(document).ready(function ($) {
             }
         },
         onRespond: function (messageDto) {
-            const self = this;
+            chat.cancelNextMessageEvent();
             chat.socket.emit(WS_ENDPOINTS.MESSAGE, messageDto);
-            self.addMessage(messageDto);
-            self.cancelNextMessageEvent();
+            chat.addMessage(messageDto);
             lStorage.addMessageToHistory(messageDto);
         },
         showChoice: function (choice) {
@@ -421,8 +422,8 @@ jQuery(document).ready(function ($) {
             lStorage.set('previousUrl', chat.getCurrentLocation());
             const userHistory = lStorage.get(lStorage.keys.HISTORY).filter(m => m.senderType === 'user');
             if (!chat.isUserReactedExplicitly(userHistory[userHistory.length - 1])) {
-                const messageFto = ModelFactory.messageDtoBuilderEvent('URL-CHANGED-EVENT', SenderType.USER);
-                chat.onRespond(messageFto);
+                const messageDto = ModelFactory.messageDtoBuilderEvent('URL-CHANGED-EVENT', SenderType.USER);
+                chat.onRespond(messageDto);
                 console.log('URL-CHANGED-EVENT sent');
             }
             console.log('new url detected');
