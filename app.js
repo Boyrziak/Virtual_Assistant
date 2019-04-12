@@ -333,8 +333,6 @@ jQuery(document).ready(function ($) {
                             options.direction = 'right';
                         }
                         if (mw.event['display'] != null) {
-                            console.log('____________________________SHOW EVENT ______________________________');
-                            console.log(mw.event);
                             self.showEvent(mw.event, sender, options);
                         }
                     }
