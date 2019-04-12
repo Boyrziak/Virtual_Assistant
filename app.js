@@ -556,7 +556,7 @@ jQuery(document).ready(function ($) {
     });
 
     // eslint-disable-next-line no-undef
-    const socket = io('http://localhost:3000', { path: '/chat/socket.io' });
+    const socket = io('https://kh-gis-chat-bot.intetics.com', { path: '/chat/socket.io' });
     chat.socket = socket;
     chat.socket.on(WS_ENDPOINTS.CONNECT, chat.connect);
     chat.socket.on(WS_ENDPOINTS.INIT_BOT, chat.initBot);
