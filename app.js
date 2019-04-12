@@ -167,7 +167,7 @@ jQuery(document).ready(function ($) {
             lStorage.set(lStorage.keys.USER, user);
             console.log(`get init-user response with: ${user}`);
             console.log(`starting to init history`);
-            socket.emit(WS_ENDPOINTS.INIT_HISTORY, user);
+            chat.socket.emit(WS_ENDPOINTS.INIT_HISTORY, user);
             // socket.emit(WS_ENDPOINTS.MESSAGE, ModelFactory.messageDtoBuilderEvent('WELCOME', SenderType.USER));
         },
         initUserCovertly: function (user) {
@@ -429,14 +429,14 @@ jQuery(document).ready(function ($) {
         },
         initialize: function () {
             if (chat.isSessionExpired()) {
-                socket.emit(WS_ENDPOINTS.INIT_BOT, { id: 1 });
+                chat.socket.emit(WS_ENDPOINTS.INIT_BOT, { id: 1 });
                 if (lStorage.has(lStorage.keys.USER)) {
                     // return history for existing user
                     const user = lStorage.get(lStorage.keys.USER);
                     chat.user = user;
-                    socket.emit(WS_ENDPOINTS.INIT_USER, ModelFactory.getUserObject(user.id));
+                    chat.socket.emit(WS_ENDPOINTS.INIT_USER, ModelFactory.getUserObject(user.id));
                 } else {
-                    socket.emit(WS_ENDPOINTS.INIT_USER, ModelFactory.getUserObject(null));
+                    chat.socket.emit(WS_ENDPOINTS.INIT_USER, ModelFactory.getUserObject(null));
                 }
             } else {
                 chat.bot = lStorage.get(lStorage.keys.BOT);
@@ -555,9 +555,14 @@ jQuery(document).ready(function ($) {
         $(this).hide('explode', 800);
     });
 
-    // eslint-disable-next-line no-undef
-    const socket = io('https://kh-gis-chat-bot.intetics.com', { path: '/chat/socket.io' });
-    chat.socket = socket;
+    if (chat.currentLocation.startsWith('https://kh-gis-chat-bot.intetics.com')) {
+        // eslint-disable-next-line no-undef
+        chat.socket = io('https://kh-gis-chat-bot.intetics.com', { path: '/chat/socket.io' });
+    } else {
+        // eslint-disable-next-line no-undef
+        chat.socket = io('http://localhost:3000', { path: '/chat/socket.io' });
+    }
+
     chat.socket.on(WS_ENDPOINTS.CONNECT, chat.connect);
     chat.socket.on(WS_ENDPOINTS.INIT_BOT, chat.initBot);
     chat.socket.on(WS_ENDPOINTS.INIT_USER, chat.initUser);
