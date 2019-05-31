@@ -336,13 +336,13 @@ jQuery(document).ready(function ($) {
                             self.showEvent(mw.event, sender, options);
                         }
                     }
-                    if (mw['choice'] != null) {
+                    if (mw['choice']) {
                         self.showChoice(mw.choice);
                     }
-                    if (mw['card'] != null) {
+                    if (mw['card']) {
                         self.showCard(mw.card);
                     }
-                    if (mw['carousel'] != null) {
+                    if (mw['carousel']) {
                         console.log(mw.carousel);
                         throw new Error('There is no implementation for rendering CAROUSEL');
                     }

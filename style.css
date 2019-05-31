@@ -66,6 +66,7 @@ body {
     font-family: 'MuseoSansCyrl', sans-serif;
     display: none;
     width: 30%;
+    background: white;
     /*max-height: 640px;*/
     height: 640px;
     box-sizing: border-box;
