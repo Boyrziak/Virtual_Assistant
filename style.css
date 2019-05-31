@@ -62,19 +62,35 @@ body {
     background: #e7873c;
 }
 
-#widget_body {
+#widget_container {
     font-family: 'MuseoSansCyrl', sans-serif;
     display: none;
     width: 30%;
-    max-height: 640px;
-    height: 80%;
-    overflow: hidden;
-    border: 2px solid #e7873c;
+    /*max-height: 640px;*/
+    height: 640px;
     box-sizing: border-box;
     right: 10px;
     bottom: 120px;
     position: fixed;
-    border-radius: 15px 15px 0px 0px;
+}
+
+#widget_body {
+    font-family: 'MuseoSansCyrl', sans-serif;
+    width: 100%;
+    /*height: 100%;*/
+    height: 505px;
+    overflow: hidden;
+    border: 2px solid #e7873c;
+    border-top: none;
+    border-bottom: none;
+    box-sizing: border-box;
+    position: relative;
+    /*border-radius: 15px 15px 0px 0px;*/
+}
+
+#widget_bottom {
+    background: white;
+    border: 2px solid #e7873c;
 }
 
 .close_widget {
@@ -104,9 +120,9 @@ body {
 }
 
 #widget_input {
-    border-top: 1px solid #e7873c;
-    background: white;
-    position: absolute;
+    /*border-top: 1px solid #e7873c;*/
+    /*background: white;*/
+    /*position: absolute;*/
     bottom: 0;
     display: flex;
     box-sizing: border-box;
@@ -148,7 +164,6 @@ body {
 }
 
 #widget_input_field::before {
-    content: attr(placeholder);
     display: flex;
     position: absolute;
     top: -15px;
@@ -156,6 +171,7 @@ body {
     left: 0;
     opacity: 0.5;
     height: 100%;
+    cursor: text;
     /*width: 300px;*/
     transition: .4s ease-in;
 }
@@ -271,7 +287,7 @@ body {
     padding: 1.1pc 10px;
     background: #f0965f;
     color: white;
-    width: 40%;
+    width: 38%;
     height: 33px;
     box-sizing: border-box;
     border: 1px solid #f0965f;
@@ -417,8 +433,6 @@ body {
 }
 
 #widget_queue {
-    position: absolute;
-    bottom: 95px;
     display: flex;
     flex-direction: column;
     padding: 10px;
@@ -489,9 +503,9 @@ body {
 }
 
 #widget_queue .choice_container {
-    position: absolute;
-    bottom: 10px;
-    width: 90%;
+    /*position: absolute;*/
+    /*bottom: 10px;*/
+    width: 100%;
     display: flex;
     flex-direction: row;
     flex-wrap: wrap;
@@ -499,13 +513,13 @@ body {
 
 #widget_queue .choice_container .choice_button {
     width: 45%;
-    margin: 10px 5px;
+    margin: 5px 5px;
     text-align: center;
-    padding: 5px 0;
+    padding: 8px 0;
     cursor: pointer;
     background: white;
     color: #e7873c;
-    font-size: 12px;
+    font-size: 14px;
     border: 1px solid #e7873c;
     border-radius: 10px;
     transition: .4s ease-in-out;
