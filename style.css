@@ -493,6 +493,8 @@ body {
 #modal_overlay {
     z-index: 900;
     position: absolute;
+    align-items: center;
+    justify-content: center;
     left: 0;
     top: 0;
     right: 0;

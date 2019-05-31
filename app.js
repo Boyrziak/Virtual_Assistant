@@ -487,19 +487,24 @@ jQuery(document).ready(function ($) {
             return this.currentLocation;
         },
         showCard: function (card) {
+            const newMessage = document.createElement('div');
+            $(newMessage).addClass('widget_message bot_message');
             const image = new Image();
             image.src = card['imageUri'];
             $(image).addClass('message_image');
+            $(newMessage).append(image);
             image.addEventListener('click', function () {
-                const lightbox = $('#widget_lightbox');
-                $(lightbox).empty();
-                $(this).clone().appendTo(lightbox);
-                $(lightbox).show('blind', { direction: 'up' }, 700);
-                $('#modal_overlay').show('explode', 800);
+                $('#modal_overlay').show('fade', 800,()=> {
+                    $('#modal_overlay').css('display', 'flex');
+                    const lightbox = $('#widget_lightbox');
+                    $(lightbox).empty();
+                    $(this).clone().appendTo(lightbox);
+                    $(lightbox).show('blind', { direction: 'up' }, 700);
+                });
             });
             image.addEventListener('load', function () {
                 setTimeout(function () {
-                    $(image).appendTo('#widget_queue').show('drop', { direction: 'left' }, 600);
+                    $(newMessage).appendTo('#widget_queue').show('drop', { direction: 'left' }, 600);
                 }, 600);
             });
         },
@@ -551,8 +556,8 @@ jQuery(document).ready(function ($) {
     });
 
     $('#modal_overlay').on('click', function () {
-        $('#widget_lightbox').hide('scale', 600);
-        $(this).hide('explode', 800);
+        $('#widget_lightbox').hide('fade', 600);
+        $(this).hide('fade', 800);
     });
 
     chat.socket = io('https://kh-gis-chat-bot.intetics.com', { path: '/chat/socket.io' });
