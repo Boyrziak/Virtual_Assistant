@@ -397,6 +397,7 @@ jQuery(document).ready(function ($) {
                 $(choiceContainer).append(choiceButton);
             });
             $(choiceContainer).appendTo('#widget_queue').show('drop', { direction: 'left' }, 600);
+            self.scrollQuery(600);
         },
         scrollQuery: function (timeout) {
             $('#widget_queue').animate({ scrollTop: $('#widget_queue')[0].scrollHeight }, timeout);
@@ -487,12 +488,15 @@ jQuery(document).ready(function ($) {
             return this.currentLocation;
         },
         showCard: function (card) {
+            const self = this;
             const newMessage = document.createElement('div');
             $(newMessage).addClass('widget_message bot_message');
             const image = new Image();
             image.src = card['imageUri'];
             $(image).addClass('message_image');
             $(newMessage).append(image);
+            $(newMessage).append(card.description);
+            let imgButtons = {buttons: card.buttons};
             image.addEventListener('click', function () {
                 $('#modal_overlay').show('fade', 800,()=> {
                     $('#modal_overlay').css('display', 'flex');
@@ -505,6 +509,8 @@ jQuery(document).ready(function ($) {
             image.addEventListener('load', function () {
                 setTimeout(function () {
                     $(newMessage).appendTo('#widget_queue').show('drop', { direction: 'left' }, 600);
+                    self.showChoice(imgButtons);
+                    self.scrollQuery(600);
                 }, 600);
             });
         },
