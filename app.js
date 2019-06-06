@@ -373,7 +373,7 @@ jQuery(document).ready(function ($) {
             chat.cancelNextMessageEvent();
             chat.socket.emit(WS_ENDPOINTS.MESSAGE, messageDto);
             chat.addMessage(messageDto);
-            lStorage.addMessageToHistory(messageDto);
+            // lStorage.addMessageToHistory(messageDto);
         },
         showChoice: function (choice) {
             const self = this;
