@@ -3,7 +3,7 @@
     src: url(fonts/Museosanscyrl500.ttf);
 }
 body {
-    overflow: hidden;
+    background: #007fff;
     font-family: 'MuseoSansCyrl', sans-serif;
 }
 
@@ -19,7 +19,7 @@ body {
     justify-content: center;
     align-items: center;
     font-size: 45px;
-    cursor: pointer;
+    cursor: grab;
     position: fixed;
     bottom: 50px;
     right: 50px;
@@ -66,7 +66,6 @@ body {
     font-family: 'MuseoSansCyrl', sans-serif;
     display: none;
     width: 30%;
-    background: white;
     /*max-height: 640px;*/
     height: 640px;
     box-sizing: border-box;
@@ -80,6 +79,7 @@ body {
     width: 100%;
     /*height: 100%;*/
     height: 505px;
+    background: white;
     overflow: hidden;
     border: 2px solid #e7873c;
     border-top: none;
@@ -105,6 +105,7 @@ body {
 
 #widget_header {
     position: relative;
+    cursor: grab;
     z-index: 200;
     height: 45px;
     background: #e7873c;
@@ -136,7 +137,6 @@ body {
     /*overflow-y: scroll;*/
     /*overflow-x: hidden;*/
     word-break: break-all;
-    cursor: pointer;
 }
 
 #widget_input_field {
@@ -277,7 +277,7 @@ body {
 
 #human_connect {
     position: absolute;
-    top: 60px;
+    top: 10px;
     right: 10px;
     cursor: pointer;
     z-index: 100;
@@ -345,7 +345,7 @@ body {
     border-radius: 100%;
     z-index: 199;
     border: 1px solid #e7873c;
-    box-shadow: inset 0 0 5px 4px #5b97f7;
+    box-shadow: inset 0 0 0px 1px #e7873c;
     transition: .4s ease-in;
 }
 
@@ -356,29 +356,29 @@ body {
     transition: .4s ease-out;
 }
 
-#audio_input::after {
-    content: '';
-    position: absolute;
-    width: 90%;
-    height: 90%;
-    border-radius: 100%;
-    border: 2px dashed #5b97f7;
-    transition: .4s ease-out;
-}
+/*#audio_input::after {*/
+    /*content: '';*/
+    /*position: absolute;*/
+    /*width: 101%;*/
+    /*height: 101%;*/
+    /*border-radius: 100%;*/
+    /*border: 2px dashed #5b97f7;*/
+    /*transition: .4s ease-out;*/
+/*}*/
 
-#audio_input::before {
-    content: '';
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    border-radius: 100%;
-    border: 2px dotted transparent;
-    transition: .4s ease-out;
-}
+/*#audio_input::before {*/
+    /*content: '';*/
+    /*position: absolute;*/
+    /*width: 105%;*/
+    /*height: 105%;*/
+    /*border-radius: 100%;*/
+    /*border: 2px dotted transparent;*/
+    /*transition: .4s ease-out;*/
+/*}*/
 
 #audio_input:hover {
     box-shadow: inset 0 0 3px 50px #e7873c;
-    border-width: 2px;
+    /*border-width: 2px;*/
     color: white;
     transition: .5s ease-out;
 }
@@ -389,17 +389,19 @@ body {
     transition: .5s ease-out;
 }
 
-#audio_input:hover::after {
-    border-width: 4px;
-    transition: .4s ease-out;
-}
+/*#audio_input:hover::after {*/
+    /*border-width: 4px;*/
+    /*transition: .4s ease-out;*/
+    /*width: 35px;*/
+    /*height: 35px;*/
+/*}*/
 
-#audio_input:hover::before {
-    width: 60%;
-    height: 60%;
-    border: 5px dotted #5b97f7;
-    transition: border .3s ease-out, width .2s ease-out .15s, height .2s ease-out .15s;
-}
+/*#audio_input:hover::before {*/
+    /*width: 60%;*/
+    /*height: 60%;*/
+    /*border: 5px dotted #5b97f7;*/
+    /*transition: border .3s ease-out, width .2s ease-out .15s, height .2s ease-out .15s;*/
+/*}*/
 
 #widget_input_field::-webkit-scrollbar {
     width: 8px;
@@ -421,11 +423,15 @@ body {
 
 #widget_queue .widget_message {
     max-width: 85%;
-    padding: 5px 10px;
+    /*padding: 5px 10px;*/
     border-radius: 10px;
     margin-bottom: 10px;
     overflow-wrap: break-word;
-    font-size: 16px;
+    /*font-size: 16px;*/
+    line-height: 18px;
+    font-family: 'Roboto', 'sans-serif';
+    font-size: 14px;
+    padding: 10px 12px;
 }
 
 #widget_queue .widget_message .message_image {
@@ -471,20 +477,20 @@ body {
 }
 
 #widget_queue .user_message {
-    background: #d6d1cc;
+    background: #f4f4f4;
     align-self: flex-end;
     color: #565656;
 }
 
 #widget_avatar {
     position: absolute;
-    top: 110px;
+    top: 60px;
     right: 0;
-    z-index: -1;
+    z-index: 0;
 }
 
 #widget_lightbox {
-    z-index: 999;
+    z-index: 1000;
     position: absolute;
     border: 2px solid #e7873c;
     background: white;
@@ -492,7 +498,7 @@ body {
 }
 
 #modal_overlay {
-    z-index: 900;
+    z-index: 999;
     position: absolute;
     align-items: center;
     justify-content: center;
@@ -526,6 +532,9 @@ body {
     border: 1px solid #e7873c;
     border-radius: 10px;
     transition: .4s ease-in-out;
+    line-height: 18px;
+    font-family: 'Roboto', 'sans-serif';
+    /*font-size: 14px;*/
 }
 
 #widget_queue .choice_container .choice_button:hover {

@@ -149,6 +149,7 @@ jQuery(document).ready(function ($) {
         messageQueue: 0,
         lastMessage: '',
         currentLocation: location.href,
+        expires: 5,
         connect: function () {
             console.log('Connected');
             $('.connection_indicator').css('color', 'green');
@@ -186,13 +187,14 @@ jQuery(document).ready(function ($) {
                 console.log(delayArr[0]);
             }
             chat.addMessage(messageDto);
-            lStorage.addMessageToHistory(messageDto);
         },
         initHistory: function (history) {
             lStorage.set(lStorage.keys.HISTORY, history);
             console.log('init history process with data:');
             console.log(history);
-            if (history != null) {
+            if (history) {
+                this.totalHistory = history;
+                console.log(this.totalHistory.length);
                 history.forEach(m => chat.addMessage(m));
                 chat.socket.emit(WS_ENDPOINTS.MESSAGE, ModelFactory.messageDtoBuilderEvent('WELCOME', SenderType.USER));
             } else {
@@ -221,6 +223,9 @@ jQuery(document).ready(function ($) {
             body.toggle('blind', { direction: 'down' }, 1000);
             if (body.offset().top <= 5) {
                 $(body).animate({ top: '10px' }, 500);
+            }
+            if (body.offset().left <= 5) {
+                $(body).animate({ left: '10px' }, 500);
             }
             button.draggable('disable');
             $('#widget_input').empty();
@@ -313,42 +318,40 @@ jQuery(document).ready(function ($) {
             self.messageQueue++;
             setTimeout(function () {
                 const options = { direction: '' };
+                if (sender === 'bot') {
+                    options.direction = 'left';
+                } else {
+                    options.direction = 'right';
+                }
                 messageDto.message.messages.forEach(mw => {
-                    if (mw['text'] != null) {
+                    if (mw.text) {
                         mw.text.text.forEach(t => {
-                            if (sender === 'bot') {
-                                options.direction = 'left';
-                                self.lastMessage = t;
-                            } else {
-                                options.direction = 'right';
-                            }
+                            self.lastMessage = t;
                             self.showText(t, sender, options);
                         });
                     }
-                    if (mw['event'] != null) {
-                        if (sender === 'bot') {
-                            options.direction = 'left';
-                            self.lastMessage = mw.event.name;
-                        } else {
-                            options.direction = 'right';
-                        }
-                        if (mw.event['display'] != null) {
+                    if (mw.event) {
+                        self.lastMessage = mw.event.name;
+                        if (mw.event.display) {
                             self.showEvent(mw.event, sender, options);
                         }
                     }
-                    if (mw['choice']) {
+                    if (mw.choice) {
                         self.showChoice(mw.choice);
+                        mw.choice = null;
                     }
-                    if (mw['card']) {
+                    if (mw.card) {
                         self.showCard(mw.card);
+                        mw.choice.buttons = null;
                     }
-                    if (mw['carousel']) {
+                    if (mw.carousel) {
                         console.log(mw.carousel);
                         throw new Error('There is no implementation for rendering CAROUSEL');
                     }
                 });
                 self.messageQueue--;
                 if (self.messageQueue === 0) self.scrollQuery(400);
+                lStorage.addMessageToHistory(messageDto);
             }, 600);
         },
         showEvent: function (event, sender, options) {
@@ -364,6 +367,7 @@ jQuery(document).ready(function ($) {
             if (!self.opened) {
                 self.showPreview(text);
             }
+            if (self.messageQueue === 0) setTimeout(self.scrollQuery(400), 400);
         },
         onRespond: function (messageDto) {
             chat.cancelNextMessageEvent();
@@ -383,8 +387,9 @@ jQuery(document).ready(function ($) {
                 choiceButton.addEventListener('click', function () {
                     console.log($(this).text());
                     $(this).addClass('chosen');
-                    if (button.postback.startsWith('CALL+')) {
-                        const functionName = button.postback.substr(button.postback.indexOf('+') + 1);
+                    let buttonPostback = /(CALL)\+(\w*)/g.exec(button.postback);
+                    if (buttonPostback && buttonPostback[1]) {
+                        const functionName = buttonPostback[2];
                         if (chat.hasOwnProperty(functionName)) {
                             chat.functionName();
                         }
@@ -623,4 +628,8 @@ jQuery(document).ready(function ($) {
     //         console.log('Recognition started');
     //         SpeechRecognition.start();
     // });
+    $(window).on('unload', ()=>{
+        chat.setCookie('close', 'closed', {expires: chat.expires});
+        // return "Bye now";
+    });
 });
