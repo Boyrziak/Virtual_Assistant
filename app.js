@@ -147,7 +147,10 @@ jQuery(document).ready(function ($) {
         firstTime: true,
         APIkey: '563492ad6f91700001000001bb151c8c07f048768f0c409fc846429b',
         messageQueue: 0,
+        messageArray: [],
         lastMessage: '',
+        type_timer: 1000,
+        pause_timer: 500,
         currentLocation: location.href,
         expires: 5,
         connect: function () {
@@ -518,6 +521,23 @@ jQuery(document).ready(function ($) {
                     self.scrollQuery(600);
                 }, 600);
             });
+        },
+        flushQueue: function (currentQueue) {
+            let self = this;
+            if (currentQueue.length > 0) {
+                let currentElement = currentQueue.shift();
+                setTimeout(() => {
+                    // $('#message_queue').animate({paddingBottom: '60px'},200);
+                    self.scrollQuery(400);
+                    $('#waves_message').show('drop', {'direction': 'left'}, 800);
+                    setTimeout(() => {
+                        $('#waves_message').hide('drop', {'direction': 'left'}, 200);
+                        // $('#message_queue').animate({paddingBottom: '8px'},300);
+                        self.addMessage(currentElement.value, currentElement.sender, currentElement.type);
+                        self.flushQueue(currentQueue);
+                    }, self.type_timer);
+                }, self.pause_timer);
+            }
         },
         connectWithHuman: function () {
             const msg = ModelFactory.messageDtoBuilderEvent('CONNECT_WITH_HUMAN', SenderType.USER, 'connect with human');

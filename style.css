@@ -542,3 +542,28 @@ body {
     color: white;
     transition: .5s ease-in;
 }
+
+#gaspar_container #gaspar_body #message_queue #waves_message {
+    display: none;
+    position: absolute;
+    bottom: 78px;
+    margin-bottom: 12px;
+    padding: 5px 12px;
+}
+
+#gaspar_container #gaspar_body #message_queue #waves_message #wave {
+    position: relative;
+    text-align: center;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+#gaspar_container #gaspar_body #message_queue #waves_message #wave .dot {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    margin-right: 1px;
+    background: white;
+    animation: wave 1.3s linear infinite;
+}
