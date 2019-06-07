@@ -218,6 +218,9 @@ jQuery(document).ready(function ($) {
         open: function () {
             const button = $('#widget_button');
             const self = this;
+            self.scrollQuery(100);
+            // $('#widget_queue')[0].scrollTop = $('#widget_queue')[0].outerHeight();
+            console.log('Opened');
             const body = $('#widget_container');
             body.css({
                 top: button.offset().top - body.outerHeight() - 40 + 'px',
@@ -238,7 +241,6 @@ jQuery(document).ready(function ($) {
             // TODO update the line below when refactoring the init method
             lStorage.set(lStorage.keys.IS_WIDGET_OPEN, self.opened);
             $('#preview_container').empty().hide('drop', 600);
-            self.scrollQuery(600);
         },
         close: function () {
             const body = $('#widget_container');
@@ -350,7 +352,7 @@ jQuery(document).ready(function ($) {
                         mw.card.buttons = null;
                     }
                     if (mw.carousel) {
-                        self.s
+                        // self.s
                         console.log(mw.carousel);
                         throw new Error('There is no implementation for rendering CAROUSEL');
                     }
@@ -358,8 +360,9 @@ jQuery(document).ready(function ($) {
                     // self.scrollQuery(400);
                     // if (self.messageQueue === 0) self.scrollQuery(400);
                 });
-                self.messageQueue--;
-                if (self.messageQueue === 0) self.scrollQuery(400);
+                self.scrollQuery(1);
+                // self.messageQueue--;
+                // if (self.messageQueue === 0) self.scrollQuery(100);
                 lStorage.addMessageToHistory(messageDto);
             }, 600);
         },
@@ -376,15 +379,11 @@ jQuery(document).ready(function ($) {
             if (!self.opened) {
                 self.showPreview(text);
             }
-            // if (self.messageQueue === 0) setTimeout(self.scrollQuery(400), 400);
         },
         onRespond: function (messageDto) {
             chat.cancelNextMessageEvent();
             chat.socket.emit(WS_ENDPOINTS.MESSAGE, messageDto);
             chat.addMessage(messageDto);
-            // chat.messageArray.push(messageDto);
-            // chat.flushNewQueue(chat.messageArray);
-            // lStorage.addMessageToHistory(messageDto);
         },
         showChoice: function (choice) {
             const self = this;
@@ -414,7 +413,7 @@ jQuery(document).ready(function ($) {
                     $(choiceContainer).append(choiceButton);
                 });
                 $(choiceContainer).appendTo('#widget_queue').show('drop', {direction: 'left'}, 600);
-                self.scrollQuery(600);
+                // self.scrollQuery(600);
             }
         },
         scrollQuery: function (timeout) {
@@ -538,7 +537,7 @@ jQuery(document).ready(function ($) {
             // });
             $(newMessage).appendTo('#widget_queue').show('drop', {direction: 'left'}, 600);
             self.showChoice(imgButtons);
-            self.scrollQuery(600);
+            // self.scrollQuery(600);
         },
         showCarousel: function(cards) {
             const self = this;
