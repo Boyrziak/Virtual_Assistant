@@ -189,16 +189,22 @@ jQuery(document).ready(function ($) {
                 chat.sendNextMessageEvent(delay, eventName);
                 console.log(delayArr[0]);
             }
-            chat.addMessage(messageDto);
+            chat.messageArray.push(messageDto);
+            chat.flushQueue(chat.messageArray);
+            // chat.addMessage(messageDto);
         },
         initHistory: function (history) {
             lStorage.set(lStorage.keys.HISTORY, history);
             console.log('init history process with data:');
             console.log(history);
             if (history) {
-                this.totalHistory = history;
-                console.log(this.totalHistory.length);
-                history.forEach(m => chat.addMessage(m));
+                chat.messageArray.push(history);
+                chat.flushQueue(chat.messageArray);
+
+                history.forEach(m => {
+                    // chat.addMessage(m)
+
+                });
                 chat.socket.emit(WS_ENDPOINTS.MESSAGE, ModelFactory.messageDtoBuilderEvent('WELCOME', SenderType.USER));
             } else {
                 console.log('init history null');
@@ -345,7 +351,7 @@ jQuery(document).ready(function ($) {
                     }
                     if (mw.card) {
                         self.showCard(mw.card);
-                        mw.choice.buttons = null;
+                        mw.card.buttons = null;
                     }
                     if (mw.carousel) {
                         console.log(mw.carousel);
@@ -375,37 +381,41 @@ jQuery(document).ready(function ($) {
         onRespond: function (messageDto) {
             chat.cancelNextMessageEvent();
             chat.socket.emit(WS_ENDPOINTS.MESSAGE, messageDto);
-            chat.addMessage(messageDto);
+            // chat.addMessage(messageDto);
+            chat.messageArray.push(messageDto);
+            chat.flushQueue(chat.messageArray);
             // lStorage.addMessageToHistory(messageDto);
         },
         showChoice: function (choice) {
             const self = this;
-            const choiceContainer = document.createElement('div');
-            $(choiceContainer).addClass('choice_container');
-            choice.buttons.forEach(function (button) {
-                const choiceButton = document.createElement('span');
-                $(choiceButton).addClass('choice_button');
-                $(choiceButton).text(button.text);
-                // Здесь обработчик на нажатие кнопки
-                choiceButton.addEventListener('click', function () {
-                    console.log($(this).text());
-                    $(this).addClass('chosen');
-                    let buttonPostback = /(CALL)\+(\w*)/g.exec(button.postback);
-                    if (buttonPostback && buttonPostback[1]) {
-                        const functionName = buttonPostback[2];
-                        if (chat.hasOwnProperty(functionName)) {
-                            chat.functionName();
+            if (choice.buttons) {
+                const choiceContainer = document.createElement('div');
+                $(choiceContainer).addClass('choice_container');
+                choice.buttons.forEach(function (button) {
+                    const choiceButton = document.createElement('span');
+                    $(choiceButton).addClass('choice_button');
+                    $(choiceButton).text(button.text);
+                    // Здесь обработчик на нажатие кнопки
+                    choiceButton.addEventListener('click', function () {
+                        console.log($(this).text());
+                        $(this).addClass('chosen');
+                        let buttonPostback = /(CALL)\+(\w*)/g.exec(button.postback);
+                        if (buttonPostback && buttonPostback[1]) {
+                            const functionName = buttonPostback[2];
+                            if (chat.hasOwnProperty(functionName)) {
+                                chat.functionName();
+                            }
+                        } else {
+                            const chosenValue = ModelFactory.messageDtoBuilderText(button.postback, SenderType.USER);
+                            self.onRespond(chosenValue);
                         }
-                    } else {
-                        const chosenValue = ModelFactory.messageDtoBuilderText(button.postback, SenderType.USER);
-                        self.onRespond(chosenValue);
-                    }
-                    $(choiceContainer).remove();
+                        $(choiceContainer).remove();
+                    });
+                    $(choiceContainer).append(choiceButton);
                 });
-                $(choiceContainer).append(choiceButton);
-            });
-            $(choiceContainer).appendTo('#widget_queue').show('drop', { direction: 'left' }, 600);
-            self.scrollQuery(600);
+                $(choiceContainer).appendTo('#widget_queue').show('drop', {direction: 'left'}, 600);
+                self.scrollQuery(600);
+            }
         },
         scrollQuery: function (timeout) {
             $('#widget_queue').animate({ scrollTop: $('#widget_queue')[0].scrollHeight }, timeout);
@@ -456,7 +466,9 @@ jQuery(document).ready(function ($) {
                     }
                 }
                 const history = lStorage.get(lStorage.keys.HISTORY);
-                history.forEach(m => chat.addMessage(m));
+                chat.messageArray.push(history);
+                chat.flushQueue(history);
+                // history.forEach(m => chat.addMessage(m));
                 if (lStorage.has(lStorage.keys.IS_WIDGET_OPEN) && (chat.getCurrentLocation() !== lStorage.get(lStorage.keys.PREVIOUS_URL))) {
                     chat.onUrlChanged();
                 }
@@ -524,19 +536,28 @@ jQuery(document).ready(function ($) {
         },
         flushQueue: function (currentQueue) {
             let self = this;
+            console.log(currentQueue);
+            let newQueue = currentQueue;
+            if (currentQueue.length > 10) {
+                currentQueue.splice(0, currentQueue.length - 10);
+            }
+            console.log(currentQueue);
             if (currentQueue.length > 0) {
                 let currentElement = currentQueue.shift();
-                setTimeout(() => {
-                    // $('#message_queue').animate({paddingBottom: '60px'},200);
-                    self.scrollQuery(400);
-                    $('#waves_message').show('drop', {'direction': 'left'}, 800);
-                    setTimeout(() => {
-                        $('#waves_message').hide('drop', {'direction': 'left'}, 200);
-                        // $('#message_queue').animate({paddingBottom: '8px'},300);
-                        self.addMessage(currentElement.value, currentElement.sender, currentElement.type);
-                        self.flushQueue(currentQueue);
-                    }, self.type_timer);
-                }, self.pause_timer);
+                self.addMessage(currentElement);
+                self.flushQueue(currentQueue);
+                // console.log(currentElement);
+                // setTimeout(() => {
+                //     // $('#message_queue').animate({paddingBottom: '60px'},200);
+                //     self.scrollQuery(400);
+                //     $('#waves_message').show('drop', {'direction': 'left'}, 800);
+                //     setTimeout(() => {
+                //         $('#waves_message').hide('drop', {'direction': 'left'}, 200);
+                //         // $('#message_queue').animate({paddingBottom: '8px'},300);
+                //         self.addMessage(currentElement);
+                //         self.flushQueue(currentQueue);
+                //     }, self.type_timer);
+                // }, self.pause_timer);
             }
         },
         connectWithHuman: function () {

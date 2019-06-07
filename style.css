@@ -544,7 +544,7 @@ body {
 }
 
 #gaspar_container #gaspar_body #message_queue #waves_message {
-    display: none;
+    /*display: none;*/
     position: absolute;
     bottom: 78px;
     margin-bottom: 12px;
