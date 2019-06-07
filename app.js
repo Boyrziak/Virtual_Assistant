@@ -352,9 +352,9 @@ jQuery(document).ready(function ($) {
                         mw.card.buttons = null;
                     }
                     if (mw.carousel) {
-                        // self.s
-                        console.log(mw.carousel);
-                        throw new Error('There is no implementation for rendering CAROUSEL');
+                        console.log(mw.carousel.cards);
+                        self.showCarousel(mw.carousel.cards);
+                        // throw new Error('There is no implementation for rendering CAROUSEL');
                     }
                     // self.messageQueue--;
                     // self.scrollQuery(400);
@@ -513,13 +513,20 @@ jQuery(document).ready(function ($) {
             const self = this;
             const newMessage = document.createElement('div');
             $(newMessage).addClass('widget_message bot_message');
-            const image = new Image();
-            image.src = card['imageUri'];
-            $(image).addClass('message_image');
-            $(newMessage).append(image);
+            let cardButtons = {buttons: card.buttons};
+            let content = null;
+            if (card.imageUri) {
+                content = new Image();
+                content.src = card.imageUri;
+                $(content).addClass('message_image');
+            } else if (card.videoUri) {
+                content = document.createElement('video');
+                content.src = card.videoUri;
+                $(content).addClass('message_video');
+            }
+            $(newMessage).append(content);
             $(newMessage).append(card.description);
-            let imgButtons = {buttons: card.buttons};
-            image.addEventListener('click', function () {
+            content.addEventListener('click', function () {
                 $('#modal_overlay').show('fade', 800, () => {
                     $('#modal_overlay').css('display', 'flex');
                     const lightbox = $('#widget_lightbox');
@@ -536,14 +543,42 @@ jQuery(document).ready(function ($) {
             //     }, 600);
             // });
             $(newMessage).appendTo('#widget_queue').show('drop', {direction: 'left'}, 600);
-            self.showChoice(imgButtons);
+            self.showChoice(cardButtons);
             // self.scrollQuery(600);
         },
         showCarousel: function(cards) {
             const self = this;
             const carouselHolder = document.createElement('div');
             $(carouselHolder).addClass('carousel_holder');
-
+            cards.forEach((card)=>{
+                const newMessage = document.createElement('div');
+                $(newMessage).addClass('widget_message bot_message');
+                let cardButtons = {buttons: card.buttons};
+                let content = null;
+                if (card.imageUri) {
+                    content = new Image();
+                    content.src = card.imageUri;
+                    $(content).addClass('message_image');
+                    content.addEventListener('click', function () {
+                        $('#modal_overlay').show('fade', 800, () => {
+                            $('#modal_overlay').css('display', 'flex');
+                            const lightbox = $('#widget_lightbox');
+                            $(lightbox).empty();
+                            $(this).clone().appendTo(lightbox);
+                            $(lightbox).show('blind', {direction: 'up'}, 700);
+                        });
+                    });
+                } else if (card.videoUri) {
+                    content = document.createElement('video');
+                    content.src = card.videoUri;
+                    $(content).addClass('message_video');
+                    $(content).attr('controls', 'true');
+                }
+                $(newMessage).append(content);
+                $(newMessage).append(card.description);
+                $(carouselHolder).append(newMessage);
+            });
+            $(carouselHolder).appendTo('#widget_queue').show('drop', {direction: 'left'}, 600);
         },
         flushQueue: function (currentQueue) {
             let self = this;

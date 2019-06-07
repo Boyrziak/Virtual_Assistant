@@ -440,6 +440,11 @@ body {
     cursor: pointer;
 }
 
+#widget_queue .widget_message .message_video {
+    width: 100%;
+    cursor: pointer;
+}
+
 #widget_queue {
     display: flex;
     flex-direction: column;
