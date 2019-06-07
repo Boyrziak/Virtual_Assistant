@@ -383,7 +383,7 @@ jQuery(document).ready(function ($) {
             chat.addMessage(messageDto);
             // chat.messageArray.push(messageDto);
             // chat.flushNewQueue(chat.messageArray);
-            lStorage.addMessageToHistory(messageDto);
+            // lStorage.addMessageToHistory(messageDto);
         },
         showChoice: function (choice) {
             const self = this;
@@ -528,13 +528,16 @@ jQuery(document).ready(function ($) {
                     $(lightbox).show('blind', {direction: 'up'}, 700);
                 });
             });
-            image.addEventListener('load', function () {
-                setTimeout(function () {
-                    $(newMessage).appendTo('#widget_queue').show('drop', {direction: 'left'}, 600);
-                    self.showChoice(imgButtons);
-                    self.scrollQuery(600);
-                }, 600);
-            });
+            // image.addEventListener('load', function () {
+            //     setTimeout(function () {
+            //         $(newMessage).appendTo('#widget_queue').show('drop', {direction: 'left'}, 600);
+            //         self.showChoice(imgButtons);
+            //         self.scrollQuery(600);
+            //     }, 600);
+            // });
+            $(newMessage).appendTo('#widget_queue').show('drop', {direction: 'left'}, 600);
+            self.showChoice(imgButtons);
+            self.scrollQuery(600);
         },
         flushQueue: function (currentQueue) {
             let self = this;
@@ -558,7 +561,6 @@ jQuery(document).ready(function ($) {
                         $('#waves_message').hide('drop', {'direction': 'left'}, 200);
                         self.addMessage(currentElement);
                         self.flushQueue(currentQueue);
-                        self.scrollQuery(400)
                     }, self.type_timer);
                 }, self.pause_timer);
             }
