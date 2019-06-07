@@ -355,7 +355,7 @@ jQuery(document).ready(function ($) {
                         throw new Error('There is no implementation for rendering CAROUSEL');
                     }
                     // self.messageQueue--;
-                    // self.scrollQuery(400)
+                    // self.scrollQuery(400);
                     // if (self.messageQueue === 0) self.scrollQuery(400);
                 });
                 self.messageQueue--;
@@ -414,7 +414,7 @@ jQuery(document).ready(function ($) {
                     $(choiceContainer).append(choiceButton);
                 });
                 $(choiceContainer).appendTo('#widget_queue').show('drop', {direction: 'left'}, 600);
-                // self.scrollQuery(600);
+                self.scrollQuery(600);
             }
         },
         scrollQuery: function (timeout) {
@@ -538,7 +538,7 @@ jQuery(document).ready(function ($) {
             // });
             $(newMessage).appendTo('#widget_queue').show('drop', {direction: 'left'}, 600);
             self.showChoice(imgButtons);
-            // self.scrollQuery(600);
+            self.scrollQuery(600);
         },
         showCarousel: function(cards) {
             const self = this;
