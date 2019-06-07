@@ -238,7 +238,7 @@ jQuery(document).ready(function ($) {
             // TODO update the line below when refactoring the init method
             lStorage.set(lStorage.keys.IS_WIDGET_OPEN, self.opened);
             $('#preview_container').empty().hide('drop', 600);
-            self.scrollQuery(1200);
+            self.scrollQuery(600);
         },
         close: function () {
             const body = $('#widget_container');
@@ -320,7 +320,6 @@ jQuery(document).ready(function ($) {
         addMessage: function (messageDto) {
             const sender = messageDto.senderType;
             const self = this;
-            self.messageQueue++;
             setTimeout(function () {
                 const options = {direction: ''};
                 if (sender === 'bot') {
@@ -329,6 +328,7 @@ jQuery(document).ready(function ($) {
                     options.direction = 'right';
                 }
                 messageDto.message.messages.forEach(mw => {
+                    self.messageQueue++;
                     if (mw.text) {
                         mw.text.text.forEach(t => {
                             self.lastMessage = t;
@@ -350,11 +350,12 @@ jQuery(document).ready(function ($) {
                         mw.card.buttons = null;
                     }
                     if (mw.carousel) {
+                        self.s
                         console.log(mw.carousel);
                         throw new Error('There is no implementation for rendering CAROUSEL');
                     }
-                    self.messageQueue--;
-                    self.scrollQuery(400)
+                    // self.messageQueue--;
+                    // self.scrollQuery(400)
                     // if (self.messageQueue === 0) self.scrollQuery(400);
                 });
                 self.messageQueue--;
@@ -375,7 +376,7 @@ jQuery(document).ready(function ($) {
             if (!self.opened) {
                 self.showPreview(text);
             }
-            if (self.messageQueue === 0) setTimeout(self.scrollQuery(400), 400);
+            // if (self.messageQueue === 0) setTimeout(self.scrollQuery(400), 400);
         },
         onRespond: function (messageDto) {
             chat.cancelNextMessageEvent();
@@ -413,7 +414,7 @@ jQuery(document).ready(function ($) {
                     $(choiceContainer).append(choiceButton);
                 });
                 $(choiceContainer).appendTo('#widget_queue').show('drop', {direction: 'left'}, 600);
-                self.scrollQuery(600);
+                // self.scrollQuery(600);
             }
         },
         scrollQuery: function (timeout) {
@@ -537,7 +538,13 @@ jQuery(document).ready(function ($) {
             // });
             $(newMessage).appendTo('#widget_queue').show('drop', {direction: 'left'}, 600);
             self.showChoice(imgButtons);
-            self.scrollQuery(600);
+            // self.scrollQuery(600);
+        },
+        showCarousel: function(cards) {
+            const self = this;
+            const carouselHolder = document.createElement('div');
+            $(carouselHolder).addClass('carousel_holder');
+
         },
         flushQueue: function (currentQueue) {
             let self = this;
@@ -555,7 +562,7 @@ jQuery(document).ready(function ($) {
             if (currentQueue.length > 0) {
                 let currentElement = currentQueue.shift();
                 setTimeout(() => {
-                    self.scrollQuery(400);
+                    // self.scrollQuery(400);
                     $('#waves_message').show('drop', {'direction': 'left'}, 800);
                     setTimeout(() => {
                         $('#waves_message').hide('drop', {'direction': 'left'}, 200);

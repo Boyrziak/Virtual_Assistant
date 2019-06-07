@@ -154,11 +154,11 @@ body {
     padding: 5px;
 }
 
-#widget_input::after {
+#widget_input_field::after {
     content: '';
     position: absolute;
     height: 2px;
-    top: 0;
+    top: -20px;
     width: 0;
     left: 50%;
     background: #007fff;
@@ -189,7 +189,7 @@ body {
     transition: .4s ease-in;
 }
 
-#widget_input_field:focus #widget_input::after {
+#widget_input_field:focus::after {
     width: calc( 100% + 4px );
     left: 0;
     transition: .5s cubic-bezier(0.3, 1, 0.6, 0.6);
