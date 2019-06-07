@@ -190,7 +190,7 @@ jQuery(document).ready(function ($) {
                 console.log(delayArr[0]);
             }
             chat.messageArray.push(messageDto);
-            chat.flushQueue(chat.messageArray);
+            chat.flushNewQueue(chat.messageArray);
             // chat.addMessage(messageDto);
         },
         initHistory: function (history) {
@@ -198,13 +198,9 @@ jQuery(document).ready(function ($) {
             console.log('init history process with data:');
             console.log(history);
             if (history) {
-                chat.messageArray.push(history);
-                chat.flushQueue(chat.messageArray);
+                chat.flushQueue(history);
 
-                history.forEach(m => {
-                    // chat.addMessage(m)
-
-                });
+                // history.forEach(m => );
                 chat.socket.emit(WS_ENDPOINTS.MESSAGE, ModelFactory.messageDtoBuilderEvent('WELCOME', SenderType.USER));
             } else {
                 console.log('init history null');
@@ -229,12 +225,12 @@ jQuery(document).ready(function ($) {
             });
             button.addClass('clicked');
             body.addClass('opened');
-            body.toggle('blind', { direction: 'down' }, 1000);
+            body.toggle('blind', {direction: 'down'}, 1000);
             if (body.offset().top <= 5) {
-                $(body).animate({ top: '10px' }, 500);
+                $(body).animate({top: '10px'}, 500);
             }
             if (body.offset().left <= 5) {
-                $(body).animate({ left: '10px' }, 500);
+                $(body).animate({left: '10px'}, 500);
             }
             button.draggable('disable');
             $('#widget_input').empty();
@@ -254,13 +250,13 @@ jQuery(document).ready(function ($) {
             });
             button.removeClass('clicked');
             body.removeClass('opened');
-            body.toggle('blind', { direction: 'down' }, 1000);
+            body.toggle('blind', {direction: 'down'}, 1000);
             this.opened = false;
             // TODO update the line below when refactoring the init method
             lStorage.set(lStorage.keys.IS_WIDGET_OPEN, self.opened);
             button.draggable('enable');
             if (button.offset().top + button.outerHeight() >= $(window).outerHeight() - 5) {
-                $(button).animate({ top: $(window).outerHeight() - button.outerHeight() - 10 + 'px' }, 500);
+                $(button).animate({top: $(window).outerHeight() - button.outerHeight() - 10 + 'px'}, 500);
             }
             // self.showPreview(this.lastMessage);
             console.log(self.lastMessage);
@@ -270,14 +266,14 @@ jQuery(document).ready(function ($) {
             const windowHeight = $(window).outerHeight();
             const windowWidth = $(window).outerWidth();
             if (body.offset().top <= 5) {
-                $(body).animate({ top: '10px' }, 500);
+                $(body).animate({top: '10px'}, 500);
             } else if (body.offset().top + body.outerHeight() > windowHeight) {
-                $(body).animate({ top: windowHeight - body.outerHeight() - 5 + 'px' }, 500);
+                $(body).animate({top: windowHeight - body.outerHeight() - 5 + 'px'}, 500);
             }
             if (body.offset().left < 0) {
-                $(body).animate({ left: '10px' }, 500);
+                $(body).animate({left: '10px'}, 500);
             } else if (body.offset().left + body.outerWidth() > windowWidth) {
-                $(body).animate({ left: windowWidth - body.outerWidth() - 5 + 'px' }, 500);
+                $(body).animate({left: windowWidth - body.outerWidth() - 5 + 'px'}, 500);
             }
         },
         setCookie: function (name, value, options) {
@@ -326,7 +322,7 @@ jQuery(document).ready(function ($) {
             const self = this;
             self.messageQueue++;
             setTimeout(function () {
-                const options = { direction: '' };
+                const options = {direction: ''};
                 if (sender === 'bot') {
                     options.direction = 'left';
                 } else {
@@ -357,6 +353,9 @@ jQuery(document).ready(function ($) {
                         console.log(mw.carousel);
                         throw new Error('There is no implementation for rendering CAROUSEL');
                     }
+                    self.messageQueue--;
+                    self.scrollQuery(400)
+                    // if (self.messageQueue === 0) self.scrollQuery(400);
                 });
                 self.messageQueue--;
                 if (self.messageQueue === 0) self.scrollQuery(400);
@@ -381,10 +380,10 @@ jQuery(document).ready(function ($) {
         onRespond: function (messageDto) {
             chat.cancelNextMessageEvent();
             chat.socket.emit(WS_ENDPOINTS.MESSAGE, messageDto);
-            // chat.addMessage(messageDto);
-            chat.messageArray.push(messageDto);
-            chat.flushQueue(chat.messageArray);
-            // lStorage.addMessageToHistory(messageDto);
+            chat.addMessage(messageDto);
+            // chat.messageArray.push(messageDto);
+            // chat.flushNewQueue(chat.messageArray);
+            lStorage.addMessageToHistory(messageDto);
         },
         showChoice: function (choice) {
             const self = this;
@@ -418,10 +417,10 @@ jQuery(document).ready(function ($) {
             }
         },
         scrollQuery: function (timeout) {
-            $('#widget_queue').animate({ scrollTop: $('#widget_queue')[0].scrollHeight }, timeout);
+            $('#widget_queue').animate({scrollTop: $('#widget_queue')[0].scrollHeight}, timeout);
         },
         showPreview: function (text) {
-            const options = { direction: 'left' };
+            const options = {direction: 'left'};
             $('#preview_container').hide('drop', options, 600);
             setTimeout(function () {
                 $('#preview_container').empty().append(text).show('fold', options, 600);
@@ -448,7 +447,7 @@ jQuery(document).ready(function ($) {
         },
         initialize: function () {
             if (chat.isSessionExpired()) {
-                chat.socket.emit(WS_ENDPOINTS.INIT_BOT, { id: 1 });
+                chat.socket.emit(WS_ENDPOINTS.INIT_BOT, {id: 1});
                 if (lStorage.has(lStorage.keys.USER)) {
                     // return history for existing user
                     const user = lStorage.get(lStorage.keys.USER);
@@ -473,6 +472,9 @@ jQuery(document).ready(function ($) {
                     chat.onUrlChanged();
                 }
             }
+            setTimeout(() => {
+                $('#widget_button').animate({opacity: '1'}, 600);
+            }, 500);
         },
         deleteMyDataRequest: function () {
             const messageDto = ModelFactory.messageDtoBuilderEvent('CLEAR_USER_DATA', SenderType.USER, 'clear my data');
@@ -518,17 +520,17 @@ jQuery(document).ready(function ($) {
             $(newMessage).append(card.description);
             let imgButtons = {buttons: card.buttons};
             image.addEventListener('click', function () {
-                $('#modal_overlay').show('fade', 800,()=> {
+                $('#modal_overlay').show('fade', 800, () => {
                     $('#modal_overlay').css('display', 'flex');
                     const lightbox = $('#widget_lightbox');
                     $(lightbox).empty();
                     $(this).clone().appendTo(lightbox);
-                    $(lightbox).show('blind', { direction: 'up' }, 700);
+                    $(lightbox).show('blind', {direction: 'up'}, 700);
                 });
             });
             image.addEventListener('load', function () {
                 setTimeout(function () {
-                    $(newMessage).appendTo('#widget_queue').show('drop', { direction: 'left' }, 600);
+                    $(newMessage).appendTo('#widget_queue').show('drop', {direction: 'left'}, 600);
                     self.showChoice(imgButtons);
                     self.scrollQuery(600);
                 }, 600);
@@ -536,28 +538,29 @@ jQuery(document).ready(function ($) {
         },
         flushQueue: function (currentQueue) {
             let self = this;
-            console.log(currentQueue);
-            let newQueue = currentQueue;
             if (currentQueue.length > 10) {
                 currentQueue.splice(0, currentQueue.length - 10);
             }
-            console.log(currentQueue);
             if (currentQueue.length > 0) {
                 let currentElement = currentQueue.shift();
                 self.addMessage(currentElement);
                 self.flushQueue(currentQueue);
-                // console.log(currentElement);
-                // setTimeout(() => {
-                //     // $('#message_queue').animate({paddingBottom: '60px'},200);
-                //     self.scrollQuery(400);
-                //     $('#waves_message').show('drop', {'direction': 'left'}, 800);
-                //     setTimeout(() => {
-                //         $('#waves_message').hide('drop', {'direction': 'left'}, 200);
-                //         // $('#message_queue').animate({paddingBottom: '8px'},300);
-                //         self.addMessage(currentElement);
-                //         self.flushQueue(currentQueue);
-                //     }, self.type_timer);
-                // }, self.pause_timer);
+            }
+        },
+        flushNewQueue: function (currentQueue) {
+            let self = this;
+            if (currentQueue.length > 0) {
+                let currentElement = currentQueue.shift();
+                setTimeout(() => {
+                    self.scrollQuery(400);
+                    $('#waves_message').show('drop', {'direction': 'left'}, 800);
+                    setTimeout(() => {
+                        $('#waves_message').hide('drop', {'direction': 'left'}, 200);
+                        self.addMessage(currentElement);
+                        self.flushQueue(currentQueue);
+                        self.scrollQuery(400)
+                    }, self.type_timer);
+                }, self.pause_timer);
             }
         },
         connectWithHuman: function () {
@@ -567,19 +570,13 @@ jQuery(document).ready(function ($) {
         }
     };
 
-    // let timeout = 5000;
-    //
-    // let idleTimer = setTimeout(function () {
-    //     chat.idleAction(timeout);
-    // }, timeout);
-
     $('#human_connect').on('click', function () {
         chat.connectWithHuman();
     });
 
     $('#widget_input_field').keypress(function (e) {
         if (!lStorage.has(lStorage.keys.USER)) {
-            chat.socket.emit(WS_ENDPOINTS.INIT_USER_COVERTLY, { id: null });
+            chat.socket.emit(WS_ENDPOINTS.INIT_USER_COVERTLY, {id: null});
         }
     });
 
@@ -612,7 +609,7 @@ jQuery(document).ready(function ($) {
         $(this).hide('fade', 800);
     });
 
-    chat.socket = io('https://kh-gis-chat-bot.intetics.com', { path: '/chat/socket.io' });
+    chat.socket = io('https://kh-gis-chat-bot.intetics.com', {path: '/chat/socket.io'});
     // if (chat.currentLocation.startsWith('https://kh-gis-chat-bot.intetics.com')) {
     //     // eslint-disable-next-line no-undef
     //     chat.socket = io('https://kh-gis-chat-bot.intetics.com', { path: '/chat/socket.io' });
@@ -669,7 +666,7 @@ jQuery(document).ready(function ($) {
     //         console.log('Recognition started');
     //         SpeechRecognition.start();
     // });
-    $(window).on('unload', ()=>{
+    $(window).on('unload', () => {
         chat.setCookie('close', 'closed', {expires: chat.expires});
         // return "Bye now";
     });
