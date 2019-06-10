@@ -223,9 +223,6 @@ jQuery(document).ready(function ($) {
         open: function () {
             const button = $('#widget_button');
             const self = this;
-            // self.scrollQuery(1);
-            // $('#widget_queue')[0].scrollTop = $('#widget_queue')[0].outerHeight();
-            console.log('Opened');
             const body = $('#widget_container');
             body.css({
                 top: button.offset().top - body.outerHeight() - 40 + 'px',
@@ -249,10 +246,10 @@ jQuery(document).ready(function ($) {
             self.scrollQuery(10);
             let timer = setInterval(() => {
                 $('#widget_queue')[0].scrollTop = 99999;
-            },20);
-            setTimeout(()=>{
-               clearInterval(timer);
-            },1000);
+            }, 20);
+            setTimeout(() => {
+                clearInterval(timer);
+            }, 1000);
         },
         close: function () {
             const body = $('#widget_container');
@@ -272,7 +269,6 @@ jQuery(document).ready(function ($) {
             if (button.offset().top + button.outerHeight() >= $(window).outerHeight() - 5) {
                 $(button).animate({top: $(window).outerHeight() - button.outerHeight() - 10 + 'px'}, 500);
             }
-            // self.showPreview(this.lastMessage);
             console.log(self.lastMessage);
         },
         reposition: function () {
@@ -366,15 +362,9 @@ jQuery(document).ready(function ($) {
                     if (mw.carousel) {
                         console.log(mw.carousel.cards);
                         self.showCarousel(mw.carousel.cards);
-                        // throw new Error('There is no implementation for rendering CAROUSEL');
                     }
-                    // self.messageQueue--;
-                    // self.scrollQuery(400);
-                    // if (self.messageQueue === 0) self.scrollQuery(400);
                 });
                 self.scrollQuery(1);
-                // self.messageQueue--;
-                // if (self.messageQueue === 0) self.scrollQuery(100);
                 lStorage.addMessageToHistory(messageDto);
             }, 600);
         },
@@ -632,11 +622,7 @@ jQuery(document).ready(function ($) {
 
             setTimeout(() => {
                 let width = $(carouselHolder).outerWidth();
-                console.log(width / cards.length);
-                $('.carousel_card').css({'min-width': width + 'px'});
-
-                let bigWidth = $('#carousel_lightbox').outerWidth();
-                // $('.lightbox_card').css({'min-width': bigWidth + 'px'});
+                $(carouselHolder).find('.carousel_card').css({'min-width': width || 267.91 + 'px'});
 
                 let rightArrow = document.createElement('div');
                 $(rightArrow).addClass('arrow_button right_arrow');
@@ -895,10 +881,56 @@ jQuery(document).ready(function ($) {
     //
     // let recording = false;
     //
-    // $('#audio_input').on('click', function () {
-    //         console.log('Recognition started');
-    //         SpeechRecognition.start();
-    // });
+
+
+    window.SpeechRecognition = window.webkitSpeechRecognition || window.SpeechRecognition;
+    let finalTranscript = '';
+    let recognition = new window.SpeechRecognition();
+    recognition.interimResults = true;
+    recognition.maxAlternatives = 10;
+    recognition.continuous = false;
+    recognition.lang = "ru-RU";
+    recognition.onresult = (event) => {
+        let interimTranscript = '';
+        for (let i = event.resultIndex, len = event.results.length; i < len; i++) {
+            let transcript = event.results[i][0].transcript;
+            if (event.results[i].isFinal) {
+                finalTranscript += transcript;
+            } else {
+                interimTranscript += transcript;
+            }
+        }
+        console.log(`Final Transcript: ${finalTranscript} | Interim Transcript: ${interimTranscript}`);
+    };
+    let pressed = false;
+
+    $('#audio_input').on('click', function () {
+        if (!pressed) {
+            console.log('Recognition started');
+            recognition.start();
+            pressed = true;
+            $(this).addClass('recording');
+        } else {
+            console.log('Recognition stopped');
+            recognition.stop();
+            $(this).removeClass('recording');
+            pressed = false;
+            setTimeout(()=>{
+                // $('#widget_input_field').empty();
+                if (finalTranscript.toLowerCase() !== 'отправить') {
+                    $('#widget_input_field').text(finalTranscript);
+                    finalTranscript = '';
+                } else {
+                    const textContent = $('#widget_input_field').text();
+                    const messageDto = ModelFactory.messageDtoBuilderText(textContent, SenderType.USER);
+                    chat.onRespond(messageDto);
+                    $('#widget_input_field').empty();
+                    finalTranscript = '';
+                }
+            }, 600);
+        }
+    });
+
     $(window).on('unload', () => {
         chat.setCookie('opened', 'false', {expires: chat.expires});
         // alert('Cookie set');
