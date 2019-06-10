@@ -533,6 +533,7 @@ jQuery(document).ready(function ($) {
                     $(lightbox).empty();
                     $(this).clone().appendTo(lightbox);
                     $(lightbox).show('blind', {direction: 'up'}, 700);
+                    $('#close_lightbox').css('top', $(lightbox).offset().top - 40 + 'px');
                 });
             });
             // image.addEventListener('load', function () {
@@ -550,6 +551,8 @@ jQuery(document).ready(function ($) {
             const self = this;
             const carouselHolder = document.createElement('div');
             $(carouselHolder).addClass('carousel_holder');
+            const dotsHolder = document.createElement('div');
+            $(dotsHolder).addClass('dots_holder').appendTo($(carouselHolder));
             cards.forEach((card)=>{
                 const newMessage = document.createElement('div');
                 $(newMessage).addClass('widget_message bot_message carousel_card');
@@ -565,7 +568,11 @@ jQuery(document).ready(function ($) {
                             const lightbox = $('#widget_lightbox');
                             $(lightbox).empty();
                             $(this).clone().appendTo(lightbox);
+                            $(lightbox).append('<div class="lightbox_descr">'+card.description+'</div>');
                             $(lightbox).show('blind', {direction: 'up'}, 700);
+                            setTimeout(()=>{
+                                $('#close_lightbox').css('top', $(lightbox).offset().top - 50 + 'px');
+                            }, 800);
                         });
                     });
                 } else if (card.videoUri) {
@@ -575,8 +582,10 @@ jQuery(document).ready(function ($) {
                     $(content).attr('controls', 'true');
                 }
                 $(newMessage).append(content);
-                $(newMessage).append('<p>' + card.description + '</p>');
+                // $(newMessage).append('<p>' + card.description + '</p>');
                 $(carouselHolder).append(newMessage);
+                let dot = document.createElement('div');
+                $(dot).addClass('control_dot').appendTo($(dotsHolder));
             });
             let arrowContainer = document.createElement('div');
             $(arrowContainer).addClass('arrow_container');
@@ -587,6 +596,54 @@ jQuery(document).ready(function ($) {
                 let width = $(carouselHolder).outerWidth();
                 console.log(width/cards.length);
                 $('.carousel_card').css({'min-width': width + 'px'});
+
+                let rightArrow = document.createElement('div');
+                $(rightArrow).addClass('arrow_button right_arrow');
+                $(rightArrow).append('<i class="fas fa-chevron-right"></i>');
+                rightArrow.addEventListener('click', ()=>{
+                    scrollHolder(rightArrow);
+                });
+
+                let leftArrow = document.createElement('div');
+                $(leftArrow).addClass('arrow_button left_arrow');
+                $(leftArrow).append('<i class="fas fa-chevron-left"></i>');
+                leftArrow.addEventListener('click', ()=>{
+                    scrollHolder(leftArrow);
+                });
+
+                function scrollHolder(element) {
+                    console.log(`Button pressed: ${$(element).attr('class')}`);
+                    element.removeEventListener('click', ()=>{
+                        scrollHolder(element);
+                    });
+                    let holder = $(element).parent().parent();
+                    let currentScroll = holder.scrollLeft();
+                    console.log(`Current scroll: ${currentScroll}`);
+                    let scrollDistance = $(element).hasClass('right_arrow') ? currentScroll + width + 10 : currentScroll - width - 10;
+                    holder.animate({scrollLeft: scrollDistance}, 600);
+                    $(element).parent().animate({left: scrollDistance + 'px'}, 600);
+                    console.log(`Current scroll: ${scrollDistance}`);
+                    setTimeout(()=>{
+                        element.addEventListener('click', ()=>{
+                            scrollHolder(element);
+                        });
+                    }, 700);
+                    if (scrollDistance <= 0) {
+                        holder.find('.left_arrow').css('display', 'none');
+                        holder.find('.right_arrow').css('display', 'block');
+                    } else if (scrollDistance >= width*(cards.length - 1)) {
+                        holder.find('.right_arrow').css('display', 'none');
+                        holder.find('.left_arrow').css('display', 'block');
+                    } else if (0 < scrollDistance < width*(cards.length - 1)) {
+                        holder.find('.right_arrow').css('display', 'block');
+                        holder.find('.left_arrow').css('display', 'block');
+                    }
+                }
+
+                $(arrowContainer).append(leftArrow);
+                $(arrowContainer).append(rightArrow);
+
+                $(dotsHolder).css('left', ($(carouselHolder).outerWidth() - $(dotsHolder).outerWidth())/2 + 'px');
             }, 500);
 
             // console.log($('.carousel_card').outerWidth());
