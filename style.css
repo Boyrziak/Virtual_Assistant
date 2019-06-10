@@ -518,7 +518,7 @@ body {
 
 #widget_queue .carousel_holder .arrow_container .arrow_button {
     position: absolute;
-    color: rgba(231, 135, 60, 0.8);
+    color: rgba(126, 123, 121, 0.8);
     font-size: 37.5px;
     cursor: pointer;
 }
@@ -540,7 +540,7 @@ body {
     z-index: 999;
 }
 
-#widget_queue .carousel_holder .dots_holder .control_dot{
+#widget_queue .carousel_holder .dots_holder .control_dot {
     width: 8px;
     height: 8px;
     margin: 0 5px;
@@ -549,7 +549,7 @@ body {
     background: #f5d1b3;
     border: 1px solid white;
     box-sizing: border-box;
-    box-shadow: 0 0 2px 1px rgba(0,0,0,0.6);
+    box-shadow: 0 0 2px 1px rgba(0, 0, 0, 0.6);
     transition: .4s ease-out;
 }
 
@@ -569,15 +569,35 @@ body {
     padding: 0;
     border-radius: 0;
     text-align: center;
-    /*width: 270px;*/
     min-width: 270px;
     height: 150px;
     margin-right: 10px;
+    margin-bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 #widget_queue .widget_message.carousel_card .message_image, .message_video {
     border-radius: 15px;
+    height: 150px;
     width: 100%;
+}
+
+#widget_queue .widget_message.carousel_card i {
+    position: absolute;
+    color: white;
+    z-index: 999;
+    cursor: pointer;
+    font-size: 80px;
+    transition: .5s ease-out;
+}
+
+#widget_queue .widget_message.carousel_card i:hover {
+    color: #e7873c;
+    transition: .5s ease-out;
+    animation: bouncePlay 1s cubic-bezier(.5, 0.05, 1, .5);
+    animation-direction: alternate;
 }
 
 #widget_queue .widget_message.bot_message.carousel_card p {
@@ -647,6 +667,125 @@ body {
     right: 25%;
     color: white;
     font-size: 40px;
+}
+
+#carousel_lightbox {
+    z-index: 1000;
+    position: absolute;
+    border: 2px solid #e7873c;
+    background: white;
+    display: none;
+    width: 50%;
+    border-radius: 25px;
+    overflow: hidden;
+    overflow-x: scroll;
+    flex-direction: row;
+}
+
+#carousel_lightbox::-webkit-scrollbar {
+    display: none;
+}
+
+#carousel_lightbox[style*='display: block'] {
+    display: flex !important;
+}
+
+#carousel_lightbox img, video {
+    width: 100%;
+}
+
+#carousel_lightbox .lightbox_card {
+    min-width: 100%;
+    margin-right: 10px;
+}
+
+#carousel_lightbox .lightbox_descr {
+    background: white;
+    height: 50px;
+    display: flex;
+    flex-direction: row;
+    align-content: center;
+    align-items: center;
+    justify-content: center;
+    text-transform: uppercase;
+    color: #e7873c;
+    font-size: 20px;
+    font-weight: bold;
+}
+
+#carousel_overlay {
+    z-index: 999;
+    position: absolute;
+    align-items: center;
+    justify-content: center;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    cursor: pointer;
+    display: none;
+}
+
+#carousel_overlay #close_carousel_lightbox {
+    position: absolute;
+    /*top: 50px;*/
+    right: 25%;
+    color: white;
+    font-size: 40px;
+}
+
+#carousel_lightbox .arrow_container {
+    width: 100%;
+    top: calc(50% - 37.5px);
+    position: absolute;
+    left: 0;
+    z-index: 999;
+    background: transparent;
+}
+
+#carousel_lightbox .arrow_button {
+    position: absolute;
+    color: rgba(126, 123, 121, 0.8);
+    font-size: 75px;
+    cursor: pointer;
+}
+
+#carousel_lightbox .arrow_container .arrow_button.left_arrow {
+    left: 20px;
+}
+
+#carousel_lightbox .arrow_container .arrow_button.right_arrow {
+    right: 20px;
+}
+
+#carousel_lightbox .dots_holder {
+    position: absolute;
+    bottom: 70px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    z-index: 999;
+}
+
+#carousel_lightbox .dots_holder .control_dot {
+    width: 15px;
+    height: 15px;
+    margin: 0 5px;
+    cursor: pointer;
+    border-radius: 100%;
+    background: #f0d2b7;
+    border: 1px solid white;
+    box-sizing: border-box;
+    box-shadow: 0 0 3px 2px rgba(0, 0, 0, 0.6);
+    transition: .4s ease-out;
+}
+
+#carousel_lightbox .dots_holder .control_dot.active_dot {
+    width: 25px;
+    height: 25px;
+    background: #dea778;
+    transition: .4s ease-out;
 }
 
 #widget_queue .choice_container {
@@ -721,5 +860,23 @@ body {
 
     30% {
         transform: translateY(-10px);
+    }
+}
+
+@keyframes bouncePlay {
+    0% {
+        transform: translate3d(0, 0, 0);
+    }
+    30% {
+        transform: translate3d(0, 30px, 0);
+    }
+    60% {
+        transform: translate3d(0, -25px, 0);
+    }
+    90% {
+        transform: translate3d(0, 10px, 0);
+    }
+    90% {
+        transform: translate3d(0, 0, 0);
     }
 }

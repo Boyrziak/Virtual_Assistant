@@ -556,10 +556,13 @@ jQuery(document).ready(function ($) {
         },
         showCarousel: function (cards) {
             const self = this;
+            $('#carousel_lightbox').empty();
             const carouselHolder = document.createElement('div');
             $(carouselHolder).addClass('carousel_holder');
             const dotsHolder = document.createElement('div');
+            const bigDotsHolder = document.createElement('div');
             $(dotsHolder).addClass('dots_holder').appendTo($(carouselHolder));
+            $(bigDotsHolder).addClass('dots_holder').appendTo($('#carousel_lightbox'));
             cards.forEach((card) => {
                 const newMessage = document.createElement('div');
                 $(newMessage).addClass('widget_message bot_message carousel_card');
@@ -573,39 +576,45 @@ jQuery(document).ready(function ($) {
                     content = document.createElement('video');
                     content.src = card.videoUri;
                     $(content).addClass('message_video');
+                    $(newMessage).append('<i class="far fa-play-circle"></i>');
                 }
-                content.addEventListener('click', function () {
-                    $('#modal_overlay').show('fade', 800, () => {
-                        $('#modal_overlay').css('display', 'flex');
-                        const lightbox = $('#widget_lightbox');
-                        $(lightbox).empty();
-                        console.log(content.tagName);
-                        let lightboxContent = document.createElement(content.tagName.toLowerCase());
-                        lightboxContent.src = card.imageUri || card.videoUri;
-                        $(lightbox).append(lightboxContent);
-                        // $(this).clone().appendTo(lightbox);
-                        $(lightbox).append('<div class="lightbox_descr">' + card.description + '</div>');
-                        if (lightboxContent.tagName.toLowerCase() === 'video') {
-                            $(lightboxContent).attr('controls', 'true');
-                        }
-                        $(lightbox).show('blind', {direction: 'up'}, 400);
-                        $(document).mouseup(function (e) {
-                            let container = $('#widget_lightbox');
-                            if (container.has(e.target).length === 0){
-                                $('#widget_lightbox').hide('fade', 600);
-                                $('#modal_overlay').hide('fade', 800);
-                            }
-                        });
-                        setTimeout(() => {
-                            $('#close_lightbox').css('top', $(lightbox).offset().top - 50 + 'px');
-                        }, 500);
-                    });
-                });
+                const lightboxCard = document.createElement('div');
+                $(lightboxCard).addClass('lightbox_card');
+                let carouselContent = document.createElement(content.tagName.toLowerCase());
+                carouselContent.src = card.imageUri || card.videoUri;
+                $(lightboxCard).append(carouselContent);
+                $(lightboxCard).append('<div class="lightbox_descr">' + card.description + '</div>');
+                if (carouselContent.tagName.toLowerCase() === 'video') {
+                    $(carouselContent).attr('controls', 'true');
+                }
+                $('#carousel_lightbox').append(lightboxCard);
+
                 $(newMessage).append(content);
                 // $(newMessage).append('<p>' + card.description + '</p>');
                 $(carouselHolder).append(newMessage);
                 let dot = document.createElement('div');
                 $(dot).addClass('control_dot').appendTo($(dotsHolder));
+                let bigDot = document.createElement('div');
+                $(bigDot).addClass('control_dot').appendTo($(bigDotsHolder));
+
+                content.addEventListener('click', function () {
+                    $('#carousel_overlay').show('fade', 800, () => {
+                        $('#carousel_overlay').css('display', 'flex');
+                        $('#carousel_lightbox').show('blind', {direction: 'up'}, 400);
+                        $(document).mouseup(function (e) {
+                            let container = $('#carousel_lightbox');
+                            if (container.has(e.target).length === 0){
+                                $('#carousel_lightbox').hide('fade', 600);
+                                $('#carousel_overlay').hide('fade', 800);
+                            }
+                        });
+                        setTimeout(() => {
+                            $('#close_carousel_lightbox').css('top', $('#carousel_lightbox').offset().top - 50 + 'px');
+                            let bigDotsOffset = ($('#carousel_lightbox').outerWidth() - $(bigDotsHolder).outerWidth()) / 2;
+                            $('#carousel_lightbox').find('.dots_holder').css('left', bigDotsOffset + 'px');
+                        }, 500);
+                    });
+                });
             });
             let arrowContainer = document.createElement('div');
             $(arrowContainer).addClass('arrow_container');
@@ -617,39 +626,45 @@ jQuery(document).ready(function ($) {
                 console.log(width / cards.length);
                 $('.carousel_card').css({'min-width': width + 'px'});
 
+                let bigWidth = $('#carousel_lightbox').outerWidth();
+                // $('.lightbox_card').css({'min-width': bigWidth + 'px'});
+
                 let rightArrow = document.createElement('div');
                 $(rightArrow).addClass('arrow_button right_arrow');
                 $(rightArrow).append('<i class="fas fa-chevron-right"></i>');
                 rightArrow.addEventListener('click', () => {
-                    scrollHolder(rightArrow);
+                    scrollHolder(rightArrow, carouselHolder);
                 });
 
                 let leftArrow = document.createElement('div');
                 $(leftArrow).addClass('arrow_button left_arrow');
                 $(leftArrow).append('<i class="fas fa-chevron-left"></i>');
                 leftArrow.addEventListener('click', () => {
-                    scrollHolder(leftArrow);
+                    scrollHolder(leftArrow, carouselHolder);
                 });
 
                 $($(carouselHolder).find('.control_dot')[0]).addClass('active_dot');
-                $('.control_dot').on('click', function(){dotScroller(this)});
+                $($('#carousel_lightbox').find('.control_dot')[0]).addClass('active_dot');
+                $('.control_dot').on('click', function(){dotScroller(this, carouselHolder)});
+                $('#carousel_lightbox').find('.control_dot').on('click', function () {dotScroller(this, $('#carousel_lightbox')[0])});
                 $(carouselHolder).find('.left_arrow').css('display', 'none');
 
                 let dotsOffset = ($(carouselHolder).outerWidth() - $(dotsHolder).outerWidth()) / 2;
                 $(carouselHolder).find('.dots_holder').css('left', dotsOffset + 'px');
 
-                function scrollHolder(element) {
+                function scrollHolder(element, carousel) {
                     console.log(`Button pressed: ${$(element).attr('class')}`);
                     element.removeEventListener('click', () => {
                         scrollHolder(element);
                     });
-                    let holder = $(element).parent().parent();
+                    let holder = $(carousel);
                     let currentScroll = holder.scrollLeft();
                     console.log(`Current scroll: ${currentScroll}`);
-                    let scrollDistance = $(element).hasClass('right_arrow') ? currentScroll + width + 10 : currentScroll - width - 10;
+                    let scrollDistance = $(element).hasClass('right_arrow') ? currentScroll + holder.outerWidth() + 10 : currentScroll - holder.outerWidth() - 10;
                     holder.animate({scrollLeft: scrollDistance}, 600);
                     $(element).parent().animate({left: scrollDistance + 'px'}, 600);
-                    holder.find('.dots_holder').animate({left: dotsOffset + scrollDistance + 'px'}, 600);
+                    let offset = ($(holder).outerWidth() - $(holder).find('.dots_holder').outerWidth()) / 2;
+                    holder.find('.dots_holder').animate({left: offset + scrollDistance + 'px'}, 600);
                     let currentActive = $(holder).find('.active_dot');
                     console.log($('.control_dot').index(currentActive));
                     if ($(element).hasClass('right_arrow')) {
@@ -667,8 +682,6 @@ jQuery(document).ready(function ($) {
                             currentActive.addClass('active_dot');
                         }
                     }
-                    // $(element).hasClass('right_arrow') ? $(currentActive).next('.control_dot').addClass('active_dot') : $(currentActive).prev('.control_dot').addClass('active_dot');
-                    // $(currentActive).removeClass('active_dot');
                     console.log(`Current scroll: ${scrollDistance}`);
                     setTimeout(() => {
                         element.addEventListener('click', () => {
@@ -678,39 +691,63 @@ jQuery(document).ready(function ($) {
                     if (scrollDistance <= 0) {
                         holder.find('.left_arrow').css('display', 'none');
                         holder.find('.right_arrow').css('display', 'block');
-                    } else if (scrollDistance >= width * (cards.length - 1)) {
+                    } else if (scrollDistance >= holder.outerWidth() * (cards.length - 1)) {
                         holder.find('.right_arrow').css('display', 'none');
                         holder.find('.left_arrow').css('display', 'block');
-                    } else if (0 < scrollDistance < width * (cards.length - 1)) {
+                    } else if (0 < scrollDistance < holder.outerWidth() * (cards.length - 1)) {
                         holder.find('.right_arrow').css('display', 'block');
                         holder.find('.left_arrow').css('display', 'block');
                     }
                 }
 
-                function dotScroller (dot) {
-                    let holder = $(dot).parent().parent();
+                function dotScroller (dot, carousel) {
+                    let holder = $(carousel);
                     $(holder).find('.control_dot').removeClass('active_dot');
                     $(dot).addClass('active_dot');
                     let scrollDistance = holder.find('.control_dot').index(dot) * (holder.outerWidth() + 10);
                     holder.animate({scrollLeft: scrollDistance}, 600);
-                    $(dot).parent().animate({left: dotsOffset + scrollDistance + 'px'}, 600);
+                    let offset = (holder.outerWidth() - $(dot).parent().outerWidth()) / 2;
+                    $(dot).parent().animate({left: offset + scrollDistance + 'px'}, 600);
                     holder.find('.arrow_container').animate({left: scrollDistance + 'px'}, 600);
 
                     if (scrollDistance <= 0) {
                         holder.find('.left_arrow').css('display', 'none');
                         holder.find('.right_arrow').css('display', 'block');
-                    } else if (scrollDistance >= width * (cards.length - 1)) {
+                    } else if (scrollDistance >= holder.outerWidth() * (cards.length - 1)) {
                         holder.find('.right_arrow').css('display', 'none');
                         holder.find('.left_arrow').css('display', 'block');
-                    } else if (0 < scrollDistance < width * (cards.length - 1)) {
+                    } else if (0 < scrollDistance < holder.outerWidth() * (cards.length - 1)) {
                         holder.find('.right_arrow').css('display', 'block');
                         holder.find('.left_arrow').css('display', 'block');
                     }
                 }
+                let bigContainer = document.createElement('div');
+                $(bigContainer).addClass('arrow_container');
+
+
+                let bigRightArrow = document.createElement('div');
+                $(bigRightArrow).addClass('arrow_button right_arrow');
+                $(bigRightArrow).append('<i class="fas fa-chevron-right"></i>');
+                bigRightArrow.addEventListener('click', () => {
+                    scrollHolder(bigRightArrow, $('#carousel_lightbox')[0]);
+                });
+
+                let bigLeftArrow = document.createElement('div');
+                $(bigLeftArrow).addClass('arrow_button left_arrow');
+                $(bigLeftArrow).append('<i class="fas fa-chevron-left"></i>');
+                bigLeftArrow.addEventListener('click', () => {
+                    scrollHolder(bigLeftArrow, $('#carousel_lightbox')[0]);
+                });
+
 
                 $(arrowContainer).append(leftArrow);
                 $(arrowContainer).append(rightArrow);
+
+                $(bigContainer).append(bigLeftArrow);
+                $(bigContainer).append(bigRightArrow);
+                $('#carousel_lightbox').prepend(bigContainer);
                 $(carouselHolder).find('.left_arrow').css('display', 'none');
+                $('#carousel_lightbox').find('.left_arrow').css('display', 'none');
             }, 500);
 
             // console.log($('.carousel_card').outerWidth());
@@ -850,7 +887,7 @@ jQuery(document).ready(function ($) {
     // });
     $(window).on('unload', () => {
         chat.setCookie('opened', 'false', {expires: chat.expires});
-        alert('Cookie set');
+        // alert('Cookie set');
         // return "Bye now";
     });
 });
