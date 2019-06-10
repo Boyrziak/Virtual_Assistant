@@ -520,7 +520,7 @@ jQuery(document).ready(function ($) {
         showCard: function (card) {
             const self = this;
             const newMessage = document.createElement('div');
-            $(newMessage).addClass('widget_message bot_message');
+            $(newMessage).addClass('widget_message bot_message carousel_card shadow_card');
             let cardButtons = {buttons: card.buttons};
             let content = null;
             if (card.imageUri) {
@@ -533,7 +533,7 @@ jQuery(document).ready(function ($) {
                 $(content).addClass('message_video');
             }
             $(newMessage).append(content);
-            $(newMessage).append(card.description);
+            // $(newMessage).append(card.description);
             content.addEventListener('click', function () {
                 $('#modal_overlay').show('fade', 800, () => {
                     $('#modal_overlay').css('display', 'flex');
@@ -541,7 +541,6 @@ jQuery(document).ready(function ($) {
                     $(lightbox).empty();
                     $(this).clone().appendTo(lightbox);
                     $(lightbox).show('blind', {direction: 'up'}, 700);
-                    $('#close_lightbox').css('top', $(lightbox).offset().top - 40 + 'px');
                     $(document).mouseup(function (e) {
                         let container = $('#widget_lightbox');
                         if (container.has(e.target).length === 0){
@@ -549,6 +548,9 @@ jQuery(document).ready(function ($) {
                             $('#modal_overlay').hide('fade', 800);
                         }
                     });
+                    setTimeout(() => {
+                        $('#close_lightbox').css('top', $('#widget_lightbox').offset().top - 40 + 'px');
+                    }, 1500);
                 });
             });
             $(newMessage).appendTo('#widget_queue').show('drop', {direction: 'left'}, 600);

@@ -448,11 +448,13 @@ body {
 #widget_queue .widget_message .message_image {
     height: 150px;
     cursor: pointer;
+    box-shadow: 3px 3px 3px 2px rgba(0, 0, 0, 0.3);
 }
 
 #widget_queue .widget_message .message_video {
     width: 100%;
     cursor: pointer;
+    box-shadow: 3px 3px 3px 2px rgba(0, 0, 0, 0.3);
 }
 
 #widget_queue {
@@ -495,7 +497,7 @@ body {
 #widget_queue .carousel_holder {
     display: flex;
     flex-direction: row;
-    width: 75%;
+    width: 85%;
     /*height: 180px;*/
     min-height: 150px;
     overflow-x: scroll;
@@ -518,7 +520,7 @@ body {
 
 #widget_queue .carousel_holder .arrow_container .arrow_button {
     position: absolute;
-    color: rgba(126, 123, 121, 0.8);
+    color: rgba(255, 255, 255, 0.8);
     font-size: 37.5px;
     cursor: pointer;
 }
@@ -541,23 +543,34 @@ body {
 }
 
 #widget_queue .carousel_holder .dots_holder .control_dot {
-    width: 8px;
-    height: 8px;
-    margin: 0 5px;
+    width: 6.66px;
+    height: 6.66px;
+    margin-right: 4.5px;
     cursor: pointer;
     border-radius: 100%;
-    background: #f5d1b3;
-    border: 1px solid white;
+    background: #ffddbf;
     box-sizing: border-box;
-    box-shadow: 0 0 2px 1px rgba(0, 0, 0, 0.6);
     transition: .4s ease-out;
 }
 
 #widget_queue .carousel_holder .dots_holder .control_dot.active_dot {
-    width: 12px;
-    height: 12px;
+    width: 11.43px;
+    height: 11.43px;
     background: #e7a470;
     transition: .4s ease-out;
+}
+
+#widget_queue .carousel_holder .dots_holder .control_dot.active_dot::after {
+    width: 10.85px;
+    height: 10.85px;
+    content: '';
+    border-radius: 100%;
+    position: absolute;
+    z-index: 1000;
+    top: 0.5714px;
+    box-sizing: border-box;
+    border: 1.14px solid #fcf2e9;
+    background: transparent;
 }
 
 #widget_queue .carousel_holder::-webkit-scrollbar {
@@ -571,8 +584,8 @@ body {
     text-align: center;
     min-width: 270px;
     height: 150px;
-    margin-right: 10px;
-    margin-bottom: 0;
+    margin-right: 8px;
+    margin-bottom: 10px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -621,7 +634,6 @@ body {
 #widget_lightbox {
     z-index: 1000;
     position: absolute;
-    border: 2px solid #e7873c;
     background: white;
     display: none;
     width: 50%;
@@ -663,16 +675,16 @@ body {
 
 #modal_overlay #close_lightbox {
     position: absolute;
-    /*top: 50px;*/
     right: 25%;
-    color: white;
-    font-size: 40px;
+}
+
+#modal_overlay #close_lightbox img {
+    width: 30px;
 }
 
 #carousel_lightbox {
     z-index: 1000;
     position: absolute;
-    border: 2px solid #e7873c;
     background: white;
     display: none;
     width: 50%;
@@ -729,10 +741,11 @@ body {
 
 #carousel_overlay #close_carousel_lightbox {
     position: absolute;
-    /*top: 50px;*/
     right: 25%;
-    color: white;
-    font-size: 40px;
+}
+
+#carousel_overlay #close_carousel_lightbox img{
+    width: 30px;
 }
 
 #carousel_lightbox .arrow_container {
@@ -746,7 +759,7 @@ body {
 
 #carousel_lightbox .arrow_button {
     position: absolute;
-    color: rgba(126, 123, 121, 0.8);
+    color: rgba(255, 255, 255, 0.8);
     font-size: 75px;
     cursor: pointer;
 }
@@ -769,23 +782,38 @@ body {
 }
 
 #carousel_lightbox .dots_holder .control_dot {
-    width: 15px;
-    height: 15px;
-    margin: 0 5px;
+    width: 13.25px;
+    height: 13.25px;
+    margin-right: 9.14px;
     cursor: pointer;
     border-radius: 100%;
-    background: #f0d2b7;
-    border: 1px solid white;
+    background: #ffddbf;
     box-sizing: border-box;
-    box-shadow: 0 0 3px 2px rgba(0, 0, 0, 0.6);
     transition: .4s ease-out;
+    position: relative;
 }
 
 #carousel_lightbox .dots_holder .control_dot.active_dot {
-    width: 25px;
-    height: 25px;
+    width: 23px;
+    height: 23px;
     background: #dea778;
     transition: .4s ease-out;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#carousel_lightbox .dots_holder .control_dot.active_dot::after {
+    width: 19.58px;
+    height: 19.58px;
+    content: '';
+    border-radius: 100%;
+    position: absolute;
+    z-index: 1000;
+    top: 1.7142px;
+    box-sizing: border-box;
+    border: 3.42px solid #fcf2e9;
+    background: transparent;
 }
 
 #widget_queue .choice_container {
