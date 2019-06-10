@@ -156,7 +156,7 @@ jQuery(document).ready(function ($) {
         connect: function () {
             let opened = chat.getCookie('opened');
             console.log(opened);
-            if(!opened) {
+            if (!opened) {
                 alert('Cookie has expired');
             }
             console.log('Connected');
@@ -223,7 +223,7 @@ jQuery(document).ready(function ($) {
         open: function () {
             const button = $('#widget_button');
             const self = this;
-            self.scrollQuery(100);
+            // self.scrollQuery(1);
             // $('#widget_queue')[0].scrollTop = $('#widget_queue')[0].outerHeight();
             console.log('Opened');
             const body = $('#widget_container');
@@ -246,6 +246,13 @@ jQuery(document).ready(function ($) {
             // TODO update the line below when refactoring the init method
             lStorage.set(lStorage.keys.IS_WIDGET_OPEN, self.opened);
             $('#preview_container').empty().hide('drop', 600);
+            self.scrollQuery(10);
+            let timer = setInterval(() => {
+                $('#widget_queue')[0].scrollTop = 99999;
+            },20);
+            setTimeout(()=>{
+               clearInterval(timer);
+            },1000);
         },
         close: function () {
             const body = $('#widget_container');
@@ -464,25 +471,25 @@ jQuery(document).ready(function ($) {
             } else {
                 chat.bot = lStorage.get(lStorage.keys.BOT);
                 chat.user = lStorage.get(lStorage.keys.USER);
-                if (lStorage.has(lStorage.keys.IS_WIDGET_OPEN)) {
-                    if (JSON.parse(lStorage.get(lStorage.keys.IS_WIDGET_OPEN))) {
-                        chat.open();
-                    }
-                }
                 const history = lStorage.get(lStorage.keys.HISTORY);
                 chat.messageArray.push(history);
                 chat.flushQueue(history);
+                setTimeout(() => {
+                    if (lStorage.has(lStorage.keys.IS_WIDGET_OPEN)) {
+                        if (JSON.parse(lStorage.get(lStorage.keys.IS_WIDGET_OPEN))) {
+                            // $('#widget_queue')[0].scrollTop = 648;
+                            chat.open();
+                        }
+                    }
+                }, 1000);
                 // history.forEach(m => chat.addMessage(m));
                 if (lStorage.has(lStorage.keys.IS_WIDGET_OPEN) && (chat.getCurrentLocation() !== lStorage.get(lStorage.keys.PREVIOUS_URL))) {
                     chat.onUrlChanged();
                 }
             }
-            setInterval(()=>{
-               chat.setCookie('opened', 'true');
+            setInterval(() => {
+                chat.setCookie('opened', 'true');
             }, 1000);
-            setTimeout(() => {
-                $('#widget_button').animate({opacity: '1'}, 600);
-            }, 500);
         },
         deleteMyDataRequest: function () {
             const messageDto = ModelFactory.messageDtoBuilderEvent('CLEAR_USER_DATA', SenderType.USER, 'clear my data');
@@ -543,7 +550,7 @@ jQuery(document).ready(function ($) {
                     $(lightbox).show('blind', {direction: 'up'}, 700);
                     $(document).mouseup(function (e) {
                         let container = $('#widget_lightbox');
-                        if (container.has(e.target).length === 0){
+                        if (container.has(e.target).length === 0) {
                             $('#widget_lightbox').hide('fade', 600);
                             $('#modal_overlay').hide('fade', 800);
                         }
@@ -605,7 +612,7 @@ jQuery(document).ready(function ($) {
                         $('#carousel_lightbox').show('blind', {direction: 'up'}, 400);
                         $(document).mouseup(function (e) {
                             let container = $('#carousel_lightbox');
-                            if (container.has(e.target).length === 0){
+                            if (container.has(e.target).length === 0) {
                                 $('#carousel_lightbox').hide('fade', 600);
                                 $('#carousel_overlay').hide('fade', 800);
                             }
@@ -647,8 +654,12 @@ jQuery(document).ready(function ($) {
 
                 $($(carouselHolder).find('.control_dot')[0]).addClass('active_dot');
                 $($('#carousel_lightbox').find('.control_dot')[0]).addClass('active_dot');
-                $('.control_dot').on('click', function(){dotScroller(this, carouselHolder)});
-                $('#carousel_lightbox').find('.control_dot').on('click', function () {dotScroller(this, $('#carousel_lightbox')[0])});
+                $('.control_dot').on('click', function () {
+                    dotScroller(this, carouselHolder)
+                });
+                $('#carousel_lightbox').find('.control_dot').on('click', function () {
+                    dotScroller(this, $('#carousel_lightbox')[0])
+                });
                 $(carouselHolder).find('.left_arrow').css('display', 'none');
 
                 let dotsOffset = ($(carouselHolder).outerWidth() - $(dotsHolder).outerWidth()) / 2;
@@ -702,7 +713,7 @@ jQuery(document).ready(function ($) {
                     }
                 }
 
-                function dotScroller (dot, carousel) {
+                function dotScroller(dot, carousel) {
                     let holder = $(carousel);
                     $(holder).find('.control_dot').removeClass('active_dot');
                     $(dot).addClass('active_dot');
@@ -723,6 +734,7 @@ jQuery(document).ready(function ($) {
                         holder.find('.left_arrow').css('display', 'block');
                     }
                 }
+
                 let bigContainer = document.createElement('div');
                 $(bigContainer).addClass('arrow_container');
 

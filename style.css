@@ -24,7 +24,6 @@ body {
     position: fixed;
     bottom: 50px;
     right: 50px;
-    opacity: 0;
     -webkit-box-shadow: -5px -5px 0px 0px rgba(168, 98, 49, 1);
     -moz-box-shadow: -5px -5px 0px 0px rgba(168, 98, 49, 1);
     box-shadow: -5px -5px 0px 0px rgba(168, 98, 49, 1);
