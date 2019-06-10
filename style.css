@@ -483,6 +483,55 @@ body {
     color: white;
 }
 
+#widget_queue .carousel_holder {
+    display: flex;
+    flex-direction: row;
+    width: 75%;
+    /*height: 180px;*/
+    min-height: 178px;
+    overflow-x: scroll;
+    background: rgba(231, 135, 60, 1);
+    overflow-y: hidden;
+    box-shadow: 3px 3px 3px 2px rgba(0,0,0,0.3);
+    border-radius: 15px;
+    margin-bottom: 10px;
+    position: relative;
+}
+
+#widget_queue .carousel_holder .arrow_container {
+    width: 100%;
+    height: 37.5px;
+    top: 56.25px;
+    position: absolute;
+    left: 0;
+    background: transparent;
+}
+
+#widget_queue .carousel_holder::-webkit-scrollbar {
+    display: none;
+}
+
+#widget_queue .widget_message.bot_message.carousel_card {
+    background: transparent;
+    padding: 0;
+    border-radius: 0;
+    text-align: center;
+    /*width: 270px;*/
+    min-width: 270px;
+    height: 150px;
+    margin-right: 10px;
+}
+
+#widget_queue .widget_message.carousel_card .message_image, .message_video {
+    border-radius: 15px;
+    width: 100%;
+}
+
+#widget_queue .widget_message.bot_message.carousel_card p{
+    margin: -5px 0 0;
+    padding: 5px;
+}
+
 #widget_queue .user_message {
     background: #f4f4f4;
     align-self: flex-end;

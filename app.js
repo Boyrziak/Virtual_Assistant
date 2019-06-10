@@ -552,7 +552,7 @@ jQuery(document).ready(function ($) {
             $(carouselHolder).addClass('carousel_holder');
             cards.forEach((card)=>{
                 const newMessage = document.createElement('div');
-                $(newMessage).addClass('widget_message bot_message');
+                $(newMessage).addClass('widget_message bot_message carousel_card');
                 let cardButtons = {buttons: card.buttons};
                 let content = null;
                 if (card.imageUri) {
@@ -575,10 +575,21 @@ jQuery(document).ready(function ($) {
                     $(content).attr('controls', 'true');
                 }
                 $(newMessage).append(content);
-                $(newMessage).append(card.description);
+                $(newMessage).append('<p>' + card.description + '</p>');
                 $(carouselHolder).append(newMessage);
             });
+            let arrowContainer = document.createElement('div');
+            $(arrowContainer).addClass('arrow_container');
+            $(carouselHolder).prepend(arrowContainer);
             $(carouselHolder).appendTo('#widget_queue').show('drop', {direction: 'left'}, 600);
+
+            setTimeout(()=>{
+                let width = $(carouselHolder).outerWidth();
+                console.log(width/cards.length);
+                $('.carousel_card').css({'min-width': width + 'px'});
+            }, 500);
+
+            // console.log($('.carousel_card').outerWidth());
         },
         flushQueue: function (currentQueue) {
             let self = this;
