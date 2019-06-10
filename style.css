@@ -509,7 +509,6 @@ body {
 
 #widget_queue .carousel_holder .arrow_container {
     width: 100%;
-    height: 37.5px;
     top: 56.25px;
     position: absolute;
     left: 0;
@@ -537,16 +536,28 @@ body {
     bottom: 10px;
     display: flex;
     flex-direction: row;
+    align-items: center;
+    z-index: 999;
 }
 
 #widget_queue .carousel_holder .dots_holder .control_dot{
-    width: 10px;
-    height: 10px;
+    width: 8px;
+    height: 8px;
     margin: 0 5px;
     cursor: pointer;
     border-radius: 100%;
-    background: #f3a871;
+    background: #f5d1b3;
     border: 1px solid white;
+    box-sizing: border-box;
+    box-shadow: 0 0 2px 1px rgba(0,0,0,0.6);
+    transition: .4s ease-out;
+}
+
+#widget_queue .carousel_holder .dots_holder .control_dot.active_dot {
+    width: 12px;
+    height: 12px;
+    background: #e7a470;
+    transition: .4s ease-out;
 }
 
 #widget_queue .carousel_holder::-webkit-scrollbar {
@@ -598,7 +609,7 @@ body {
     overflow: hidden;
 }
 
-#widget_lightbox img {
+#widget_lightbox img, video {
     width: 100%;
 }
 

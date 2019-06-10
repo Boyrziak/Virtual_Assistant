@@ -152,8 +152,13 @@ jQuery(document).ready(function ($) {
         type_timer: 1000,
         pause_timer: 500,
         currentLocation: location.href,
-        expires: 5,
+        expires: 10,
         connect: function () {
+            let opened = chat.getCookie('opened');
+            console.log(opened);
+            if(!opened) {
+                alert('Cookie has expired');
+            }
             console.log('Connected');
             $('.connection_indicator').css('color', 'green');
             $('#widget_input_field').attr('placeholder', 'Enter your message...');
@@ -472,6 +477,9 @@ jQuery(document).ready(function ($) {
                     chat.onUrlChanged();
                 }
             }
+            setInterval(()=>{
+               chat.setCookie('opened', 'true');
+            }, 1000);
             setTimeout(() => {
                 $('#widget_button').animate({opacity: '1'}, 600);
             }, 500);
@@ -534,26 +542,25 @@ jQuery(document).ready(function ($) {
                     $(this).clone().appendTo(lightbox);
                     $(lightbox).show('blind', {direction: 'up'}, 700);
                     $('#close_lightbox').css('top', $(lightbox).offset().top - 40 + 'px');
+                    $(document).mouseup(function (e) {
+                        let container = $('#widget_lightbox');
+                        if (container.has(e.target).length === 0){
+                            $('#widget_lightbox').hide('fade', 600);
+                            $('#modal_overlay').hide('fade', 800);
+                        }
+                    });
                 });
             });
-            // image.addEventListener('load', function () {
-            //     setTimeout(function () {
-            //         $(newMessage).appendTo('#widget_queue').show('drop', {direction: 'left'}, 600);
-            //         self.showChoice(imgButtons);
-            //         self.scrollQuery(600);
-            //     }, 600);
-            // });
             $(newMessage).appendTo('#widget_queue').show('drop', {direction: 'left'}, 600);
             self.showChoice(cardButtons);
-            // self.scrollQuery(600);
         },
-        showCarousel: function(cards) {
+        showCarousel: function (cards) {
             const self = this;
             const carouselHolder = document.createElement('div');
             $(carouselHolder).addClass('carousel_holder');
             const dotsHolder = document.createElement('div');
             $(dotsHolder).addClass('dots_holder').appendTo($(carouselHolder));
-            cards.forEach((card)=>{
+            cards.forEach((card) => {
                 const newMessage = document.createElement('div');
                 $(newMessage).addClass('widget_message bot_message carousel_card');
                 let cardButtons = {buttons: card.buttons};
@@ -562,25 +569,38 @@ jQuery(document).ready(function ($) {
                     content = new Image();
                     content.src = card.imageUri;
                     $(content).addClass('message_image');
-                    content.addEventListener('click', function () {
-                        $('#modal_overlay').show('fade', 800, () => {
-                            $('#modal_overlay').css('display', 'flex');
-                            const lightbox = $('#widget_lightbox');
-                            $(lightbox).empty();
-                            $(this).clone().appendTo(lightbox);
-                            $(lightbox).append('<div class="lightbox_descr">'+card.description+'</div>');
-                            $(lightbox).show('blind', {direction: 'up'}, 700);
-                            setTimeout(()=>{
-                                $('#close_lightbox').css('top', $(lightbox).offset().top - 50 + 'px');
-                            }, 800);
-                        });
-                    });
                 } else if (card.videoUri) {
                     content = document.createElement('video');
                     content.src = card.videoUri;
                     $(content).addClass('message_video');
-                    $(content).attr('controls', 'true');
                 }
+                content.addEventListener('click', function () {
+                    $('#modal_overlay').show('fade', 800, () => {
+                        $('#modal_overlay').css('display', 'flex');
+                        const lightbox = $('#widget_lightbox');
+                        $(lightbox).empty();
+                        console.log(content.tagName);
+                        let lightboxContent = document.createElement(content.tagName.toLowerCase());
+                        lightboxContent.src = card.imageUri || card.videoUri;
+                        $(lightbox).append(lightboxContent);
+                        // $(this).clone().appendTo(lightbox);
+                        $(lightbox).append('<div class="lightbox_descr">' + card.description + '</div>');
+                        if (lightboxContent.tagName.toLowerCase() === 'video') {
+                            $(lightboxContent).attr('controls', 'true');
+                        }
+                        $(lightbox).show('blind', {direction: 'up'}, 400);
+                        $(document).mouseup(function (e) {
+                            let container = $('#widget_lightbox');
+                            if (container.has(e.target).length === 0){
+                                $('#widget_lightbox').hide('fade', 600);
+                                $('#modal_overlay').hide('fade', 800);
+                            }
+                        });
+                        setTimeout(() => {
+                            $('#close_lightbox').css('top', $(lightbox).offset().top - 50 + 'px');
+                        }, 500);
+                    });
+                });
                 $(newMessage).append(content);
                 // $(newMessage).append('<p>' + card.description + '</p>');
                 $(carouselHolder).append(newMessage);
@@ -592,28 +612,35 @@ jQuery(document).ready(function ($) {
             $(carouselHolder).prepend(arrowContainer);
             $(carouselHolder).appendTo('#widget_queue').show('drop', {direction: 'left'}, 600);
 
-            setTimeout(()=>{
+            setTimeout(() => {
                 let width = $(carouselHolder).outerWidth();
-                console.log(width/cards.length);
+                console.log(width / cards.length);
                 $('.carousel_card').css({'min-width': width + 'px'});
 
                 let rightArrow = document.createElement('div');
                 $(rightArrow).addClass('arrow_button right_arrow');
                 $(rightArrow).append('<i class="fas fa-chevron-right"></i>');
-                rightArrow.addEventListener('click', ()=>{
+                rightArrow.addEventListener('click', () => {
                     scrollHolder(rightArrow);
                 });
 
                 let leftArrow = document.createElement('div');
                 $(leftArrow).addClass('arrow_button left_arrow');
                 $(leftArrow).append('<i class="fas fa-chevron-left"></i>');
-                leftArrow.addEventListener('click', ()=>{
+                leftArrow.addEventListener('click', () => {
                     scrollHolder(leftArrow);
                 });
 
+                $($(carouselHolder).find('.control_dot')[0]).addClass('active_dot');
+                $('.control_dot').on('click', function(){dotScroller(this)});
+                $(carouselHolder).find('.left_arrow').css('display', 'none');
+
+                let dotsOffset = ($(carouselHolder).outerWidth() - $(dotsHolder).outerWidth()) / 2;
+                $(carouselHolder).find('.dots_holder').css('left', dotsOffset + 'px');
+
                 function scrollHolder(element) {
                     console.log(`Button pressed: ${$(element).attr('class')}`);
-                    element.removeEventListener('click', ()=>{
+                    element.removeEventListener('click', () => {
                         scrollHolder(element);
                     });
                     let holder = $(element).parent().parent();
@@ -622,19 +649,60 @@ jQuery(document).ready(function ($) {
                     let scrollDistance = $(element).hasClass('right_arrow') ? currentScroll + width + 10 : currentScroll - width - 10;
                     holder.animate({scrollLeft: scrollDistance}, 600);
                     $(element).parent().animate({left: scrollDistance + 'px'}, 600);
+                    holder.find('.dots_holder').animate({left: dotsOffset + scrollDistance + 'px'}, 600);
+                    let currentActive = $(holder).find('.active_dot');
+                    console.log($('.control_dot').index(currentActive));
+                    if ($(element).hasClass('right_arrow')) {
+                        if (currentActive.next('.control_dot')) {
+                            currentActive.removeClass('active_dot');
+                            currentActive.next('.control_dot').addClass('active_dot');
+                        } else {
+                            currentActive.addClass('active_dot');
+                        }
+                    } else {
+                        if (currentActive.prev('.control_dot')) {
+                            currentActive.removeClass('active_dot');
+                            currentActive.prev('.control_dot').addClass('active_dot');
+                        } else {
+                            currentActive.addClass('active_dot');
+                        }
+                    }
+                    // $(element).hasClass('right_arrow') ? $(currentActive).next('.control_dot').addClass('active_dot') : $(currentActive).prev('.control_dot').addClass('active_dot');
+                    // $(currentActive).removeClass('active_dot');
                     console.log(`Current scroll: ${scrollDistance}`);
-                    setTimeout(()=>{
-                        element.addEventListener('click', ()=>{
+                    setTimeout(() => {
+                        element.addEventListener('click', () => {
                             scrollHolder(element);
                         });
-                    }, 700);
+                    }, 200);
                     if (scrollDistance <= 0) {
                         holder.find('.left_arrow').css('display', 'none');
                         holder.find('.right_arrow').css('display', 'block');
-                    } else if (scrollDistance >= width*(cards.length - 1)) {
+                    } else if (scrollDistance >= width * (cards.length - 1)) {
                         holder.find('.right_arrow').css('display', 'none');
                         holder.find('.left_arrow').css('display', 'block');
-                    } else if (0 < scrollDistance < width*(cards.length - 1)) {
+                    } else if (0 < scrollDistance < width * (cards.length - 1)) {
+                        holder.find('.right_arrow').css('display', 'block');
+                        holder.find('.left_arrow').css('display', 'block');
+                    }
+                }
+
+                function dotScroller (dot) {
+                    let holder = $(dot).parent().parent();
+                    $(holder).find('.control_dot').removeClass('active_dot');
+                    $(dot).addClass('active_dot');
+                    let scrollDistance = holder.find('.control_dot').index(dot) * (holder.outerWidth() + 10);
+                    holder.animate({scrollLeft: scrollDistance}, 600);
+                    $(dot).parent().animate({left: dotsOffset + scrollDistance + 'px'}, 600);
+                    holder.find('.arrow_container').animate({left: scrollDistance + 'px'}, 600);
+
+                    if (scrollDistance <= 0) {
+                        holder.find('.left_arrow').css('display', 'none');
+                        holder.find('.right_arrow').css('display', 'block');
+                    } else if (scrollDistance >= width * (cards.length - 1)) {
+                        holder.find('.right_arrow').css('display', 'none');
+                        holder.find('.left_arrow').css('display', 'block');
+                    } else if (0 < scrollDistance < width * (cards.length - 1)) {
                         holder.find('.right_arrow').css('display', 'block');
                         holder.find('.left_arrow').css('display', 'block');
                     }
@@ -642,8 +710,7 @@ jQuery(document).ready(function ($) {
 
                 $(arrowContainer).append(leftArrow);
                 $(arrowContainer).append(rightArrow);
-
-                $(dotsHolder).css('left', ($(carouselHolder).outerWidth() - $(dotsHolder).outerWidth())/2 + 'px');
+                $(carouselHolder).find('.left_arrow').css('display', 'none');
             }, 500);
 
             // console.log($('.carousel_card').outerWidth());
@@ -715,10 +782,14 @@ jQuery(document).ready(function ($) {
         resizeTimer = setTimeout(chat.reposition, 500);
     });
 
-    $('#modal_overlay').on('click', function () {
-        $('#widget_lightbox').hide('fade', 600);
-        $(this).hide('fade', 800);
-    });
+    // $('#modal_overlay').on('click', function () {
+    //     $('#widget_lightbox').hide('fade', 600);
+    //     $(this).hide('fade', 800);
+    // });
+    //
+    // $('#widget_lightbox').on('click', function () {
+    //     console.log('Hello lightbox');
+    // });
 
     chat.socket = io('https://kh-gis-chat-bot.intetics.com', {path: '/chat/socket.io'});
     // if (chat.currentLocation.startsWith('https://kh-gis-chat-bot.intetics.com')) {
@@ -778,7 +849,8 @@ jQuery(document).ready(function ($) {
     //         SpeechRecognition.start();
     // });
     $(window).on('unload', () => {
-        chat.setCookie('close', 'closed', {expires: chat.expires});
+        chat.setCookie('opened', 'false', {expires: chat.expires});
+        alert('Cookie set');
         // return "Bye now";
     });
 });
