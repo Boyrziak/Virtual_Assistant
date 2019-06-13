@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css"
           integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
     <link href="https://fonts.googleapis.com/css?family=Roboto:100,400,500" rel="stylesheet">
@@ -21,10 +22,23 @@
 <div id="widget_container">
     <div id="widget_header">
         <i class="fas fa-lightbulb connection_indicator"></i>
+        <i class="fas fa-chevron-down show_buttons"></i>
         <p id="header_text">
             Intetics Virtual Assistant
         </p>
         <i class="fas fa-times close_widget"></i>
+    </div>
+    <div id="mobile_buttons">
+        <div id="control_buttons">
+            <a href="https://intetics.com/privacy-statement" target="_blank">
+                <i class="fas fa-lock"></i>
+                <!--<img src="lock.png">-->
+                Privacy notice</a>
+            <span class="clear_history">
+            <i class="fas fa-minus-circle"></i>
+                <!--<img src="delete.png">-->
+            Delete my data</span>
+        </div>
     </div>
     <div id="widget_body">
         <div id="widget_queue">
@@ -36,7 +50,7 @@
                 </div>
             </div>
         </div>
-        <span id="human_connect">
+        <span class="human_connect">
         <i class="far fa-comment-alt"></i>
             <!--<img src="message.png">-->
         Connect with human
@@ -46,21 +60,27 @@
         </div>
     </div>
     <div id="widget_bottom">
-        <div id="widget_input"></div>
         <div id="widget_input_field" contenteditable="true" placeholder="Enter your message..."></div>
         <div id="audio_input">
             <i class="fas fa-microphone"></i>
         </div>
-        <div id="control_buttons">
+        <div class="control_buttons">
             <a href="https://intetics.com/privacy-statement" target="_blank">
                 <i class="fas fa-lock"></i>
                 <!--<img src="lock.png">-->
                 Privacy notice</a>
-            <span id="clear_history">
+            <span class="clear_history">
             <i class="fas fa-minus-circle"></i>
                 <!--<img src="delete.png">-->
             Delete my data</span>
         </div>
+    </div>
+    <div id="bottom_connect">
+        <span class="human_connect">
+        <i class="far fa-comment-alt"></i>
+            <!--<img src="message.png">-->
+        Connect with human
+    </span>
     </div>
 </div>
 <div id="widget_button">

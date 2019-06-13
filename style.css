@@ -92,6 +92,8 @@ body {
 
 #widget_bottom {
     background: white;
+    height: 85px;
+    position: relative;
     border: 2px solid #e7873c;
 }
 
@@ -107,7 +109,7 @@ body {
 #widget_header {
     position: relative;
     cursor: grab;
-    z-index: 200;
+    z-index: 1001;
     height: 45px;
     background: #e7873c;
     border-radius: 15px 15px 0 0;
@@ -206,7 +208,7 @@ body {
     transition: .4s ease-in;
 }
 
-#control_buttons {
+.control_buttons {
     position: absolute;
     bottom: 3px;
     right: 8px;
@@ -216,7 +218,7 @@ body {
     flex-direction: column;
 }
 
-#control_buttons span {
+.control_buttons span {
     margin-top: 5px;
     cursor: pointer;
     z-index: 100;
@@ -230,7 +232,7 @@ body {
     transition: .4s ease-out;
 }
 
-#control_buttons i {
+.control_buttons i {
     color: transparent;
     margin-right: 10px;
     -webkit-text-stroke-width: 1px;
@@ -238,7 +240,7 @@ body {
     transition: .5s ease-out;
 }
 
-#control_buttons a {
+.control_buttons a {
     margin-top: 5px;
     cursor: pointer;
     z-index: 100;
@@ -253,29 +255,29 @@ body {
     text-decoration: none;
 }
 
-#control_buttons span:hover {
+.control_buttons span:hover {
     background: #e7873c;
     color: white;
     transition: .5s ease-out;
 }
 
-#control_buttons span:hover i {
+.control_buttons span:hover i {
     -webkit-text-stroke-color: white;
     transition: .5s ease-out;
 }
 
-#control_buttons a:hover {
+.control_buttons a:hover {
     background: #e7873c;
     color: white;
     transition: .5s ease-out;
 }
 
-#control_buttons a:hover i {
+.control_buttons a:hover i {
     -webkit-text-stroke-color: white;
     transition: .5s ease-out;
 }
 
-#human_connect {
+.human_connect {
     position: absolute;
     top: 10px;
     right: 10px;
@@ -297,7 +299,7 @@ body {
     transition: .4s ease-out;
 }
 
-#human_connect i {
+.human_connect i {
     color: transparent;
     margin-right: 10px;
     -webkit-text-stroke-width: 1px;
@@ -305,13 +307,13 @@ body {
     transition: .4s ease-out;
 }
 
-#human_connect:hover {
+.human_connect:hover {
     background: white;
     color: #e7873c;
     transition: .5s ease-out;
 }
 
-#human_connect:hover i {
+.human_connect:hover i {
     -webkit-text-stroke-color: #e7873c;
     transition: .5s ease-out;
 }
@@ -362,14 +364,15 @@ body {
 #audio_input.recording {
     -webkit-text-stroke-width: 1px;
     -webkit-text-stroke-color: #e7873c;
-    color: transparent;
+    color: white;
+    background: #e7873c;
     transition: .4s ease-out;
 }
 
 #audio_input i {
     -webkit-text-stroke-width: 1px;
     -webkit-text-stroke-color: #e7873c;
-    color: transparent;
+    color: white;
     transition: .4s ease-out;
 }
 
@@ -546,6 +549,8 @@ body {
     flex-direction: row;
     align-items: center;
     z-index: 999;
+    width: 100%;
+    justify-content: center;
 }
 
 #widget_queue .carousel_holder .dots_holder .control_dot {
@@ -556,14 +561,14 @@ body {
     border-radius: 100%;
     background: #ffddbf;
     box-sizing: border-box;
-    transition: .4s ease-out;
+    /*transition: .4s ease-out;*/
 }
 
 #widget_queue .carousel_holder .dots_holder .control_dot.active_dot {
     width: 11.43px;
     height: 11.43px;
     background: #e7a470;
-    transition: .4s ease-out;
+    /*transition: .4s ease-out;*/
 }
 
 #widget_queue .carousel_holder .dots_holder .control_dot.active_dot::after {
@@ -613,10 +618,8 @@ body {
 }
 
 #widget_queue .widget_message.carousel_card i:hover {
-    color: #e7873c;
+    color: rgba(231, 135, 60, 0.8);
     transition: .5s ease-out;
-    animation: bouncePlay 1s cubic-bezier(.5, 0.05, 1, .5);
-    animation-direction: alternate;
 }
 
 #widget_queue .widget_message.bot_message.carousel_card p {
@@ -674,7 +677,7 @@ body {
     top: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.5);
+    background: rgba(0, 0, 0, 0.9);
     cursor: pointer;
     display: none;
 }
@@ -696,13 +699,13 @@ body {
     width: 50%;
     border-radius: 25px;
     overflow: hidden;
-    overflow-x: scroll;
+    /*overflow-x: hidden;*/
     flex-direction: row;
 }
 
-#carousel_lightbox::-webkit-scrollbar {
-    display: none;
-}
+/*#carousel_lightbox::-webkit-scrollbar {*/
+    /*display: none;*/
+/*}*/
 
 #carousel_lightbox[style*='display: block'] {
     display: flex !important;
@@ -740,7 +743,7 @@ body {
     top: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.5);
+    background: rgba(0, 0, 0, 0.9);
     cursor: pointer;
     display: none;
 }
@@ -750,7 +753,7 @@ body {
     right: 25%;
 }
 
-#carousel_overlay #close_carousel_lightbox img{
+#carousel_overlay #close_carousel_lightbox img {
     width: 30px;
 }
 
@@ -785,6 +788,8 @@ body {
     flex-direction: row;
     align-items: center;
     z-index: 999;
+    width: 100%;
+    justify-content: center;
 }
 
 #carousel_lightbox .dots_holder .control_dot {
@@ -795,7 +800,7 @@ body {
     border-radius: 100%;
     background: #ffddbf;
     box-sizing: border-box;
-    transition: .4s ease-out;
+    /*transition: .4s ease-out;*/
     position: relative;
 }
 
@@ -803,7 +808,7 @@ body {
     width: 23px;
     height: 23px;
     background: #dea778;
-    transition: .4s ease-out;
+    /*transition: .4s ease-out;*/
     display: flex;
     align-items: center;
     justify-content: center;
@@ -912,5 +917,230 @@ body {
     }
     90% {
         transform: translate3d(0, 0, 0) scale(1, 1);
+    }
+}
+
+#bottom_connect {
+    display: none;
+}
+
+#mobile_buttons {
+     display: none;
+ }
+
+.show_buttons {
+    display: none;
+}
+
+@media screen and (max-width: 1400px) {
+    #widget_container {
+        width: 50%;
+    }
+}
+
+@media screen and (max-width: 1200px) {
+    #widget_container {
+        width: 50%;
+    }
+}
+
+@media screen and (max-width: 1000px) {
+    #widget_container {
+        width: 60%;
+    }
+}
+
+@media screen and (max-width: 780px) {
+    #widget_container {
+        width: 95%;
+        height: 95%;
+        left: 2.5% !important;
+        bottom: -1px!important;
+        top: unset !important;
+    }
+
+    #widget_header {
+        height: 7%;
+    }
+
+    .show_buttons {
+        display: block;
+        position: absolute;
+        left: 34px;
+        font-size: 25px;
+        cursor: pointer;
+        color: rgba(0, 0, 0, 0.25);
+        transition: .6s ease-in;
+        z-index: 2000;
+    }
+
+    .show_buttons.rotated {
+        transform: rotateX(180deg);
+        transition: .6s ease-out;
+    }
+
+    #mobile_buttons {
+        background: #d07b2b;
+        height: 0;
+        display: block;
+        position: absolute;
+        top: 3%;
+        left: 0;
+        width: 100%;
+        cursor: pointer;
+        z-index: 1000;
+        opacity: 0;
+        transition: .6s ease-out;
+    }
+
+    #mobile_buttons.expanded {
+        height: 10%;
+        top: 7%;
+        opacity: 1;
+        transition: .7s ease-out;
+    }
+
+    #mobile_buttons .control_buttons {
+        width: 90%;
+        flex-direction: row;
+        position: static;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto;
+        height: 100%;
+    }
+
+    #mobile_buttons .control_buttons a {
+        margin: 5px 2.5%;
+        cursor: pointer;
+        z-index: 100;
+        font-size: 14px;
+        width: 100%;
+        color: #e7873c;
+        background: white;
+        height: 18px;
+    }
+
+    #mobile_buttons .control_buttons span {
+        margin: 5px 2.5%;
+        cursor: pointer;
+        z-index: 100;
+        font-size: 14px;
+        width: 100%;
+        color: #e7873c;
+        background: white;
+        height: 18px;
+    }
+
+    #widget_body {
+        height: 73%;
+    }
+
+    #widget_body .human_connect {
+        display: none;
+    }
+
+    #widget_queue {
+        max-height: 100%;
+        width: 100%;
+    }
+
+    #widget_queue .widget_message {
+        max-width: 75%;
+        border-radius: 20px;
+    }
+
+    #widget_avatar {
+        display: none;
+    }
+
+    #widget_bottom {
+        height: 10%;
+        position: relative;
+        box-sizing: border-box;
+        border-bottom: none;
+    }
+
+    #widget_bottom .control_buttons {
+        display: none;
+    }
+
+    #bottom_connect {
+        background: #ffdbc3;
+        height: 10%;
+        box-sizing: border-box;
+        border: 2px solid #e7873c;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    #bottom_connect .human_connect {
+        position: static;
+        width: 95%;
+        font-size: 16px;
+    }
+
+    #widget_queue .widget_message.bot_message.carousel_card {
+        width: 75%;
+        height: 160px;
+    }
+
+    #widget_queue .widget_message.carousel_card .message_image, .message_video {
+        height: 160px;
+    }
+
+    #widget_input_field {
+        width: 80%;
+        height: 100%;
+        max-height: 100%;
+        display: flex;
+        align-items: center;
+        left: calc(3% + 52px);
+        min-height: unset;
+    }
+
+    #widget_input_field::before {
+        top: 0;
+        height: 100%;
+    }
+
+    #audio_input {
+        bottom: calc(50% - 20px);
+    }
+
+    #widget_queue .carousel_holder {
+        width: 75%;
+        height: 160px;
+        min-height: 160px!important;
+    }
+
+    #widget_queue .carousel_holder .widget_message.bot_message.carousel_card {
+        width: 100%;
+        min-width: 100%!important;
+    }
+
+    #widget_queue .carousel_holder .arrow_container {
+        top: 53px;
+    }
+
+    #widget_queue .carousel_holder .arrow_container .arrow_button {
+        font-size: 45px;
+    }
+
+    #widget_lightbox {
+        width: 95%;
+    }
+
+    #modal_overlay #close_lightbox {
+        right: 5%;
+    }
+
+    #carousel_lightbox {
+        width: 95%;
+    }
+
+    #carousel_overlay #close_carousel_lightbox {
+        right: 5%;
     }
 }

@@ -221,6 +221,7 @@ jQuery(document).ready(function ($) {
             $('#widget_input_field').attr('contenteditable', 'false');
         },
         open: function () {
+            $('#widget_button').off('click');
             const button = $('#widget_button');
             const self = this;
             const body = $('#widget_container');
@@ -250,6 +251,13 @@ jQuery(document).ready(function ($) {
             setTimeout(() => {
                 clearInterval(timer);
             }, 1000);
+            setTimeout(()=>{
+                $('#widget_container').css('height', '95%');
+                let widgetHeight = $('#widget_container').outerHeight();
+                console.log(widgetHeight);
+                $('#widget_container').css('height', widgetHeight + 'px');
+                $('#widget_button').on('click', chat.open);
+            }, 2000);
         },
         close: function () {
             const body = $('#widget_container');
@@ -468,7 +476,7 @@ jQuery(document).ready(function ($) {
                     if (lStorage.has(lStorage.keys.IS_WIDGET_OPEN)) {
                         if (JSON.parse(lStorage.get(lStorage.keys.IS_WIDGET_OPEN))) {
                             // $('#widget_queue')[0].scrollTop = 648;
-                            chat.open();
+                            // chat.open();
                         }
                     }
                 }, 1000);
@@ -562,11 +570,13 @@ jQuery(document).ready(function ($) {
             const bigDotsHolder = document.createElement('div');
             $(dotsHolder).addClass('dots_holder').appendTo($(carouselHolder));
             $(bigDotsHolder).addClass('dots_holder').appendTo($('#carousel_lightbox'));
-            cards.forEach((card) => {
+            cards.forEach((card, index) => {
                 const newMessage = document.createElement('div');
                 $(newMessage).addClass('widget_message bot_message carousel_card');
                 let cardButtons = {buttons: card.buttons};
                 let content = null;
+                let icon = document.createElement('i');
+                $(icon).addClass('far fa-play-circle');
                 if (card.imageUri) {
                     content = new Image();
                     content.src = card.imageUri;
@@ -575,7 +585,7 @@ jQuery(document).ready(function ($) {
                     content = document.createElement('video');
                     content.src = card.videoUri;
                     $(content).addClass('message_video');
-                    $(newMessage).append('<i class="far fa-play-circle"></i>');
+                    $(newMessage).append(icon);
                 }
                 const lightboxCard = document.createElement('div');
                 $(lightboxCard).addClass('lightbox_card');
@@ -614,6 +624,43 @@ jQuery(document).ready(function ($) {
                         }, 500);
                     });
                 });
+
+                // let icon = $(newMessage).find('.far');
+                // console.log(icon);
+                if (icon) {
+                    icon.addEventListener('click', function () {
+                        $('#carousel_overlay').show('fade', 800, () => {
+                            $('#carousel_overlay').css('display', 'flex');
+                            $('#carousel_lightbox').show('blind', {direction: 'up'}, 400);
+                            $(document).mouseup(function (e) {
+                                let container = $('#carousel_lightbox');
+                                if (container.has(e.target).length === 0) {
+                                    $('#carousel_lightbox').hide('fade', 600);
+                                    $('#carousel_overlay').hide('fade', 800);
+                                }
+                            });
+                            setTimeout(() => {
+                                $('#close_carousel_lightbox').css('top', $('#carousel_lightbox').offset().top - 50 + 'px');
+                                let lighbox = $('#carousel_lightbox');
+                                let bigDotsOffset = (lighbox.outerWidth() - $(bigDotsHolder).outerWidth()) / 2;
+                                lighbox.find('.dots_holder').css('left', bigDotsOffset + 'px');
+                                let currentOffset = (lighbox.outerWidth() + 10) * index;
+                                lighbox.animate({scrollLeft: currentOffset + 'px'}, 600);
+
+                                if (currentOffset <= 0) {
+                                    lighbox.find('.left_arrow').css('display', 'none');
+                                    lighbox.find('.right_arrow').css('display', 'block');
+                                } else if (currentOffset >= lighbox.outerWidth() * (cards.length - 1)) {
+                                    lighbox.find('.right_arrow').css('display', 'none');
+                                    lighbox.find('.left_arrow').css('display', 'block');
+                                } else if (0 < currentOffset < lighbox.outerWidth() * (cards.length - 1)) {
+                                    lighbox.find('.right_arrow').css('display', 'block');
+                                    lighbox.find('.left_arrow').css('display', 'block');
+                                }
+                            }, 500);
+                        });
+                    });
+                }
             });
             let arrowContainer = document.createElement('div');
             $(arrowContainer).addClass('arrow_container');
@@ -653,9 +700,9 @@ jQuery(document).ready(function ($) {
 
                 function scrollHolder(element, carousel) {
                     console.log(`Button pressed: ${$(element).attr('class')}`);
-                    element.removeEventListener('click', () => {
-                        scrollHolder(element);
-                    });
+                    // element.removeEventListener('click', () => {
+                    //     scrollHolder(element);
+                    // });
                     let holder = $(carousel);
                     let currentScroll = holder.scrollLeft();
                     console.log(`Current scroll: ${currentScroll}`);
@@ -663,7 +710,7 @@ jQuery(document).ready(function ($) {
                     holder.animate({scrollLeft: scrollDistance}, 600);
                     $(element).parent().animate({left: scrollDistance + 'px'}, 600);
                     let offset = ($(holder).outerWidth() - $(holder).find('.dots_holder').outerWidth()) / 2;
-                    holder.find('.dots_holder').animate({left: offset + scrollDistance + 'px'}, 600);
+                    holder.find('.dots_holder').css('left', offset + scrollDistance + 'px');
                     let currentActive = $(holder).find('.active_dot');
                     console.log($('.control_dot').index(currentActive));
                     if ($(element).hasClass('right_arrow')) {
@@ -682,11 +729,11 @@ jQuery(document).ready(function ($) {
                         }
                     }
                     console.log(`Current scroll: ${scrollDistance}`);
-                    setTimeout(() => {
-                        element.addEventListener('click', () => {
-                            scrollHolder(element);
-                        });
-                    }, 200);
+                    // setTimeout(() => {
+                    //     element.addEventListener('click', () => {
+                    //         scrollHolder(element);
+                    //     });
+                    // }, 200);
                     if (scrollDistance <= 0) {
                         holder.find('.left_arrow').css('display', 'none');
                         holder.find('.right_arrow').css('display', 'block');
@@ -706,7 +753,7 @@ jQuery(document).ready(function ($) {
                     let scrollDistance = holder.find('.control_dot').index(dot) * (holder.outerWidth() + 10);
                     holder.animate({scrollLeft: scrollDistance}, 600);
                     let offset = (holder.outerWidth() - $(dot).parent().outerWidth()) / 2;
-                    $(dot).parent().animate({left: offset + scrollDistance + 'px'}, 600);
+                    $(dot).parent().css('left', offset + scrollDistance + 'px');
                     holder.find('.arrow_container').animate({left: scrollDistance + 'px'}, 600);
 
                     if (scrollDistance <= 0) {
@@ -785,7 +832,7 @@ jQuery(document).ready(function ($) {
         }
     };
 
-    $('#human_connect').on('click', function () {
+    $('.human_connect').on('click', function () {
         chat.connectWithHuman();
     });
 
@@ -811,22 +858,13 @@ jQuery(document).ready(function ($) {
 
     $('.close_widget').on('click', chat.close);
 
-    $('#clear_history').on('click', chat.deleteMyDataRequest);
+    $('.clear_history').on('click', chat.deleteMyDataRequest);
 
     let resizeTimer;
     $(window).resize(function () {
         clearTimeout(resizeTimer);
         resizeTimer = setTimeout(chat.reposition, 500);
     });
-
-    // $('#modal_overlay').on('click', function () {
-    //     $('#widget_lightbox').hide('fade', 600);
-    //     $(this).hide('fade', 800);
-    // });
-    //
-    // $('#widget_lightbox').on('click', function () {
-    //     console.log('Hello lightbox');
-    // });
 
     chat.socket = io('https://kh-gis-chat-bot.intetics.com', {path: '/chat/socket.io'});
     // if (chat.currentLocation.startsWith('https://kh-gis-chat-bot.intetics.com')) {
@@ -847,41 +885,6 @@ jQuery(document).ready(function ($) {
     chat.socket.on(WS_ENDPOINTS.EXCEPTION, chat.chatException);
     chat.socket.on(WS_ENDPOINTS.DISCONNECT, chat.chatDisconnect);
 
-    // let timeout = 5000;
-    //
-    // let idleTimer = setTimeout(function () {
-    //     chat.idleAction(timeout);
-    // }, timeout);
-    // let choices = [{value: 'Yes'}, {value: 'No'}];
-    // let img = {src: 'Layer 6.png'};
-    // chat.addMessage(choices, 'bot', 'choice');
-    // chat.addMessage(img, 'bot', 'image');
-
-    // $(window).mousemove(function () {
-    //     clearTimeout(idleTimer);
-    //     console.log('Mouse move was performed');
-    //     idleTimer = setTimeout(function () {
-    //         chat.idleAction(timeout);
-    //     }, timeout);
-    // });
-
-    // if(window.SpeechRecognition || window.webkitSpeechRecognition || window.mozSpeechRecognition || window.msSpeechRecognition){
-    //     console.log('Браузер поддерживает данную технологию');
-    // }else{
-    //     console.log('Не поддерживается данным браузером');
-    // }
-    // let SpeechRecognition = new (window.SpeechRecognition || window.webkitSpeechRecognition || window.mozSpeechRecognition || window.msSpeechRecognition)();
-    // SpeechRecognition.lang = "en-EN";
-    // SpeechRecognition.onresult = function(event){
-    //     console.log(event);
-    // };
-    // SpeechRecognition.onend = function(){
-    //     SpeechRecognition.start();
-    // };
-    //
-    // let recording = false;
-    //
-
 
     window.SpeechRecognition = window.webkitSpeechRecognition || window.SpeechRecognition;
     let finalTranscript = '';
@@ -889,7 +892,7 @@ jQuery(document).ready(function ($) {
     recognition.interimResults = true;
     recognition.maxAlternatives = 10;
     recognition.continuous = false;
-    recognition.lang = "ru-RU";
+    // recognition.lang = "ru-RU";
     recognition.onresult = (event) => {
         let interimTranscript = '';
         for (let i = event.resultIndex, len = event.results.length; i < len; i++) {
@@ -915,9 +918,9 @@ jQuery(document).ready(function ($) {
             recognition.stop();
             $(this).removeClass('recording');
             pressed = false;
-            setTimeout(()=>{
+            setTimeout(() => {
                 // $('#widget_input_field').empty();
-                if (finalTranscript.toLowerCase() !== 'отправить') {
+                if (finalTranscript.toLowerCase() !== 'отправить' || finalTranscript.toLowerCase() !== 'send') {
                     $('#widget_input_field').text(finalTranscript);
                     finalTranscript = '';
                 } else {
@@ -931,9 +934,21 @@ jQuery(document).ready(function ($) {
         }
     });
 
+    $('.show_buttons').on('click', function () {
+       $(this).toggleClass('rotated');
+       $('#mobile_buttons').toggleClass('expanded');
+    });
+
     $(window).on('unload', () => {
         chat.setCookie('opened', 'false', {expires: chat.expires});
         // alert('Cookie set');
         // return "Bye now";
+    });
+
+    $(window).resize(()=>{
+        $('#widget_container').css('height', '95%');
+        let widgetHeight = $('#widget_container').outerHeight();
+        console.log(widgetHeight);
+        $('#widget_container').css('height', widgetHeight + 'px');
     });
 });
