@@ -478,7 +478,7 @@ jQuery(document).ready(function ($) {
                     if (lStorage.has(lStorage.keys.IS_WIDGET_OPEN)) {
                         if (JSON.parse(lStorage.get(lStorage.keys.IS_WIDGET_OPEN))) {
                             // $('#widget_queue')[0].scrollTop = 648;
-                            // chat.open();
+                            chat.open();
                         }
                     }
                 }, 1000);
