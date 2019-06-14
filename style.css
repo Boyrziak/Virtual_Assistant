@@ -720,6 +720,10 @@ body {
     margin-right: 10px;
 }
 
+#carousel_lightbox .lightbox_card .message_image, .message_video {
+    height: unset;
+}
+
 #carousel_lightbox .lightbox_descr {
     background: white;
     height: 50px;
