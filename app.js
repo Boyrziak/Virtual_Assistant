@@ -547,7 +547,9 @@ jQuery(document).ready(function ($) {
                     const lightbox = $('#widget_lightbox');
                     $(lightbox).empty();
                     $(this).clone().appendTo(lightbox);
-                    $(lightbox).append('<div class="lightbox_descr">' + card.title + '</div>');
+                    if (card.title) {
+                        $(lightbox).append('<div class="lightbox_descr">' + card.title + '</div>');
+                    }
                     $(lightbox).show('blind', {direction: 'up'}, 700);
                     $(document).mouseup(function (e) {
                         let container = $('#widget_lightbox');
@@ -595,7 +597,9 @@ jQuery(document).ready(function ($) {
                 let carouselContent = document.createElement(content.tagName.toLowerCase());
                 carouselContent.src = card.imageUri || card.videoUri;
                 $(lightboxCard).append(carouselContent);
-                $(lightboxCard).append('<div class="lightbox_descr">' + card.title + '</div>');
+                if (card.title) {
+                    $(lightboxCard).append('<div class="lightbox_descr">' + card.title + '</div>');
+                }
                 if (carouselContent.tagName.toLowerCase() === 'video') {
                     $(carouselContent).attr('controls', 'true');
                 }
