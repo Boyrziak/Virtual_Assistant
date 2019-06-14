@@ -251,12 +251,14 @@ jQuery(document).ready(function ($) {
             setTimeout(() => {
                 clearInterval(timer);
             }, 1000);
-            setTimeout(()=>{
-                $('#widget_container').css('height', '95%');
-                let widgetHeight = $('#widget_container').outerHeight();
-                console.log(widgetHeight);
-                $('#widget_container').css('height', widgetHeight + 'px');
-                $('#widget_button').on('click', chat.open);
+            setTimeout(() => {
+                if (window.outerWidth() <= 780) {
+                    $('#widget_container').css('height', '95%');
+                    let widgetHeight = $('#widget_container').outerHeight();
+                    console.log(widgetHeight);
+                    $('#widget_container').css('height', widgetHeight + 'px');
+                    $('#widget_button').on('click', chat.open);
+                }
             }, 2000);
         },
         close: function () {
@@ -545,6 +547,7 @@ jQuery(document).ready(function ($) {
                     const lightbox = $('#widget_lightbox');
                     $(lightbox).empty();
                     $(this).clone().appendTo(lightbox);
+                    $(lightbox).append('<div class="lightbox_descr">' + card.title + '</div>');
                     $(lightbox).show('blind', {direction: 'up'}, 700);
                     $(document).mouseup(function (e) {
                         let container = $('#widget_lightbox');
@@ -592,7 +595,7 @@ jQuery(document).ready(function ($) {
                 let carouselContent = document.createElement(content.tagName.toLowerCase());
                 carouselContent.src = card.imageUri || card.videoUri;
                 $(lightboxCard).append(carouselContent);
-                $(lightboxCard).append('<div class="lightbox_descr">' + card.description + '</div>');
+                $(lightboxCard).append('<div class="lightbox_descr">' + card.title + '</div>');
                 if (carouselContent.tagName.toLowerCase() === 'video') {
                     $(carouselContent).attr('controls', 'true');
                 }
@@ -864,6 +867,10 @@ jQuery(document).ready(function ($) {
     $(window).resize(function () {
         clearTimeout(resizeTimer);
         resizeTimer = setTimeout(chat.reposition, 500);
+        // $('#widget_container').css('height', '95%');
+        // let widgetHeight = $('#widget_container').outerHeight();
+        // console.log(widgetHeight);
+        // $('#widget_container').css('height', widgetHeight + 'px');
     });
 
     chat.socket = io('https://kh-gis-chat-bot.intetics.com', {path: '/chat/socket.io'});
@@ -892,7 +899,7 @@ jQuery(document).ready(function ($) {
     recognition.interimResults = true;
     recognition.maxAlternatives = 10;
     recognition.continuous = false;
-    // recognition.lang = "ru-RU";
+    recognition.lang = "en-GB";
     recognition.onresult = (event) => {
         let interimTranscript = '';
         for (let i = event.resultIndex, len = event.results.length; i < len; i++) {
@@ -906,6 +913,20 @@ jQuery(document).ready(function ($) {
         console.log(`Final Transcript: ${finalTranscript} | Interim Transcript: ${interimTranscript}`);
     };
     let pressed = false;
+    recognition.onaudioend = (event) => {
+        console.log('Recognition stopped');
+        recognition.stop();
+        $('#audio_input').removeClass('recording');
+        pressed = false;
+        setTimeout(() => {
+            if (finalTranscript !='') {
+                const messageDto = ModelFactory.messageDtoBuilderText(finalTranscript, SenderType.USER);
+                chat.onRespond(messageDto);
+                $('#widget_input_field').empty();
+                finalTranscript = '';
+            }
+        }, 300);
+    };
 
     $('#audio_input').on('click', function () {
         if (!pressed) {
@@ -935,20 +956,13 @@ jQuery(document).ready(function ($) {
     });
 
     $('.show_buttons').on('click', function () {
-       $(this).toggleClass('rotated');
-       $('#mobile_buttons').toggleClass('expanded');
+        $(this).toggleClass('rotated');
+        $('#mobile_buttons').toggleClass('expanded');
     });
 
     $(window).on('unload', () => {
         chat.setCookie('opened', 'false', {expires: chat.expires});
         // alert('Cookie set');
         // return "Bye now";
-    });
-
-    $(window).resize(()=>{
-        $('#widget_container').css('height', '95%');
-        let widgetHeight = $('#widget_container').outerHeight();
-        console.log(widgetHeight);
-        $('#widget_container').css('height', widgetHeight + 'px');
     });
 });
