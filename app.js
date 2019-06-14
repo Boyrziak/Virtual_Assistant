@@ -321,7 +321,6 @@ jQuery(document).ready(function ($) {
                     updatedCookie += '=' + propValue;
                 }
             }
-
             document.cookie = updatedCookie;
         },
         getCookie: function (name) {
