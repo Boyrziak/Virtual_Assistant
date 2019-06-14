@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title>Test page 1</title>
+    <meta name="description" content="Winepicker test page 1">
+    <meta name="author" content="atroskov">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css"
+        integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+    <link href="https://fonts.googleapis.com/css?family=Roboto:100,400,500" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="jquery-ui.min.css">
+    <script src="jquery.js" type="text/javascript"></script>
+    <script src="jquery-ui.min.js" type="text/javascript"></script>
+    <script src="app.js" type="text/javascript"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.2.0/socket.io.js"></script>
+
+
+    <style type="text/css">
+        body {
+            background-color: cadetblue;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Intetics GEO</h1>
+    <h2>https://bpm.intetics.com/contact-bpm</h2>
+    <ul>
+        <li><a href="test-page-1.html">https://geo.intetics.com/</a></li>
+        <li><a href="test-page-2.html">https://geo.intetics.com/geosoftware </a></li>
+        <li><a href="test-page-3.html">https://geo.intetics.com/geodata </a></li>
+        <li><a href="test-page-4.html">https://geo.intetics.com/geosolutions </a></li>
+        <li><a href="test-page-5.html">https://geo.intetics.com/geo-news </a></li>
+        <li><a href="test-page-6.html">https://geo.intetics.com/geo-blog  </a></li>
+        <li><a href="test-page-7.html">https://geo.intetics.com/geo-white-papers </a></li>
+        <li><a href="test-page-8.html">https://geo.intetics.com/contact-geo </a></li>
+        <li><a href="test-page-9.html">https://bpm.intetics.com/ </a></li>
+        <li><a href="test-page-10.html">https://bpm.intetics.com/contact-bpm </a></li>
+        <li><a href="test-page-11.html">https://bpm.intetics.com/bpm-portfolio  </a></li>
+        <li><a href="test-page-12.html">https://geo.intetics.com/gisportfolio  </a></li>
+    </ul>
+    <div id="widget_container">
+        <div id="widget_header">
+            <i class="fas fa-lightbulb connection_indicator"></i>
+            <i class="fas fa-chevron-down show_buttons"></i>
+            <p id="header_text">
+                Intetics Virtual Assistant
+            </p>
+            <i class="fas fa-times close_widget"></i>
+        </div>
+        <div id="mobile_buttons">
+            <div id="control_buttons">
+                <a href="https://intetics.com/privacy-statement" target="_blank">
+                    <i class="fas fa-lock"></i>
+                    <!--<img src="lock.png">-->
+                    Privacy notice</a>
+                <span class="clear_history">
+                <i class="fas fa-minus-circle"></i>
+                    <!--<img src="delete.png">-->
+                Delete my data</span>
+            </div>
+        </div>
+        <div id="widget_body">
+            <div id="widget_queue">
+                <div id="waves_message" class="widget_message bot_message">
+                    <div id="wave">
+                        <span class="dot"></span>
+                        <span class="dot"></span>
+                        <span class="dot"></span>
+                    </div>
+                </div>
+            </div>
+            <span class="human_connect">
+            <i class="far fa-comment-alt"></i>
+                <!--<img src="message.png">-->
+            Connect with human
+        </span>
+            <div id="widget_avatar">
+                <img src="MikeIdleAvatar.png">
+            </div>
+        </div>
+        <div id="widget_bottom">
+            <div id="widget_input_field" contenteditable="true" placeholder="Enter your message..."></div>
+            <div id="audio_input">
+                <i class="fas fa-microphone"></i>
+            </div>
+            <div class="control_buttons">
+                <a href="https://intetics.com/privacy-statement" target="_blank">
+                    <i class="fas fa-lock"></i>
+                    <!--<img src="lock.png">-->
+                    Privacy notice</a>
+                <span class="clear_history">
+                <i class="fas fa-minus-circle"></i>
+                    <!--<img src="delete.png">-->
+                Delete my data</span>
+            </div>
+        </div>
+        <div id="bottom_connect">
+            <span class="human_connect">
+            <i class="far fa-comment-alt"></i>
+                <!--<img src="message.png">-->
+            Connect with human
+        </span>
+        </div>
+    </div>
+    <div id="widget_button">
+        <img src="Layer%207.png">
+        <div id="preview_container"></div>
+    </div>
+    <div id="modal_overlay">
+        <div id="widget_lightbox">
+        </div>
+        <div id="close_lightbox">
+            <!--<i class="fas fa-times"></i>-->
+            <img src="cancel.png" title="Close">
+        </div>
+    </div>
+    <div id="carousel_overlay">
+        <div id="carousel_lightbox">
+        </div>
+        <div id="close_carousel_lightbox">
+            <!--<i class="fas fa-times"></i>-->
+            <img src="cancel.png" title="Close">
+        </div>
+    </div>
+</body>
+
+</html>
