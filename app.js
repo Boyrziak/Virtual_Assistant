@@ -157,7 +157,7 @@ jQuery(document).ready(function ($) {
             let opened = chat.getCookie('opened');
             console.log(opened);
             if (!opened) {
-                alert('Cookie has expired');
+                console.log('Cookie has expired');
             }
             console.log('Connected');
             $('.connection_indicator').css('color', 'green');
