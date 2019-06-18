@@ -442,18 +442,18 @@ jQuery(document).ready(function ($) {
             return !lStorage.has(lStorage.keys.HISTORY);
         },
         isUserReactedExplicitly: function (lastUserMessage) {
-            const msg = lastUserMessage.message.messages[0];
-            return msg.hasOwnProperty('text') || (msg.hasOwnProperty('event') && msg.event.hasOwnProperty('display'));
+            // const msg = lastUserMessage.message.messages[0];
+            // return msg.hasOwnProperty('text') || (msg.hasOwnProperty('event') && msg.event.hasOwnProperty('display'));
+            return false;
         },
         onUrlChanged: function () {
+            console.log('new url detected');
             lStorage.set('previousUrl', chat.getCurrentLocation());
             const userHistory = lStorage.get(lStorage.keys.HISTORY).filter(m => m.senderType === 'user');
             if (!chat.isUserReactedExplicitly(userHistory[userHistory.length - 1])) {
                 const messageDto = ModelFactory.messageDtoBuilderEvent('URL-CHANGED-EVENT', SenderType.USER);
                 chat.onRespond(messageDto);
-                console.log('URL-CHANGED-EVENT sent');
             }
-            console.log('new url detected');
             console.log($('#widget_queue').length);
         },
         initialize: function () {
