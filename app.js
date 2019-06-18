@@ -361,6 +361,7 @@ jQuery(document).ready(function ($) {
                         }
                     }
                     if (mw.choice) {
+                        $('.choice_container').remove();
                         self.showChoice(mw.choice);
                         mw.choice = null;
                     }
