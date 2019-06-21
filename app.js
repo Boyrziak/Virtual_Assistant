@@ -83,7 +83,9 @@ jQuery(document).ready(function ($) {
             _content[0].text = new Text();
             _content[0].text.text = [content];
             const messageContent = new MessageContent(_content, chat.getCurrentLocation());
-            return new MessageDto(messageContent, senderType, chat.user);
+            const response = new MessageDto(messageContent, senderType, chat.user);
+            console.log(`BUILD TEXT: ${JSON.stringify(response)}`);
+            return response;
         }
 
         static messageDtoBuilderEvent(content, senderType, display) {
@@ -92,7 +94,9 @@ jQuery(document).ready(function ($) {
             _content[0].event.name = content;
             _content[0].event.display = display || undefined;
             const messageContent = new MessageContent(_content, chat.getCurrentLocation());
-            return new MessageDto(messageContent, senderType, chat.user);
+            const response = new MessageDto(messageContent, senderType, chat.user);
+            console.log(`BUILD EVENT: ${JSON.stringify(response)}`);
+            return response;
         }
     }
 
@@ -195,8 +199,7 @@ jQuery(document).ready(function ($) {
             console.log(`get init-user response with: ${user}`);
         },
         chatMessage: function (messageDto) {
-            console.log('New message received:');
-            console.log(messageDto);
+            console.log(`New message received: ${JSON.stringify(messageDto)}`);
             const delayArr = messageDto.message.messages.filter(mw => mw.hasOwnProperty('payload') && mw.payload.hasOwnProperty('type') && mw.payload.type === 'delay');
             if (delayArr.length > 0) {
                 const delay = delayArr[0].payload.delayValue;
@@ -220,6 +223,12 @@ jQuery(document).ready(function ($) {
             } else {
                 console.log('init history null');
             }
+        },
+        openUrl(url) {
+            window.open(url);
+        },
+        signInWithLinkedIn() {
+            console.log('There is now implementation of this functionality');
         },
         chatException: function (data) {
             console.log('exception: ', data);
@@ -348,6 +357,7 @@ jQuery(document).ready(function ($) {
                 expires: -1
             });
         },
+
         addMessage: function (messageDto) {
             const sender = messageDto.senderType;
             const self = this;
@@ -422,12 +432,10 @@ jQuery(document).ready(function ($) {
                     choiceButton.addEventListener('click', function () {
                         console.log($(this).text());
                         $(this).addClass('chosen');
-                        let buttonPostback = /(CALL)\+(\w*)\+(.*)|(CALL)\+(\w*)/g.exec(button.postback);
-                        if (buttonPostback && buttonPostback[1]) {
-                            const functionName = buttonPostback[2];
-                            if (chat.hasOwnProperty(functionName)) {
-                                chat[functionName]();
-                            }
+                        // let buttonPostback = /(CALL)\+(\w*)\+(.*)|(CALL)\+(\w*)/g.exec(button.postback);
+                        if (button.postback.startsWith('CALL+')) {
+                            const [, functionName, parameter] = button.postback.split('+');
+                            chat[functionName](parameter);
                         } else {
                             const chosenValue = ModelFactory.messageDtoBuilderText(button.postback, SenderType.USER);
                             self.onRespond(chosenValue);
@@ -963,7 +971,8 @@ jQuery(document).ready(function ($) {
         // $('#widget_container').css('height', widgetHeight + 'px');
     });
 
-    chat.socket = io('https://kh-gis-chat-bot.intetics.com', {path: '/chat/socket.io'});
+    // chat.socket = io('https://kh-gis-chat-bot.intetics.com', {path: '/chat/socket.io'});
+    chat.socket = io('http://localhost:3000', {path: '/chat/socket.io'});
     // if (chat.currentLocation.startsWith('https://kh-gis-chat-bot.intetics.com')) {
     //     // eslint-disable-next-line no-undef
     //     chat.socket = io('https://kh-gis-chat-bot.intetics.com', { path: '/chat/socket.io' });
