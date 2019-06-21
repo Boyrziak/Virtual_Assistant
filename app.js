@@ -971,8 +971,8 @@ jQuery(document).ready(function ($) {
         // $('#widget_container').css('height', widgetHeight + 'px');
     });
 
-    // chat.socket = io('https://kh-gis-chat-bot.intetics.com', {path: '/chat/socket.io'});
-    chat.socket = io('http://localhost:3000', {path: '/chat/socket.io'});
+    chat.socket = io('https://kh-gis-chat-bot.intetics.com', {path: '/chat/socket.io'});
+    // chat.socket = io('http://localhost:3000', {path: '/chat/socket.io'});
     // if (chat.currentLocation.startsWith('https://kh-gis-chat-bot.intetics.com')) {
     //     // eslint-disable-next-line no-undef
     //     chat.socket = io('https://kh-gis-chat-bot.intetics.com', { path: '/chat/socket.io' });
