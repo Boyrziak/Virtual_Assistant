@@ -1,11 +1,21 @@
 // eslint-disable-next-line no-undef
 jQuery(document).ready(function ($) {
     $('#widget_button').draggable({
-        containment: 'window'
+        containment: 'window',
+        cursor: "grabbing",
+        start: function () {
+            $('#widget_button').off('click');
+        },
+        stop: function () {
+            setTimeout(function () {
+                $('#widget_button').on('click', chat.open);
+            }, 100);
+        }
     });
     $('#widget_container').draggable({
         handle: '#widget_header',
-        containment: 'window'
+        containment: 'window',
+        cursor: "grabbing"
     });
 
     class MessageWrapper {
@@ -260,6 +270,7 @@ jQuery(document).ready(function ($) {
                     $('#widget_button').on('click', chat.open);
                 }
             }, 2000);
+            $('#widget_button').on('click', chat.open);
         },
         close: function () {
             const body = $('#widget_container');
@@ -280,6 +291,7 @@ jQuery(document).ready(function ($) {
                 $(button).animate({top: $(window).outerHeight() - button.outerHeight() - 10 + 'px'}, 500);
             }
             console.log(self.lastMessage);
+            $('#widget_button').on('click', chat.open);
         },
         reposition: function () {
             const body = $('#widget_container');
@@ -530,6 +542,8 @@ jQuery(document).ready(function ($) {
             $(newMessage).addClass('widget_message bot_message carousel_card shadow_card');
             let cardButtons = {buttons: card.buttons};
             let content = null;
+            let icon = document.createElement('i');
+            $(icon).addClass('far fa-play-circle');
             if (card.imageUri) {
                 content = new Image();
                 content.src = card.imageUri;
@@ -538,9 +552,39 @@ jQuery(document).ready(function ($) {
                 content = document.createElement('video');
                 content.src = card.videoUri;
                 $(content).addClass('message_video');
+                $(newMessage).append(icon);
             }
             $(newMessage).append(content);
             // $(newMessage).append(card.description);
+            icon.addEventListener('click', function () {
+                $('#modal_overlay').show('fade', 800, () => {
+                    $('#modal_overlay').css('display', 'flex');
+                    const lightbox = $('#widget_lightbox');
+                    $(lightbox).empty();
+                    $(content).clone().appendTo(lightbox);
+                    if (card.title) {
+                        $(lightbox).append('<div class="lightbox_descr">' + card.title + '</div>');
+                    }
+                    if (content.tagName.toLowerCase() === 'video') {
+                        $(lightbox).find('video').attr('controls', 'true');
+                        $(lightbox).find('video').attr('id', 'carousel_video');
+                    }
+                    $(lightbox).show('blind', {direction: 'up'}, 700);
+                    $(document).mouseup(function (e) {
+                        let container = $('#widget_lightbox');
+                        if (container.has(e.target).length === 0) {
+                            $('#widget_lightbox').hide('fade', 600);
+                            $('#modal_overlay').hide('fade', 800);
+                            $('#widget_lightbox').find('video')[0].pause();
+                            document.getElementById('carousel_video').pause();
+                            content.pause();
+                        }
+                    });
+                    setTimeout(() => {
+                        $('#close_lightbox').css('top', $('#widget_lightbox').offset().top - 40 + 'px');
+                    }, 1500);
+                });
+            });
             content.addEventListener('click', function () {
                 $('#modal_overlay').show('fade', 800, () => {
                     $('#modal_overlay').css('display', 'flex');
@@ -550,6 +594,10 @@ jQuery(document).ready(function ($) {
                     if (card.title) {
                         $(lightbox).append('<div class="lightbox_descr">' + card.title + '</div>');
                     }
+                    if (content.tagName.toLowerCase() === 'video') {
+                        $(lightbox).find('video').attr('controls', 'true');
+                        $(lightbox).find('video').attr('id', 'carousel_video');
+                    }
                     $(lightbox).show('blind', {direction: 'up'}, 700);
                     $(document).mouseup(function (e) {
                         let container = $('#widget_lightbox');
@@ -557,6 +605,8 @@ jQuery(document).ready(function ($) {
                             $('#widget_lightbox').hide('fade', 600);
                             $('#modal_overlay').hide('fade', 800);
                             $('#widget_lightbox').find('video')[0].pause();
+                            document.getElementById('carousel_video').pause();
+                            content.pause();
                         }
                     });
                     setTimeout(() => {
@@ -570,9 +620,11 @@ jQuery(document).ready(function ($) {
         showCarousel: function (cards) {
             const self = this;
             const carouselHolder = document.createElement('div');
+            const carouselWrap = document.createElement('div');
+            $(carouselWrap).addClass('carousel_wrap');
             $(carouselHolder).addClass('carousel_holder');
             const dotsHolder = document.createElement('div');
-            $(dotsHolder).addClass('dots_holder').appendTo($(carouselHolder));
+            $(dotsHolder).addClass('dots_holder').appendTo($(carouselWrap));
             cards.forEach((card, index) => {
                 const newMessage = document.createElement('div');
                 $(newMessage).addClass('widget_message bot_message carousel_card');
@@ -594,6 +646,7 @@ jQuery(document).ready(function ($) {
                 $(carouselHolder).append(newMessage);
                 let dot = document.createElement('div');
                 $(dot).addClass('control_dot').appendTo($(dotsHolder));
+                index === 0 ? $(dot).addClass('active_dot') : null;
 
                 content.addEventListener('click', function () {
                     chat.showCarouselLightbox(cards, index);
@@ -607,8 +660,9 @@ jQuery(document).ready(function ($) {
             });
             let arrowContainer = document.createElement('div');
             $(arrowContainer).addClass('arrow_container');
-            $(carouselHolder).prepend(arrowContainer);
-            $(carouselHolder).appendTo('#widget_queue').show('drop', {direction: 'left'}, 600);
+            $(carouselWrap).prepend(arrowContainer);
+            $(carouselWrap).append(carouselHolder);
+            $(carouselWrap).appendTo('#widget_queue').show('drop', {direction: 'left'}, 600);
 
             setTimeout(() => {
                 let width = $(carouselHolder).outerWidth();
@@ -627,27 +681,29 @@ jQuery(document).ready(function ($) {
                 leftArrow.addEventListener('click', () => {
                     chat.scrollHolder(leftArrow, carouselHolder, cards.length);
                 });
-
-                $($(carouselHolder).find('.control_dot')[0]).addClass('active_dot');
                 $('.control_dot').on('click', function () {
                     chat.dotScroller(this, carouselHolder, cards.length)
                 });
-                $(carouselHolder).find('.left_arrow').css('display', 'none');
 
                 let dotsOffset = ($(carouselHolder).outerWidth() - $(dotsHolder).outerWidth()) / 2;
-                $(carouselHolder).find('.dots_holder').css('left', dotsOffset + 'px');
+                $(carouselWrap).find('.dots_holder').css('left', dotsOffset + 'px');
 
                 $(arrowContainer).append(leftArrow);
                 $(arrowContainer).append(rightArrow);
-                $(carouselHolder).find('.left_arrow').css('display', 'none');
+                $(carouselWrap).find('.left_arrow').css('display', 'none');
             }, 500);
         },
         showCarouselLightbox: function (cards, scrollTo) {
             const self = this;
             scrollTo = scrollTo || 0;
+            let wrap = $('#carousel_wrap');
+            wrap.append('<div class="pane left_pane"></div>');
+            wrap.append('<div class="pane right_pane"></div>');
+            wrap.find('.dots_holder').remove();
+            wrap.find('.arrow_container').remove();
             $('#carousel_lightbox').empty();
             const bigDotsHolder = document.createElement('div');
-            $(bigDotsHolder).addClass('dots_holder').appendTo($('#carousel_lightbox'));
+            $(bigDotsHolder).addClass('dots_holder').appendTo(wrap);
             cards.forEach((card, index) => {
                 const newMessage = document.createElement('div');
                 $(newMessage).addClass('widget_message bot_message carousel_card');
@@ -661,6 +717,9 @@ jQuery(document).ready(function ($) {
                     content.src = card.videoUri;
                     $(content).addClass('message_video');
                 }
+                $(content).on('load', function () {
+                    console.log('Loaded image № ' + index);
+                });
                 const lightboxCard = document.createElement('div');
                 $(lightboxCard).addClass('lightbox_card');
                 $(lightboxCard).append(content);
@@ -674,20 +733,30 @@ jQuery(document).ready(function ($) {
                 $('#carousel_lightbox').append(lightboxCard);
                 let bigDot = document.createElement('div');
                 $(bigDot).addClass('control_dot').appendTo($(bigDotsHolder));
+                index === 0 ? $(bigDot).addClass('active_dot') : null;
                 $('#carousel_overlay').show('fade', 800, () => {
-                    $('#carousel_overlay').css('display', 'flex');
-                    $('#carousel_lightbox').show('blind', {direction: 'up'}, 400);
-                    $(document).mouseup(function (e) {
-                        let container = $('#carousel_lightbox');
-                        if (container.has(e.target).length === 0) {
-                            $('#carousel_lightbox').hide('fade', 600);
-                            $('#carousel_overlay').hide('fade', 800);
-                            document.getElementById('carousel_video').pause();
-                            content.pause();
-                        }
-                    });
-                    setTimeout(() => {
-                        $('#close_carousel_lightbox').css('top', $('#carousel_lightbox').offset().top - 50 + 'px');
+                    $('.loader_circle').css('display', 'block');
+                    setTimeout(function () {
+                        $('#carousel_wrap').css('display', 'flex');
+                        $('.loader_circle').css('display', 'none');
+                        $('#carousel_overlay').css('display', 'flex');
+                        $('#carousel_lightbox').animate({opacity: 1}, 400);
+                        $(document).mouseup(function (e) {
+                            let container = $('#carousel_wrap');
+                            if (container.has(e.target).length === 0) {
+                                $('#carousel_wrap').css('display', 'none');
+                                $('#close_carousel_lightbox').css('display', 'none');
+                                // $('#carousel_lightbox').hide('fade', 600);
+                                $('#carousel_lightbox').css('opacity', 0);
+                                $('#carousel_overlay').hide('fade', 800);
+                                document.getElementById('carousel_video').pause();
+                                content.pause();
+                            }
+                        });
+                        $('#close_carousel_lightbox').css({
+                            top: $('#carousel_lightbox').offset().top - 50 + 'px',
+                            display: 'block'
+                        });
                         let lighbox = $('#carousel_lightbox');
                         let bigDotsOffset = (lighbox.outerWidth() - $(bigDotsHolder).outerWidth()) / 2;
                         lighbox.find('.dots_holder').css('left', bigDotsOffset + 'px');
@@ -704,13 +773,11 @@ jQuery(document).ready(function ($) {
                             lighbox.find('.right_arrow').css('display', 'block');
                             lighbox.find('.left_arrow').css('display', 'block');
                         }
-                    }, 500);
+                    }, cards.length * 500);
                 });
             });
-
-            setTimeout(() => {
-                $($('#carousel_lightbox').find('.control_dot')[0]).addClass('active_dot');
-                $('#carousel_lightbox').find('.control_dot').on('click', function () {
+            setTimeout(()=>{
+                wrap.find('.control_dot').on('click', function () {
                     chat.dotScroller(this, $('#carousel_lightbox')[0], cards.length)
                 });
 
@@ -723,6 +790,9 @@ jQuery(document).ready(function ($) {
                 bigRightArrow.addEventListener('click', () => {
                     chat.scrollHolder(bigRightArrow, $('#carousel_lightbox')[0], cards.length);
                 });
+                wrap.find('right_pane').on('click', function () {
+                    chat.scrollHolder(this, $('#carousel_lightbox')[0], cards.length);
+                });
 
                 let bigLeftArrow = document.createElement('div');
                 $(bigLeftArrow).addClass('arrow_button left_arrow');
@@ -730,25 +800,40 @@ jQuery(document).ready(function ($) {
                 bigLeftArrow.addEventListener('click', () => {
                     chat.scrollHolder(bigLeftArrow, $('#carousel_lightbox')[0], cards.length);
                 });
+                wrap.find('left_pane').on('click', function () {
+                    chat.scrollHolder(this, $('#carousel_lightbox')[0], cards.length);
+                });
+
+                $(bigLeftArrow).hover(function() {
+                    wrap.find('.left_pane').addClass('hovered');
+                }, () => {
+                    wrap.find('.left_pane').removeClass('hovered');
+                });
+
+                $(bigRightArrow).hover(function() {
+                    wrap.find('.right_pane').addClass('hovered');
+                }, () => {
+                    wrap.find('.right_pane').removeClass('hovered');
+                });
 
                 $(bigContainer).append(bigLeftArrow);
                 $(bigContainer).append(bigRightArrow);
-                $('#carousel_lightbox').prepend(bigContainer);
-                $('#carousel_lightbox').find('.left_arrow').css('display', 'none');
+                wrap.prepend(bigContainer);
+                wrap.find('.left_arrow').css('display', 'none');
+                wrap.find('.left_pane').css('display', 'none');
             }, 500);
         },
         scrollHolder: function (element, carousel, carouselLenght) {
             let holder = $(carousel);
+            let parent = holder.parent();
             let currentScroll = holder.scrollLeft();
-            console.log(`Current scroll: ${currentScroll}`);
-            let scrollDistance = $(element).hasClass('right_arrow') ? currentScroll + holder.outerWidth() + 10 : currentScroll - holder.outerWidth() - 10;
+            let scrollDistance = $(element).hasClass('right_arrow') || $(element).hasClass('right_pane') ? currentScroll + holder.outerWidth() + 10 : currentScroll - holder.outerWidth() - 10;
             holder.animate({scrollLeft: scrollDistance}, 600);
-            $(element).parent().animate({left: scrollDistance + 'px'}, 600);
-            let offset = ($(holder).outerWidth() - $(holder).find('.dots_holder').outerWidth()) / 2;
-            holder.find('.dots_holder').animate({'left': offset + scrollDistance + 'px'}, 600);
-            let currentActive = $(holder).find('.active_dot');
-            console.log($('.control_dot').index(currentActive));
-            if ($(element).hasClass('right_arrow')) {
+            // $(element).parent().animate({left: scrollDistance + 'px'}, 600);
+            // let offset = ($(holder).outerWidth() - $(holder).find('.dots_holder').outerWidth()) / 2;
+            // holder.find('.dots_holder').animate({'left': offset + scrollDistance + 'px'}, 600);
+            let currentActive = parent.find('.active_dot');
+            if ($(element).hasClass('right_arrow') || $(element).hasClass('right_pane')) {
                 if (currentActive.next('.control_dot')) {
                     currentActive.removeClass('active_dot');
                     currentActive.next('.control_dot').addClass('active_dot');
@@ -764,35 +849,47 @@ jQuery(document).ready(function ($) {
                 }
             }
             if (scrollDistance <= 0) {
-                holder.find('.left_arrow').css('display', 'none');
-                holder.find('.right_arrow').css('display', 'block');
+                $(parent).find('.left_arrow').css('display', 'none');
+                $(parent).find('.right_arrow').css('display', 'block');
+                $(parent).find('.left_pane').css('display', 'none');
+                $(parent).find('.right_pane').css('display', 'block');
             } else if (scrollDistance >= holder.outerWidth() * (carouselLenght - 1)) {
-                holder.find('.right_arrow').css('display', 'none');
-                holder.find('.left_arrow').css('display', 'block');
+                $(parent).find('.right_arrow').css('display', 'none');
+                $(parent).find('.left_arrow').css('display', 'block');
+                $(parent).find('.right_pane').css('display', 'none');
+                $(parent).find('.left_pane').css('display', 'block');
             } else if (0 < scrollDistance < holder.outerWidth() * (carouselLenght - 1)) {
-                holder.find('.right_arrow').css('display', 'block');
-                holder.find('.left_arrow').css('display', 'block');
+                $(parent).find('.right_arrow').css('display', 'block');
+                $(parent).find('.left_arrow').css('display', 'block');
+                $(parent).find('.right_pane').css('display', 'block');
+                $(parent).find('.left_pane').css('display', 'block');
             }
         },
         dotScroller: function (dot, carousel, carouselLenght) {
             let holder = $(carousel);
-            $(holder).find('.control_dot').removeClass('active_dot');
+            $(holder).parent().find('.control_dot').removeClass('active_dot');
             $(dot).addClass('active_dot');
-            let scrollDistance = holder.find('.control_dot').index(dot) * (holder.outerWidth() + 10);
+            let scrollDistance = holder.parent().find('.control_dot').index(dot) * (holder.outerWidth() + 10);
             holder.animate({scrollLeft: scrollDistance}, 600);
-            let offset = (holder.outerWidth() - $(dot).parent().outerWidth()) / 2;
-            $(dot).parent().css('left', offset + scrollDistance + 'px');
-            holder.find('.arrow_container').animate({left: scrollDistance + 'px'}, 600);
+            // let offset = (holder.outerWidth() - $(dot).parent().outerWidth()) / 2;
+            // $(dot).parent().css('left', offset + scrollDistance + 'px');
+            // holder.find('.arrow_container').animate({left: scrollDistance + 'px'}, 600);
 
             if (scrollDistance <= 0) {
-                holder.find('.left_arrow').css('display', 'none');
-                holder.find('.right_arrow').css('display', 'block');
+                $(parent).find('.left_arrow').css('display', 'none');
+                $(parent).find('.right_arrow').css('display', 'block');
+                $(parent).find('.left_pane').css('display', 'none');
+                $(parent).find('.right_pane').css('display', 'block');
             } else if (scrollDistance >= holder.outerWidth() * (carouselLenght - 1)) {
-                holder.find('.right_arrow').css('display', 'none');
-                holder.find('.left_arrow').css('display', 'block');
+                $(parent).find('.right_arrow').css('display', 'none');
+                $(parent).find('.left_arrow').css('display', 'block');
+                $(parent).find('.right_pane').css('display', 'none');
+                $(parent).find('.left_pane').css('display', 'block');
             } else if (0 < scrollDistance < holder.outerWidth() * (carouselLenght - 1)) {
-                holder.find('.right_arrow').css('display', 'block');
-                holder.find('.left_arrow').css('display', 'block');
+                $(parent).find('.right_arrow').css('display', 'block');
+                $(parent).find('.left_arrow').css('display', 'block');
+                $(parent).find('.right_pane').css('display', 'block');
+                $(parent).find('.left_pane').css('display', 'block');
             }
         },
         flushQueue: function (currentQueue) {
