@@ -826,6 +826,32 @@ jQuery(document).ready(function ($) {
             const msg = ModelFactory.messageDtoBuilderEvent('CONNECT_WITH_HUMAN', SenderType.USER, 'connect with human');
             chat.onRespond(msg);
             chat.cancelNextMessageEvent();
+        },
+        audioRecording: function () {
+            if (!pressed) {
+                console.log('Recognition started');
+                recognition.start();
+                pressed = true;
+                $(this).addClass('recording');
+            } else {
+                console.log('Recognition stopped');
+                recognition.stop();
+                $(this).removeClass('recording');
+                pressed = false;
+                setTimeout(() => {
+                    // $('#widget_input_field').empty();
+                    if (finalTranscript.toLowerCase() !== 'отправить' || finalTranscript.toLowerCase() !== 'send') {
+                        $('#widget_input_field').text(finalTranscript);
+                        finalTranscript = '';
+                    } else {
+                        const textContent = $('#widget_input_field').text();
+                        const messageDto = ModelFactory.messageDtoBuilderText(textContent, SenderType.USER);
+                        chat.onRespond(messageDto);
+                        $('#widget_input_field').empty();
+                        finalTranscript = '';
+                    }
+                }, 600);
+            }
         }
     };
 
@@ -920,34 +946,8 @@ jQuery(document).ready(function ($) {
         }, 300);
     };
 
-    $('#audio_input').on('click', audioRecording);
+    $('#audio_input').on('click', chat.audioRecording);
 
-    function audioRecording () {
-        if (!pressed) {
-            console.log('Recognition started');
-            recognition.start();
-            pressed = true;
-            $(this).addClass('recording');
-        } else {
-            console.log('Recognition stopped');
-            recognition.stop();
-            $(this).removeClass('recording');
-            pressed = false;
-            setTimeout(() => {
-                // $('#widget_input_field').empty();
-                if (finalTranscript.toLowerCase() !== 'отправить' || finalTranscript.toLowerCase() !== 'send') {
-                    $('#widget_input_field').text(finalTranscript);
-                    finalTranscript = '';
-                } else {
-                    const textContent = $('#widget_input_field').text();
-                    const messageDto = ModelFactory.messageDtoBuilderText(textContent, SenderType.USER);
-                    chat.onRespond(messageDto);
-                    $('#widget_input_field').empty();
-                    finalTranscript = '';
-                }
-            }, 600);
-        }
-    }
 
     $('.show_buttons').on('click', function () {
         $(this).toggleClass('rotated');
