@@ -168,9 +168,9 @@ jQuery(document).ready(function ($) {
         currentLocation: location.href,
         expires: 10,
         connect: function () {
-            let opened = chat.getCookie('opened');
-            console.log(opened);
-            if (!opened) {
+            let openWindow = chat.getCookie('opened');
+            console.log(openWindow);
+            if (!openWindow) {
                 console.log('Cookie has expired');
             }
             console.log('Connected');
@@ -240,9 +240,10 @@ jQuery(document).ready(function ($) {
             $('#widget_input_field').attr('contenteditable', 'false');
         },
         open: function () {
-            $('#widget_button').off('click');
-            const button = $('#widget_button');
             const self = this;
+            $('#widget_button').off('click');
+            self.opened = true;
+            const button = $('#widget_button');
             const body = $('#widget_container');
             body.css({
                 top: button.offset().top - body.outerHeight() - 40 + 'px',
@@ -250,7 +251,7 @@ jQuery(document).ready(function ($) {
             });
             button.addClass('clicked');
             body.addClass('opened');
-            body.toggle('blind', {direction: 'down'}, 1000);
+            body.show('blind', {direction: 'down'}, 1000);
             if (body.offset().top <= 5) {
                 $(body).animate({top: '10px'}, 500);
             }
@@ -259,11 +260,10 @@ jQuery(document).ready(function ($) {
             }
             button.draggable('disable');
             $('#widget_input').empty();
-            self.opened = true;
             // TODO update the line below when refactoring the init method
             lStorage.set(lStorage.keys.IS_WIDGET_OPEN, self.opened);
             $('#preview_container').empty().hide('drop', 600);
-            self.scrollQuery(10);
+            // self.scrollQuery(10);
             let timer = setInterval(() => {
                 $('#widget_queue')[0].scrollTop = 99999;
             }, 20);
@@ -282,25 +282,31 @@ jQuery(document).ready(function ($) {
             $('#widget_button').on('click', chat.open);
         },
         close: function () {
+            const self = this;
+            self.opened = false;
             const body = $('#widget_container');
             const button = $('#widget_button');
-            const self = this;
             button.css({
                 top: body.offset().top + body.outerHeight() + 40 + 'px',
                 left: body.offset().left + body.outerWidth() - button.outerWidth()
             });
             button.removeClass('clicked');
             body.removeClass('opened');
-            body.toggle('blind', {direction: 'down'}, 1000);
-            this.opened = false;
+            body.hide('blind', {direction: 'down'}, 1000);
             // TODO update the line below when refactoring the init method
             lStorage.set(lStorage.keys.IS_WIDGET_OPEN, self.opened);
             button.draggable('enable');
             if (button.offset().top + button.outerHeight() >= $(window).outerHeight() - 5) {
                 $(button).animate({top: $(window).outerHeight() - button.outerHeight() - 10 + 'px'}, 500);
             }
-            console.log(self.lastMessage);
-            $('#widget_button').on('click', chat.open);
+
+            if (button.offset().left <= 5) {
+                $(body).animate({left: '10px'}, 500);
+            }
+
+            if (button.offset().left + button.outerWidth() >= $(window).outerWidth - 5) {
+                $(body).animate({left: $(window).outerWidth - button.outerWidth() + 10 + 'px'}, 500);
+            }
         },
         reposition: function () {
             const body = $('#widget_container');
@@ -563,7 +569,6 @@ jQuery(document).ready(function ($) {
                 $(newMessage).append(icon);
             }
             $(newMessage).append(content);
-            // $(newMessage).append(card.description);
             icon.addEventListener('click', function () {
                 $('#modal_overlay').show('fade', 800, () => {
                     $('#modal_overlay').css('display', 'flex');
@@ -583,7 +588,6 @@ jQuery(document).ready(function ($) {
                         if (container.has(e.target).length === 0) {
                             $('#widget_lightbox').hide('fade', 600);
                             $('#modal_overlay').hide('fade', 800);
-                            $('#widget_lightbox').find('video')[0].pause();
                             document.getElementById('carousel_video').pause();
                             content.pause();
                         }
@@ -626,7 +630,6 @@ jQuery(document).ready(function ($) {
             self.showChoice(cardButtons);
         },
         showCarousel: function (cards) {
-            const self = this;
             const carouselHolder = document.createElement('div');
             const carouselWrap = document.createElement('div');
             $(carouselWrap).addClass('carousel_wrap');
@@ -639,16 +642,8 @@ jQuery(document).ready(function ($) {
                 let content = null;
                 let icon = document.createElement('i');
                 $(icon).addClass('far fa-play-circle');
-                if (card.imageUri) {
-                    content = new Image();
-                    content.src = card.imageUri;
-                    $(content).addClass('message_image');
-                } else if (card.videoUri) {
-                    content = document.createElement('video');
-                    content.src = card.videoUri;
-                    $(content).addClass('message_video');
-                    $(newMessage).append(icon);
-                }
+                card.imageUri ? (content = new Image(), content.src = card.imageUri, $(content).addClass('message_image'))
+                    : card.videoUri ? (content = document.createElement('video'), content.src = card.videoUri, $(newMessage).append(icon), $(content).addClass('message_video')) : null;
 
                 $(newMessage).append(content);
                 $(carouselHolder).append(newMessage);
@@ -660,74 +655,41 @@ jQuery(document).ready(function ($) {
                     chat.showCarouselLightbox(cards, index);
                 });
 
-                if (icon) {
-                    icon.addEventListener('click', function () {
-                        chat.showCarouselLightbox(cards, index);
-                    });
-                }
+                icon.addEventListener('click', function () {
+                    chat.showCarouselLightbox(cards, index);
+                });
+
             });
-            let arrowContainer = document.createElement('div');
-            $(arrowContainer).addClass('arrow_container');
-            $(carouselWrap).prepend(arrowContainer);
+
             $(carouselWrap).append(carouselHolder);
             $(carouselWrap).appendTo('#widget_queue').show('drop', {direction: 'left'}, 600);
+            $(carouselWrap).append('<div class="pane left_pane"><div class="arrow_button left_arrow"><i class="fas fa-chevron-left"></i></div></div>');
+            $(carouselWrap).append('<div class="pane right_pane"><div class="arrow_button right_arrow"><i class="fas fa-chevron-right"></i></div></div>');
 
-            setTimeout(() => {
-                let width = $(carouselHolder).outerWidth();
-                $(carouselHolder).find('.carousel_card').css({'min-width': width || 267.91 + 'px'});
+            let width = $(carouselHolder).outerWidth();
+            $(carouselHolder).find('.carousel_card').css({'min-width': width || 267.91 + 'px'});
 
-                let rightArrow = document.createElement('div');
-                $(rightArrow).addClass('arrow_button right_arrow');
-                $(rightArrow).append('<i class="fas fa-chevron-right"></i>');
-                rightArrow.addEventListener('click', () => {
-                    chat.scrollHolder(rightArrow, carouselHolder, cards.length);
-                });
+            $(carouselWrap).find('.arrow_button').on('click', function () {
+                chat.scrollHolder(this, carouselHolder, cards.length);
+            });
 
-                let leftArrow = document.createElement('div');
-                $(leftArrow).addClass('arrow_button left_arrow');
-                $(leftArrow).append('<i class="fas fa-chevron-left"></i>');
-                leftArrow.addEventListener('click', () => {
-                    chat.scrollHolder(leftArrow, carouselHolder, cards.length);
-                });
-                $('.control_dot').on('click', function () {
-                    chat.dotScroller(this, carouselHolder, cards.length)
-                });
+            $('.control_dot').on('click', function () {
+                chat.dotScroller(this, carouselHolder, cards.length)
+            });
 
-                let dotsOffset = ($(carouselHolder).outerWidth() - $(dotsHolder).outerWidth()) / 2;
-                $(carouselWrap).find('.dots_holder').css('left', dotsOffset + 'px');
-
-                $(arrowContainer).append(leftArrow);
-                $(arrowContainer).append(rightArrow);
-                $(carouselWrap).find('.left_arrow').css('display', 'none');
-            }, 500);
+            let dotsOffset = ($(carouselHolder).outerWidth() - $(dotsHolder).outerWidth()) / 2;
+            $(carouselWrap).find('.dots_holder').css('left', dotsOffset + 'px');
+            chat.checkArrows($(carouselWrap), $(carouselHolder).scrollLeft(), cards.length);
         },
         showCarouselLightbox: function (cards, scrollTo) {
-            const self = this;
             scrollTo = scrollTo || 0;
             let wrap = $('#carousel_wrap');
-            wrap.append('<div class="pane left_pane"></div>');
-            wrap.append('<div class="pane right_pane"></div>');
-            wrap.find('.dots_holder').remove();
-            wrap.find('.arrow_container').remove();
-            $('#carousel_lightbox').empty();
-            const bigDotsHolder = document.createElement('div');
-            $(bigDotsHolder).addClass('dots_holder').appendTo(wrap);
+            let lightbox = $('#carousel_lightbox');
+            lightbox.empty();
+            wrap.find('.dots_holder').empty();
             cards.forEach((card, index) => {
-                const newMessage = document.createElement('div');
-                $(newMessage).addClass('widget_message bot_message carousel_card');
                 let content = null;
-                if (card.imageUri) {
-                    content = new Image();
-                    content.src = card.imageUri;
-                    $(content).addClass('message_image');
-                } else if (card.videoUri) {
-                    content = document.createElement('video');
-                    content.src = card.videoUri;
-                    $(content).addClass('message_video');
-                }
-                $(content).on('load', function () {
-                    console.log('Loaded image № ' + index);
-                });
+                card.imageUri ? (content = new Image(), content.src = card.imageUri) : card.videoUri ? (content = document.createElement('video'), content.src = card.videoUri) : null;
                 const lightboxCard = document.createElement('div');
                 $(lightboxCard).addClass('lightbox_card');
                 $(lightboxCard).append(content);
@@ -738,108 +700,57 @@ jQuery(document).ready(function ($) {
                     $(content).attr('controls', 'true');
                     $(content).attr('id', 'carousel_video');
                 }
-                $('#carousel_lightbox').append(lightboxCard);
+                lightbox.append(lightboxCard);
                 let bigDot = document.createElement('div');
-                $(bigDot).addClass('control_dot').appendTo($(bigDotsHolder));
+                $(bigDot).addClass('control_dot').appendTo(wrap.find('.dots_holder'));
                 index === 0 ? $(bigDot).addClass('active_dot') : null;
-                $('#carousel_overlay').show('fade', 800, () => {
-                    $('.loader_circle').css('display', 'block');
-                    setTimeout(function () {
-                        $('#carousel_wrap').css('display', 'flex');
-                        $('.loader_circle').css('display', 'none');
-                        $('#carousel_overlay').css('display', 'flex');
-                        $('#carousel_lightbox').animate({opacity: 1}, 400);
-                        $(document).mouseup(function (e) {
-                            let container = $('#carousel_wrap');
-                            if (container.has(e.target).length === 0) {
-                                $('#carousel_wrap').css('display', 'none');
-                                $('#close_carousel_lightbox').css('display', 'none');
-                                // $('#carousel_lightbox').hide('fade', 600);
-                                $('#carousel_lightbox').css('opacity', 0);
-                                $('#carousel_overlay').hide('fade', 800);
-                                document.getElementById('carousel_video').pause();
-                                content.pause();
-                            }
-                        });
-                        $('#close_carousel_lightbox').css({
-                            top: $('#carousel_lightbox').offset().top - 50 + 'px',
-                            display: 'block'
-                        });
-                        let lighbox = $('#carousel_lightbox');
-                        let bigDotsOffset = (lighbox.outerWidth() - $(bigDotsHolder).outerWidth()) / 2;
-                        lighbox.find('.dots_holder').css('left', bigDotsOffset + 'px');
-                        let currentOffset = (lighbox.outerWidth() + 10) * scrollTo;
-                        lighbox.animate({scrollLeft: currentOffset + 'px'}, 600);
-
-                        if (currentOffset <= 0) {
-                            lighbox.find('.left_arrow').css('display', 'none');
-                            lighbox.find('.right_arrow').css('display', 'block');
-                        } else if (currentOffset >= lighbox.outerWidth() * (cards.length - 1)) {
-                            lighbox.find('.right_arrow').css('display', 'none');
-                            lighbox.find('.left_arrow').css('display', 'block');
-                        } else if (0 < currentOffset < lighbox.outerWidth() * (cards.length - 1)) {
-                            lighbox.find('.right_arrow').css('display', 'block');
-                            lighbox.find('.left_arrow').css('display', 'block');
-                        }
-                    }, cards.length * 500);
-                });
             });
-            setTimeout(()=>{
-                wrap.find('.control_dot').on('click', function () {
-                    chat.dotScroller(this, $('#carousel_lightbox')[0], cards.length)
-                });
+            $('#carousel_overlay').show('fade', 800, () => {
+                $('.loader_circle').css('display', 'block');
+                $($('.control_dot')[scrollTo - 1]).addClass('active_dot');
+                setTimeout(function () {
+                    wrap.css('display', 'flex');
+                    $('.loader_circle').css('display', 'none');
+                    $('#carousel_overlay').css('display', 'flex');
+                    $('#carousel_lightbox').animate({opacity: 1}, 400);
+                    $(document).mouseup(function (e) {
+                        if (wrap.has(e.target).length === 0) {
+                            wrap.css('display', 'none');
+                            $('#close_carousel_lightbox').css('display', 'none');
+                            lightbox.css('opacity', 0);
+                            $('#carousel_overlay').hide('fade', 800);
+                            document.getElementById('carousel_video').pause();
+                            // content.pause();
+                        }
+                    });
+                    $('#close_carousel_lightbox').css({
+                        top: $('#carousel_lightbox').offset().top - 50 + 'px',
+                        display: 'block'
+                    });
+                    let bigDotsOffset = (lightbox.outerWidth() - wrap.find('.dots_holder').outerWidth()) / 2;
+                    wrap.find('.dots_holder').css('left', bigDotsOffset + 'px');
+                    let currentOffset = (lightbox.outerWidth() + 10) * scrollTo;
+                    lightbox.animate({scrollLeft: currentOffset + 'px'}, 600);
 
-                let bigContainer = document.createElement('div');
-                $(bigContainer).addClass('arrow_container');
+                    wrap.find('.control_dot').on('click', function () {
+                        chat.dotScroller(this, $('#carousel_lightbox')[0], cards.length)
+                    });
 
-                let bigRightArrow = document.createElement('div');
-                $(bigRightArrow).addClass('arrow_button right_arrow');
-                $(bigRightArrow).append('<i class="fas fa-chevron-right"></i>');
-                bigRightArrow.addEventListener('click', () => {
-                    chat.scrollHolder(bigRightArrow, $('#carousel_lightbox')[0], cards.length);
-                });
-                wrap.find('right_pane').on('click', function () {
-                    chat.scrollHolder(this, $('#carousel_lightbox')[0], cards.length);
-                });
+                    wrap.find('.arrow_button').on('click', function () {
+                        chat.scrollHolder(this, $('#carousel_lightbox')[0], cards.length);
+                    });
 
-                let bigLeftArrow = document.createElement('div');
-                $(bigLeftArrow).addClass('arrow_button left_arrow');
-                $(bigLeftArrow).append('<i class="fas fa-chevron-left"></i>');
-                bigLeftArrow.addEventListener('click', () => {
-                    chat.scrollHolder(bigLeftArrow, $('#carousel_lightbox')[0], cards.length);
-                });
-                wrap.find('left_pane').on('click', function () {
-                    chat.scrollHolder(this, $('#carousel_lightbox')[0], cards.length);
-                });
-
-                $(bigLeftArrow).hover(function() {
-                    wrap.find('.left_pane').addClass('hovered');
-                }, () => {
-                    wrap.find('.left_pane').removeClass('hovered');
-                });
-
-                $(bigRightArrow).hover(function() {
-                    wrap.find('.right_pane').addClass('hovered');
-                }, () => {
-                    wrap.find('.right_pane').removeClass('hovered');
-                });
-
-                $(bigContainer).append(bigLeftArrow);
-                $(bigContainer).append(bigRightArrow);
-                wrap.prepend(bigContainer);
-                wrap.find('.left_arrow').css('display', 'none');
-                wrap.find('.left_pane').css('display', 'none');
-            }, 500);
+                    chat.checkArrows(wrap, currentOffset, cards.length);
+                }, cards.length * 50);
+            });
         },
-        scrollHolder: function (element, carousel, carouselLenght) {
+        scrollHolder: function (element, carousel, carouselLength) {
+            $(element).off('click');
             let holder = $(carousel);
             let parent = holder.parent();
             let currentScroll = holder.scrollLeft();
-            let scrollDistance = $(element).hasClass('right_arrow') || $(element).hasClass('right_pane') ? currentScroll + holder.outerWidth() + 10 : currentScroll - holder.outerWidth() - 10;
+            let scrollDistance = $(element).hasClass('right_arrow') ? currentScroll + holder.outerWidth() + 10 : currentScroll - holder.outerWidth() - 10;
             holder.animate({scrollLeft: scrollDistance}, 600);
-            // $(element).parent().animate({left: scrollDistance + 'px'}, 600);
-            // let offset = ($(holder).outerWidth() - $(holder).find('.dots_holder').outerWidth()) / 2;
-            // holder.find('.dots_holder').animate({'left': offset + scrollDistance + 'px'}, 600);
             let currentActive = parent.find('.active_dot');
             if ($(element).hasClass('right_arrow') || $(element).hasClass('right_pane')) {
                 if (currentActive.next('.control_dot')) {
@@ -856,48 +767,33 @@ jQuery(document).ready(function ($) {
                     currentActive.addClass('active_dot');
                 }
             }
-            if (scrollDistance <= 0) {
-                $(parent).find('.left_arrow').css('display', 'none');
-                $(parent).find('.right_arrow').css('display', 'block');
-                $(parent).find('.left_pane').css('display', 'none');
-                $(parent).find('.right_pane').css('display', 'block');
-            } else if (scrollDistance >= holder.outerWidth() * (carouselLenght - 1)) {
-                $(parent).find('.right_arrow').css('display', 'none');
-                $(parent).find('.left_arrow').css('display', 'block');
-                $(parent).find('.right_pane').css('display', 'none');
-                $(parent).find('.left_pane').css('display', 'block');
-            } else if (0 < scrollDistance < holder.outerWidth() * (carouselLenght - 1)) {
-                $(parent).find('.right_arrow').css('display', 'block');
-                $(parent).find('.left_arrow').css('display', 'block');
-                $(parent).find('.right_pane').css('display', 'block');
-                $(parent).find('.left_pane').css('display', 'block');
-            }
+            chat.checkArrows($(parent), scrollDistance, carouselLength);
+            setTimeout(function () {
+                $(element).on('click', function () {
+                    chat.scrollHolder(element, carousel, carouselLength);
+                });
+            }, 300);
         },
-        dotScroller: function (dot, carousel, carouselLenght) {
+        dotScroller: function (dot, carousel, carouselLength) {
             let holder = $(carousel);
-            $(holder).parent().find('.control_dot').removeClass('active_dot');
+            let parent = $(holder).parent();
+            $(parent).find('.active_dot').removeClass('active_dot');
             $(dot).addClass('active_dot');
             let scrollDistance = holder.parent().find('.control_dot').index(dot) * (holder.outerWidth() + 10);
+            console.log(holder.parent().find('.control_dot').index(dot));
             holder.animate({scrollLeft: scrollDistance}, 600);
-            // let offset = (holder.outerWidth() - $(dot).parent().outerWidth()) / 2;
-            // $(dot).parent().css('left', offset + scrollDistance + 'px');
-            // holder.find('.arrow_container').animate({left: scrollDistance + 'px'}, 600);
-
+            chat.checkArrows($(parent), scrollDistance, carouselLength);
+        },
+        checkArrows: function (holder, scrollDistance, carouselLength) {
             if (scrollDistance <= 0) {
-                $(parent).find('.left_arrow').css('display', 'none');
-                $(parent).find('.right_arrow').css('display', 'block');
-                $(parent).find('.left_pane').css('display', 'none');
-                $(parent).find('.right_pane').css('display', 'block');
-            } else if (scrollDistance >= holder.outerWidth() * (carouselLenght - 1)) {
-                $(parent).find('.right_arrow').css('display', 'none');
-                $(parent).find('.left_arrow').css('display', 'block');
-                $(parent).find('.right_pane').css('display', 'none');
-                $(parent).find('.left_pane').css('display', 'block');
-            } else if (0 < scrollDistance < holder.outerWidth() * (carouselLenght - 1)) {
-                $(parent).find('.right_arrow').css('display', 'block');
-                $(parent).find('.left_arrow').css('display', 'block');
-                $(parent).find('.right_pane').css('display', 'block');
-                $(parent).find('.left_pane').css('display', 'block');
+                holder.find('.left_pane').css('display', 'none');
+                holder.find('.right_pane').css('display', 'flex');
+            } else if (scrollDistance >= holder.outerWidth() * (carouselLength - 1)) {
+                holder.find('.right_pane').css('display', 'none');
+                holder.find('.left_pane').css('display', 'flex');
+            } else if (0 < scrollDistance < holder.outerWidth() * (carouselLength - 1)) {
+                holder.find('.right_pane').css('display', 'flex');
+                holder.find('.left_pane').css('display', 'flex');
             }
         },
         flushQueue: function (currentQueue) {
@@ -937,12 +833,6 @@ jQuery(document).ready(function ($) {
         chat.connectWithHuman();
     });
 
-    $('#widget_input_field').keypress(function (e) {
-        if (!lStorage.has(lStorage.keys.USER)) {
-            chat.socket.emit(WS_ENDPOINTS.INIT_USER_COVERTLY, {id: null});
-        }
-    });
-
     $('#widget_input_field').keydown(function (e) {
         if (e.keyCode === 13) {
             e.preventDefault();
@@ -950,6 +840,10 @@ jQuery(document).ready(function ($) {
             const messageDto = ModelFactory.messageDtoBuilderText(textContent, SenderType.USER);
             chat.onRespond(messageDto);
             $(this).empty();
+        } else {
+            if (!lStorage.has(lStorage.keys.USER)) {
+                chat.socket.emit(WS_ENDPOINTS.INIT_USER_COVERTLY, {id: null});
+            }
         }
     });
 
@@ -965,10 +859,6 @@ jQuery(document).ready(function ($) {
     $(window).resize(function () {
         clearTimeout(resizeTimer);
         resizeTimer = setTimeout(chat.reposition, 500);
-        // $('#widget_container').css('height', '95%');
-        // let widgetHeight = $('#widget_container').outerHeight();
-        // console.log(widgetHeight);
-        // $('#widget_container').css('height', widgetHeight + 'px');
     });
 
     chat.socket = io('https://kh-gis-chat-bot.intetics.com', {path: '/chat/socket.io'});
@@ -1013,12 +903,15 @@ jQuery(document).ready(function ($) {
     };
     let pressed = false;
     recognition.onaudioend = (event) => {
+        if (!lStorage.has(lStorage.keys.USER)) {
+            chat.socket.emit(WS_ENDPOINTS.INIT_USER_COVERTLY, {id: null});
+        }
         console.log('Recognition stopped');
         recognition.stop();
         $('#audio_input').removeClass('recording');
         pressed = false;
         setTimeout(() => {
-            if (finalTranscript != '') {
+            if (finalTranscript !== '') {
                 const messageDto = ModelFactory.messageDtoBuilderText(finalTranscript, SenderType.USER);
                 chat.onRespond(messageDto);
                 $('#widget_input_field').empty();
@@ -1027,7 +920,9 @@ jQuery(document).ready(function ($) {
         }, 300);
     };
 
-    $('#audio_input').on('click', function () {
+    $('#audio_input').on('click', audioRecording);
+
+    function audioRecording () {
         if (!pressed) {
             console.log('Recognition started');
             recognition.start();
@@ -1052,7 +947,7 @@ jQuery(document).ready(function ($) {
                 }
             }, 600);
         }
-    });
+    }
 
     $('.show_buttons').on('click', function () {
         $(this).toggleClass('rotated');
@@ -1061,7 +956,45 @@ jQuery(document).ready(function ($) {
 
     $(window).on('unload', () => {
         chat.setCookie('opened', 'false', {expires: chat.expires});
-        // alert('Cookie set');
-        // return "Bye now";
     });
+
+    let init = {
+        method: 'GET'
+        // headers: {'Content-Type': 'application/x-www-form-urlencoded'}
+    };
+
+    let myLinkedinRequest = new Request('https://www.linkedin.com/oauth/v2/authorization?response_type=code&client_id=78ces7rr8idfht&redirect_uri=https://kh-gis-chat-bot.intetics.com/intetics-bot-test/test-page-1.html&state=LinkedinTokenState&scope=r_liteprofile%20r_emailaddress%20w_member_social', init);
+
+    // let myLinkedinRequest = new Request('https://bac45637.ngrok.io/linkedin', init);
+    // fetch(myLinkedinRequest).then((response)=>{
+    //     console.log(response);
+    //     return response.text();
+    // }).then((textResponse)=>{
+    //    $('body').empty();
+    //     document.getElementsByTagName('body')[0].insertAdjacentHTML("beforeend", textResponse);
+    // });
+
+
+    // let xhrRequest = new XMLHttpRequest();
+    // xhrRequest.open('GET', 'https://www.linkedin.com/oauth/v2/authorization?response_type=code&client_id=78ces7rr8idfht&redirect_uri=https://kh-gis-chat-bot.intetics.com/intetics-bot-test/test-page-1.html&state=LinkedinTokenState&scope=r_liteprofile%20r_emailaddress%20w_member_social');
+
+    function createCORSRequest(method, url) {
+        let xhr = new XMLHttpRequest();
+        if ("withCredentials" in xhr) {
+            // XHR for Chrome/Firefox/Opera/Safari.
+            xhr.open(method, url, true);
+        } else if (typeof XDomainRequest != "undefined") {
+            // XDomainRequest for IE.
+            xhr = new XDomainRequest();
+            xhr.open(method, url);
+        } else {
+            // CORS not supported.
+            xhr = null;
+        }
+        return xhr;
+    }
+
+    let url = 'https://www.linkedin.com/oauth/v2/authorization?response_type=code&client_id=78ces7rr8idfht&redirect_uri=https://kh-gis-chat-bot.intetics.com/intetics-bot-test/test-page-1.html&state=LinkedinTokenState&scope=r_liteprofile%20r_emailaddress%20w_member_social';
+    let xhr = createCORSRequest('GET', url);
+    xhr.send();
 });

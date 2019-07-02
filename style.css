@@ -672,6 +672,7 @@ body {
     background: white;
     height: 50px;
     display: flex;
+    text-align: center;
     flex-direction: row;
     align-content: center;
     align-items: center;
@@ -831,6 +832,10 @@ body {
 #carousel_wrap .pane{
     position: absolute;
     width: 10%;
+    display: flex;
+    align-items: center;
+    align-content: center;
+    justify-content: center;
     z-index: 1100;
     height: 100%;
 }
@@ -864,6 +869,56 @@ body {
 #carousel_wrap .pane.right_pane.hovered {
     transition: .4s;
     background: linear-gradient(to right, rgba(0,0,0,0.1), rgba(0,0,0,0.2) 40%, rgba(0,0,0,0.4) 80%, rgba(0,0,0,0.6) 100%);
+}
+
+.carousel_wrap .pane{
+    position: absolute;
+    width: 10%;
+    top: 0;
+    display: flex;
+    align-items: center;
+    align-content: center;
+    justify-content: center;
+    z-index: 1100;
+    height: 150px;
+}
+
+.carousel_wrap .pane.left_pane {
+    border-bottom-left-radius: 15px;
+    border-top-left-radius: 15px;
+}
+
+.carousel_wrap .pane.right_pane {
+    right: 0;
+    border-bottom-right-radius: 15px;
+    border-top-right-radius: 15px;
+}
+
+.carousel_wrap .pane.left_pane:hover {
+    transition: .4s;
+    background: linear-gradient(to left, rgba(0,0,0,0.1), rgba(0,0,0,0.2) 40%, rgba(0,0,0,0.4) 80%, rgba(0,0,0,0.6) 100%);
+}
+
+.carousel_wrap .pane.right_pane:hover {
+    transition: .4s;
+    background: linear-gradient(to right, rgba(0,0,0,0.1), rgba(0,0,0,0.2) 40%, rgba(0,0,0,0.4) 80%, rgba(0,0,0,0.6) 100%);
+}
+
+.carousel_wrap .pane.left_pane.hovered {
+    transition: .4s;
+    background: linear-gradient(to left, rgba(0,0,0,0.1), rgba(0,0,0,0.2) 40%, rgba(0,0,0,0.4) 80%, rgba(0,0,0,0.6) 100%);
+}
+
+.carousel_wrap .pane.right_pane.hovered {
+    transition: .4s;
+    background: linear-gradient(to right, rgba(0,0,0,0.1), rgba(0,0,0,0.2) 40%, rgba(0,0,0,0.4) 80%, rgba(0,0,0,0.6) 100%);
+}
+
+.carousel_wrap .arrow_button {
+    position: absolute;
+    color: rgba(255, 255, 255, 1);
+    font-size: 25px;
+    cursor: pointer;
 }
 
 #carousel_wrap .arrow_container {
@@ -1196,7 +1251,11 @@ body {
     }
 
     #widget_queue .widget_message.carousel_card .message_image, .message_video {
-        /*height: 160px;*/
+        height: 160px;
+    }
+
+    #widget_lightbox img, video {
+        height: unset!important;
     }
 
     #widget_input_field {
@@ -1219,8 +1278,11 @@ body {
         bottom: calc(50% - 20px);
     }
 
-    #widget_queue .carousel_holder {
+    #widget_queue .carousel_wrap {
         width: 60%;
+    }
+
+    #widget_queue .carousel_holder {
         height: 160px;
         min-height: 160px!important;
     }
@@ -1238,6 +1300,24 @@ body {
         font-size: 45px;
     }
 
+    #carousel_wrap {
+        width: 95%;
+    }
+
+    #carousel_wrap .pane {
+        width: 15%;
+    }
+
+    #carousel_wrap .pane.left_pane {
+        transition: .4s;
+        background: linear-gradient(to left, rgba(0,0,0,0.1), rgba(0,0,0,0.2) 40%, rgba(0,0,0,0.4) 80%, rgba(0,0,0,0.6) 100%);
+    }
+
+    #carousel_wrap .pane.right_pane {
+        transition: .4s;
+        background: linear-gradient(to right, rgba(0,0,0,0.1), rgba(0,0,0,0.2) 40%, rgba(0,0,0,0.4) 80%, rgba(0,0,0,0.6) 100%);
+    }
+
     #widget_lightbox {
         width: 95%;
     }
@@ -1246,9 +1326,9 @@ body {
         right: 5%;
     }
 
-    #carousel_lightbox {
-        width: 95%;
-    }
+    /*#carousel_lightbox {*/
+        /*width: 95%;*/
+    /*}*/
 
     #carousel_overlay #close_carousel_lightbox {
         right: 5%;
