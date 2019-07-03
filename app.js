@@ -367,6 +367,7 @@ jQuery(document).ready(function ($) {
         addMessage: function (messageDto) {
             const sender = messageDto.senderType;
             const self = this;
+            console.log(messageDto);
             setTimeout(function () {
                 const options = {direction: ''};
                 if (sender === 'bot') {
@@ -550,7 +551,7 @@ jQuery(document).ready(function ($) {
             this.currentLocation = location.href;
             return this.currentLocation;
         },
-        showCard: function (card) {
+        showCard: function (card, eventName, delay) {
             const self = this;
             const newMessage = document.createElement('div');
             $(newMessage).addClass('widget_message bot_message carousel_card shadow_card');
@@ -570,6 +571,7 @@ jQuery(document).ready(function ($) {
             }
             $(newMessage).append(content);
             icon.addEventListener('click', function () {
+                chat.cancelNextMessageEvent();
                 $('#modal_overlay').show('fade', 800, () => {
                     $('#modal_overlay').css('display', 'flex');
                     const lightbox = $('#widget_lightbox');
@@ -652,10 +654,12 @@ jQuery(document).ready(function ($) {
                 index === 0 ? $(dot).addClass('active_dot') : null;
 
                 content.addEventListener('click', function () {
+                    chat.cancelNextMessageEvent();
                     chat.showCarouselLightbox(cards, index);
                 });
 
                 icon.addEventListener('click', function () {
+                    chat.cancelNextMessageEvent();
                     chat.showCarouselLightbox(cards, index);
                 });
 
@@ -752,17 +756,17 @@ jQuery(document).ready(function ($) {
             let scrollDistance = $(element).hasClass('right_arrow') ? currentScroll + holder.outerWidth() + 10 : currentScroll - holder.outerWidth() - 10;
             holder.animate({scrollLeft: scrollDistance}, 600);
             let currentActive = parent.find('.active_dot');
-            if ($(element).hasClass('right_arrow') || $(element).hasClass('right_pane')) {
+            if ($(element).hasClass('right_arrow')) {
                 if (currentActive.next('.control_dot')) {
-                    currentActive.removeClass('active_dot');
                     currentActive.next('.control_dot').addClass('active_dot');
+                    currentActive.removeClass('active_dot');
                 } else {
                     currentActive.addClass('active_dot');
                 }
             } else {
                 if (currentActive.prev('.control_dot')) {
-                    currentActive.removeClass('active_dot');
                     currentActive.prev('.control_dot').addClass('active_dot');
+                    currentActive.removeClass('active_dot');
                 } else {
                     currentActive.addClass('active_dot');
                 }
@@ -828,7 +832,9 @@ jQuery(document).ready(function ($) {
             chat.cancelNextMessageEvent();
         },
         audioRecording: function () {
+            $('#audio_input').addClass('recording');
             if (!pressed) {
+                chat.cancelNextMessageEvent();
                 console.log('Recognition started');
                 recognition.start();
                 pressed = true;
@@ -841,7 +847,7 @@ jQuery(document).ready(function ($) {
                 setTimeout(() => {
                     // $('#widget_input_field').empty();
                     if (finalTranscript.toLowerCase() !== 'отправить' || finalTranscript.toLowerCase() !== 'send') {
-                        $('#widget_input_field').text(finalTranscript);
+                        $('#widget_input_field').text(interimResults);
                         finalTranscript = '';
                     } else {
                         const textContent = $('#widget_input_field').text();
@@ -910,13 +916,14 @@ jQuery(document).ready(function ($) {
 
     window.SpeechRecognition = window.webkitSpeechRecognition || window.SpeechRecognition;
     let finalTranscript = '';
+    let interimTranscript = '';
     let recognition = new window.SpeechRecognition();
     recognition.interimResults = true;
     recognition.maxAlternatives = 10;
     recognition.continuous = false;
     recognition.lang = "en-GB";
     recognition.onresult = (event) => {
-        let interimTranscript = '';
+        interimTranscript = '';
         for (let i = event.resultIndex, len = event.results.length; i < len; i++) {
             let transcript = event.results[i][0].transcript;
             if (event.results[i].isFinal) {
@@ -936,6 +943,7 @@ jQuery(document).ready(function ($) {
         recognition.stop();
         $('#audio_input').removeClass('recording');
         pressed = false;
+
         setTimeout(() => {
             if (finalTranscript !== '') {
                 const messageDto = ModelFactory.messageDtoBuilderText(finalTranscript, SenderType.USER);

@@ -650,6 +650,10 @@ body {
     width: 40%;
 }
 
+.shadow_card {
+    margin-bottom: 10px!important;
+}
+
 #widget_avatar img {
     width: 100%;
 }
