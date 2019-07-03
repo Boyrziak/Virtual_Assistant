@@ -525,9 +525,11 @@ jQuery(document).ready(function ($) {
         },
         clearHistoryConfirmed: function (data) {
             console.log('Clear History confirmed  => ', data);
-            $('#widget_queue').empty();
-            lStorage.clear();
             delete chat.user;
+            lStorage.clear();
+            setTimeout(()=>{
+                $('#widget_queue').empty();
+            }, 300);
         },
         sendNextMessageEvent: function (delay, eventName) {
             chat.nextMessageTimer = setTimeout(function () {
@@ -674,15 +676,15 @@ jQuery(document).ready(function ($) {
             $(carouselHolder).find('.carousel_card').css({'min-width': width || 267.91 + 'px'});
 
             $(carouselWrap).find('.arrow_button').on('click', function () {
-                chat.scrollHolder(this, carouselHolder, cards.length);
+                chat.scrollHolder(this, carouselHolder, cards.length, 9);
             });
 
             $('.control_dot').on('click', function () {
-                chat.dotScroller(this, carouselHolder, cards.length)
+                chat.dotScroller(this, carouselHolder, cards.length, 8)
             });
 
-            let dotsOffset = ($(carouselHolder).outerWidth() - $(dotsHolder).outerWidth()) / 2;
-            $(carouselWrap).find('.dots_holder').css('left', dotsOffset + 'px');
+            // let dotsOffset = ($(carouselHolder).outerWidth() - $(dotsHolder).outerWidth()) / 2;
+            // $(carouselWrap).find('.dots_holder').css('left', dotsOffset + 'px');
             chat.checkArrows($(carouselWrap), $(carouselHolder).scrollLeft(), cards.length);
         },
         showCarouselLightbox: function (cards, scrollTo) {
@@ -707,23 +709,24 @@ jQuery(document).ready(function ($) {
                 lightbox.append(lightboxCard);
                 let bigDot = document.createElement('div');
                 $(bigDot).addClass('control_dot').appendTo(wrap.find('.dots_holder'));
-                index === 0 ? $(bigDot).addClass('active_dot') : null;
             });
             $('#carousel_overlay').show('fade', 800, () => {
                 $('.loader_circle').css('display', 'block');
-                $($('.control_dot')[scrollTo - 1]).addClass('active_dot');
+                wrap.find('.left_pane').append('<div class="arrow_button left_arrow"><i class="fas fa-chevron-left"></i></div>');
+                wrap.find('.right_pane').append('<div class="arrow_button right_arrow"><i class="fas fa-chevron-right"></i></div>');
                 setTimeout(function () {
                     wrap.css('display', 'flex');
                     $('.loader_circle').css('display', 'none');
                     $('#carousel_overlay').css('display', 'flex');
                     $('#carousel_lightbox').animate({opacity: 1}, 400);
                     $(document).mouseup(function (e) {
-                        if (wrap.has(e.target).length === 0) {
+                        if (wrap.has(e.target).length === 0 && $('#carousel_overlay').css('display') !== 'none') {
                             wrap.css('display', 'none');
                             $('#close_carousel_lightbox').css('display', 'none');
                             lightbox.css('opacity', 0);
                             $('#carousel_overlay').hide('fade', 800);
                             document.getElementById('carousel_video').pause();
+                            wrap.find('.arrow_button').remove();
                             // content.pause();
                         }
                     });
@@ -731,29 +734,32 @@ jQuery(document).ready(function ($) {
                         top: $('#carousel_lightbox').offset().top - 50 + 'px',
                         display: 'block'
                     });
+                    let currentDot = wrap.find('.control_dot')[scrollTo];
+                    $(currentDot).addClass('active_dot');
                     let bigDotsOffset = (lightbox.outerWidth() - wrap.find('.dots_holder').outerWidth()) / 2;
-                    wrap.find('.dots_holder').css('left', bigDotsOffset + 'px');
+                    // wrap.find('.dots_holder').css('left', bigDotsOffset + 'px');
                     let currentOffset = (lightbox.outerWidth() + 10) * scrollTo;
-                    lightbox.animate({scrollLeft: currentOffset + 'px'}, 600);
+                    lightbox.animate({scrollLeft: currentOffset + 'px'}, 0);
 
                     wrap.find('.control_dot').on('click', function () {
-                        chat.dotScroller(this, $('#carousel_lightbox')[0], cards.length)
+                        chat.dotScroller(this, $('#carousel_lightbox')[0], cards.length, 10)
                     });
 
                     wrap.find('.arrow_button').on('click', function () {
-                        chat.scrollHolder(this, $('#carousel_lightbox')[0], cards.length);
+                        chat.scrollHolder(this, $('#carousel_lightbox')[0], cards.length, 10);
                     });
 
                     chat.checkArrows(wrap, currentOffset, cards.length);
                 }, cards.length * 50);
             });
         },
-        scrollHolder: function (element, carousel, carouselLength) {
+        scrollHolder: function (element, carousel, carouselLength, rightOffset) {
+            console.log('Scrolled by arrow');
             $(element).off('click');
             let holder = $(carousel);
             let parent = holder.parent();
             let currentScroll = holder.scrollLeft();
-            let scrollDistance = $(element).hasClass('right_arrow') ? currentScroll + holder.outerWidth() + 10 : currentScroll - holder.outerWidth() - 10;
+            let scrollDistance = $(element).hasClass('right_arrow') ? currentScroll + holder.outerWidth() + rightOffset : currentScroll - holder.outerWidth() - rightOffset;
             holder.animate({scrollLeft: scrollDistance}, 600);
             let currentActive = parent.find('.active_dot');
             if ($(element).hasClass('right_arrow')) {
@@ -774,16 +780,17 @@ jQuery(document).ready(function ($) {
             chat.checkArrows($(parent), scrollDistance, carouselLength);
             setTimeout(function () {
                 $(element).on('click', function () {
-                    chat.scrollHolder(element, carousel, carouselLength);
+                    chat.scrollHolder(element, carousel, carouselLength, rightOffset);
                 });
             }, 700);
         },
-        dotScroller: function (dot, carousel, carouselLength) {
+        dotScroller: function (dot, carousel, carouselLength, rightOffset) {
+            console.log('Scrolled by dot');
             let holder = $(carousel);
             let parent = $(holder).parent();
             $(parent).find('.active_dot').removeClass('active_dot');
             $(dot).addClass('active_dot');
-            let scrollDistance = holder.parent().find('.control_dot').index(dot) * (holder.outerWidth() + 10);
+            let scrollDistance = holder.parent().find('.control_dot').index(dot) * (holder.outerWidth() + rightOffset);
             console.log(holder.parent().find('.control_dot').index(dot));
             holder.animate({scrollLeft: scrollDistance}, 600);
             chat.checkArrows($(parent), scrollDistance, carouselLength);

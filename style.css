@@ -556,7 +556,9 @@ body {
     flex-direction: row;
     align-items: center;
     z-index: 999;
-    width: 100%;
+    width: 80%;
+    margin-left: 10%;
+    margin-right: 10%;
     justify-content: center;
 }
 
@@ -712,20 +714,14 @@ body {
 
 #carousel_lightbox {
     z-index: 1000;
-    /*position: absolute;*/
     background: white;
     display: flex;
-    /*width: 50%;*/
     opacity: 0;
+    cursor: initial;
     border-radius: 25px;
     overflow: hidden;
-    /*overflow-x: hidden;*/
     flex-direction: row;
 }
-
-/*#carousel_lightbox::-webkit-scrollbar {*/
-    /*display: none;*/
-/*}*/
 
 #carousel_lightbox[style*='display: block'] {
     display: flex !important;
@@ -836,6 +832,7 @@ body {
 #carousel_wrap .pane{
     position: absolute;
     width: 10%;
+    cursor: initial;
     display: flex;
     align-items: center;
     align-content: center;
@@ -956,7 +953,9 @@ body {
     flex-direction: row;
     align-items: center;
     z-index: 1200;
-    width: 100%;
+    width: 80%;
+    margin-left: 10%;
+    margin-right: 10%;
     justify-content: center;
 }
 
