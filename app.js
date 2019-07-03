@@ -776,7 +776,7 @@ jQuery(document).ready(function ($) {
                 $(element).on('click', function () {
                     chat.scrollHolder(element, carousel, carouselLength);
                 });
-            }, 300);
+            }, 700);
         },
         dotScroller: function (dot, carousel, carouselLength) {
             let holder = $(carousel);
