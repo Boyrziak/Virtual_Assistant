@@ -8,6 +8,22 @@ body {
     font-family: 'MuseoSansCyrl', sans-serif;
 }
 
+#test_linkedin {
+    width: 150px;
+    height: 50px;
+    display: flex;
+    align-content: center;
+    justify-content: center;
+    align-items: center;
+    position: absolute;
+    top: 500px;
+    left: 200px;
+    background: #e7873c;
+    color: white;
+    font-size: 20px;
+    cursor: pointer;
+}
+
 #widget_button {
     border: 2px solid transparent;
     border-radius: 100%;
@@ -147,14 +163,15 @@ body {
     position: absolute;
     bottom: 0;
     width: 48%;
-    max-height: 87px;
-    min-height: 60px;
+    height: 100%;
     box-sizing: border-box;
     left: calc(3% + 42px);
     overflow-y: scroll;
     overflow-x: hidden;
     z-index: 99;
-    padding: 34px 10px;
+    display: flex;
+    /*align-items: center;*/
+    padding: 32px 10px 0;
 }
 
 #widget_input_field::after {
@@ -747,6 +764,7 @@ body {
     flex-direction: row;
     align-content: center;
     align-items: center;
+    text-align: center;
     justify-content: center;
     text-transform: uppercase;
     color: #e7873c;
@@ -1004,14 +1022,19 @@ body {
 }
 
 #widget_queue .choice_container .choice_button {
-    width: 45%;
+    width: 40%;
     margin: 5px 5px;
     text-align: center;
-    padding: 8px 0;
+    padding: 4px 1px;
     cursor: pointer;
+    min-height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     background: white;
     color: #e7873c;
     font-size: 14px;
+    word-break: break-word;
     border: 1px solid #e7873c;
     border-radius: 10px;
     transition: .4s ease-in-out;
