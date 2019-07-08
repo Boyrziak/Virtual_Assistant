@@ -1,6 +1,7 @@
 // eslint-disable-next-line no-undef
 jQuery(document).ready(function ($) {
-    chat.linkedinExchangeAuthToken();
+    const baseUrl = 'https://kh-gis-chat-bot.intetics.com';
+
     $('#widget_button').draggable({
         containment: 'window',
         cursor: "grabbing",
@@ -203,7 +204,7 @@ jQuery(document).ready(function ($) {
             console.log(`get init-user response with: ${user}`);
         },
         chatMessage: function (messageDto) {
-            console.log(`New message received: ${JSON.stringify(messageDto)}`);
+            console.log(messageDto);
             const delayArr = messageDto.message.messages.filter(mw => mw.hasOwnProperty('payload') && mw.payload.hasOwnProperty('type') && mw.payload.type === 'delay');
             if (delayArr.length > 0) {
                 const delay = delayArr[0].payload.delayValue;
@@ -403,6 +404,9 @@ jQuery(document).ready(function ($) {
                     if (mw.carousel) {
                         console.log(mw.carousel.cards);
                         self.showCarousel(mw.carousel.cards, messageDto);
+                    }
+                    if (mw.linksNecklace) {
+                        self.showNecklace(mw.linksNecklace.links);
                     }
                 });
                 self.scrollQuery(1);
@@ -694,8 +698,6 @@ jQuery(document).ready(function ($) {
                 chat.dotScroller(this, carouselHolder, cards.length, 8)
             });
 
-            // let dotsOffset = ($(carouselHolder).outerWidth() - $(dotsHolder).outerWidth()) / 2;
-            // $(carouselWrap).find('.dots_holder').css('left', dotsOffset + 'px');
             chat.checkArrows($(carouselWrap), $(carouselHolder).scrollLeft(), cards.length);
         },
         showCarouselLightbox: function (cards, scrollTo) {
@@ -753,8 +755,6 @@ jQuery(document).ready(function ($) {
                     });
                     let currentDot = wrap.find('.control_dot')[scrollTo];
                     $(currentDot).addClass('active_dot');
-                    let bigDotsOffset = (lightbox.outerWidth() - wrap.find('.dots_holder').outerWidth()) / 2;
-                    // wrap.find('.dots_holder').css('left', bigDotsOffset + 'px');
                     let currentOffset = (lightbox.outerWidth() + 10) * scrollTo;
                     lightbox.animate({scrollLeft: currentOffset + 'px'}, 0);
 
@@ -824,6 +824,38 @@ jQuery(document).ready(function ($) {
                 holder.find('.left_pane').css('display', 'flex');
             }
         },
+        showNecklace: function (links) {
+            let necklaceWrap = document.createElement('div');
+            $(necklaceWrap).addClass('necklace_wrap');
+            let necklaceHolder = document.createElement('div');
+            $(necklaceHolder).addClass('necklace_holder');
+            links.forEach(function (link) {
+                let linkContainer = document.createElement('div');
+                $(linkContainer).addClass('necklase_link_wrap');
+                $(linkContainer).append('<a target="_blank" href="' + link.linkUri + '"><img src="' + link.imageUri + '"></a>');
+                $(linkContainer).hover(function () {
+                   $(this).find('a').css('box-shadow', 'inset 10px 10px 50px 50px ' + link.hoverColor);
+                }, function () {
+                    $(this).find('a').css('box-shadow', 'inset 0px 0px 0px 0px ' + link.hoverColor);
+                });
+                $(necklaceHolder).append(linkContainer);
+            });
+            $(necklaceWrap).append(necklaceHolder);
+
+            $(necklaceWrap).append('<div class="arrow_button left_arrow"><i class="fas fa-chevron-left"></i></div>');
+            $(necklaceWrap).append('<div class="arrow_button right_arrow"><i class="fas fa-chevron-right"></i></div>');
+
+            $(necklaceWrap).find('.arrow_button').on('click', function () {
+                console.log('click');
+                if ($(this).hasClass('right_arrow')) {
+                    $(necklaceHolder).animate({scrollLeft: $(necklaceHolder).outerWidth()}, 600);
+                } else {
+                    $(necklaceHolder).animate({scrollLeft: 0}, 600);
+                }
+
+            });
+            $(necklaceWrap).appendTo('#widget_queue');
+        },
         flushQueue: function (currentQueue) {
             let self = this;
             if (currentQueue.length > 20) {
@@ -850,14 +882,25 @@ jQuery(document).ready(function ($) {
                 }, self.pause_timer);
             }
         },
-        linkedinGetAuthToken: function () {
+        initLinkedinConnection: function() {
+            let init = {
+                method: 'GET'
+            };
+            let request = new Request('', init);
+            fetch(request).then((response)=>{
+                return response.json();
+            }).then((jsonResponse)=>{
+                chat.linkedinGetAuthToken(jsonResponse.authUrl);
+            })
+        },
+        linkedinGetAuthToken: function (authUrl) {
             let init = {
                 method: 'GET',
                 headers: {
                     'Access-Control-Allow-Origin': '*'
                 }
             };
-            let myLinkedinRequest = new Request('https://3df1ae19.ngrok.io/auth', init);
+            let myLinkedinRequest = new Request(authUrl, init);
             fetch(myLinkedinRequest).then((response) => {
                 console.log(response);
                 return response.json();
@@ -878,13 +921,21 @@ jQuery(document).ready(function ($) {
                     return result.json();
                 }).then(function (jsonResponse) {
                     console.log(jsonResponse);
+                    chat.setCookie('access_token', jsonResponse.access_token, {expires: jsonResponse.expires});
                     chat.linkedinGetUser(jsonResponse.access_token);
                 });
             } else {
                 console.log('No Auth Token!');
             }
         },
-        linkedinGetUser: function(token) {
+        linkedinGetUser: function (token) {
+            let newInit = {
+                method: 'GET',
+                headers: {
+                    Connection: 'Keep-Alive',
+                    Authorization: 'Bearer ' + token
+                }
+            };
             let dataRequest = new Request('https://3df1ae19.ngrok.io/getUser?access_token=' + token, newInit);
             fetch(dataRequest).then(function (result) {
                 return result.json();
@@ -908,21 +959,21 @@ jQuery(document).ready(function ($) {
         }
     };
 
+    chat.linkedinExchangeAuthToken();
+
     $('.human_connect').on('click', function () {
         chat.connectWithHuman();
     });
 
     $('#widget_input_field').keydown(function (e) {
         let result = /^\s+$/gi.exec($(this).text());
-        console.log(result);
-        console.log($(this).text());
         if (e.keyCode === 13 && $(this).text() !== '' && !result) {
             e.preventDefault();
             const textContent = $(this).text();
             const messageDto = ModelFactory.messageDtoBuilderText(textContent, SenderType.USER);
             chat.onRespond(messageDto);
             $(this).empty();
-        } else if ( e.keyCode === 13 && ($(this).text() === '' || result)) {
+        } else if (e.keyCode === 13 && ($(this).text() === '' || result)) {
             e.preventDefault();
         } else {
             if (!lStorage.has(lStorage.keys.USER)) {
@@ -945,7 +996,7 @@ jQuery(document).ready(function ($) {
         resizeTimer = setTimeout(chat.reposition, 500);
     });
 
-    chat.socket = io('https://kh-gis-chat-bot.intetics.com', {path: '/chat/socket.io'});
+    chat.socket = io(baseUrl, {path: '/chat/socket.io'});
     // chat.socket = io('http://localhost:3000', {path: '/chat/socket.io'});
     // if (chat.currentLocation.startsWith('https://kh-gis-chat-bot.intetics.com')) {
     //     // eslint-disable-next-line no-undef
@@ -1018,7 +1069,6 @@ jQuery(document).ready(function ($) {
     $(window).on('unload', () => {
         chat.setCookie('opened', 'false', {expires: chat.expires});
     });
-
 
 
     $('#test_linkedin').on('click', chat.linkedinGetAuthToken);
