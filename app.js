@@ -169,6 +169,7 @@ jQuery(document).ready(function ($) {
         type_timer: 1000,
         pause_timer: 500,
         access_token: '',
+        authPath: '',
         pausedMessage: null,
         currentLocation: location.href,
         expires: 10,
@@ -886,7 +887,7 @@ jQuery(document).ready(function ($) {
             let init = {
                 method: 'GET'
             };
-            let request = new Request('', init);
+            let request = new Request(baseUrl + '/node/api/rest/v1/auth/getBaseUrl', init);
             fetch(request).then((response)=>{
                 return response.json();
             }).then((jsonResponse)=>{
@@ -916,14 +917,19 @@ jQuery(document).ready(function ($) {
                 let init = {
                     method: 'GET'
                 };
-                let myLinkedinRequest = new Request('https://3df1ae19.ngrok.io/exchange?code=' + locationResult[1], init);
-                fetch(myLinkedinRequest).then(function (result) {
-                    return result.json();
-                }).then(function (jsonResponse) {
-                    console.log(jsonResponse);
-                    chat.setCookie('access_token', jsonResponse.access_token, {expires: jsonResponse.expires});
-                    chat.linkedinGetUser(jsonResponse.access_token);
-                });
+                let request = new Request(baseUrl + '/node/api/rest/v1/auth/getBaseUrl', init);
+                fetch(request).then((response)=>{
+                    return response.json();
+                }).then((jsonResponse)=>{
+                    let myLinkedinRequest = new Request(jsonResponse.authUrl + '/exchangeToken?code=' + locationResult[1], init);
+                    fetch(myLinkedinRequest).then(function (result) {
+                        return result.json();
+                    }).then(function (jsonResponse) {
+                        console.log(jsonResponse);
+                        chat.setCookie('access_token', jsonResponse.access_token, {expires: jsonResponse.expires});
+                        chat.linkedinGetUser(jsonResponse.access_token);
+                    });
+                })
             } else {
                 console.log('No Auth Token!');
             }
@@ -1071,5 +1077,5 @@ jQuery(document).ready(function ($) {
     });
 
 
-    $('#test_linkedin').on('click', chat.linkedinGetAuthToken);
+    $('#test_linkedin').on('click', chat.initLinkedinConnection);
 });
