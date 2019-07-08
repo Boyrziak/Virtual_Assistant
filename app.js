@@ -835,7 +835,7 @@ jQuery(document).ready(function ($) {
                 $(linkContainer).addClass('necklase_link_wrap');
                 $(linkContainer).append('<a target="_blank" href="' + link.linkUri + '"><img src="' + link.imageUri + '"></a>');
                 $(linkContainer).hover(function () {
-                   $(this).find('a').css('box-shadow', 'inset 10px 10px 50px 50px ' + link.hoverColor);
+                    $(this).find('a').css('box-shadow', 'inset 10px 10px 50px 50px ' + link.hoverColor);
                 }, function () {
                     $(this).find('a').css('box-shadow', 'inset 0px 0px 0px 0px ' + link.hoverColor);
                 });
@@ -883,25 +883,14 @@ jQuery(document).ready(function ($) {
                 }, self.pause_timer);
             }
         },
-        initLinkedinConnection: function() {
-            let init = {
-                method: 'GET'
-            };
-            let request = new Request(baseUrl + '/node/api/rest/v1/auth/getBaseUrl', init);
-            fetch(request).then((response)=>{
-                return response.json();
-            }).then((jsonResponse)=>{
-                chat.linkedinGetAuthToken(jsonResponse.authUrl);
-            })
-        },
-        linkedinGetAuthToken: function (authUrl) {
+        linkedinGetAuthToken: function () {
             let init = {
                 method: 'GET',
                 headers: {
                     'Access-Control-Allow-Origin': '*'
                 }
             };
-            let myLinkedinRequest = new Request(authUrl, init);
+            let myLinkedinRequest = new Request(baseUrl + '/node/api/rest/v1/auth/getToken', init);
             fetch(myLinkedinRequest).then((response) => {
                 console.log(response);
                 return response.json();
@@ -917,19 +906,14 @@ jQuery(document).ready(function ($) {
                 let init = {
                     method: 'GET'
                 };
-                let request = new Request(baseUrl + '/node/api/rest/v1/auth/getBaseUrl', init);
-                fetch(request).then((response)=>{
-                    return response.json();
-                }).then((jsonResponse)=>{
-                    let myLinkedinRequest = new Request(jsonResponse.authUrl + '/exchangeToken?code=' + locationResult[1], init);
-                    fetch(myLinkedinRequest).then(function (result) {
-                        return result.json();
-                    }).then(function (jsonResponse) {
-                        console.log(jsonResponse);
-                        chat.setCookie('access_token', jsonResponse.access_token, {expires: jsonResponse.expires});
-                        chat.linkedinGetUser(jsonResponse.access_token);
-                    });
-                })
+                let myLinkedinRequest = new Request(baseUrl + '/node/api/rest/v1/auth/exchangeToken?code=' + locationResult[1], init);
+                fetch(myLinkedinRequest).then(function (result) {
+                    return result.json();
+                }).then(function (jsonResponse) {
+                    console.log(jsonResponse);
+                    chat.setCookie('access_token', jsonResponse.access_token, {expires: jsonResponse.expires});
+                    chat.linkedinGetUser(jsonResponse.access_token);
+                });
             } else {
                 console.log('No Auth Token!');
             }
@@ -942,7 +926,7 @@ jQuery(document).ready(function ($) {
                     Authorization: 'Bearer ' + token
                 }
             };
-            let dataRequest = new Request('https://3df1ae19.ngrok.io/getUser?access_token=' + token, newInit);
+            let dataRequest = new Request(baseUrl + '/node/api/rest/v1/auth/getUser?access_token=' + token, newInit);
             fetch(dataRequest).then(function (result) {
                 return result.json();
             }).then(function (jsonResponse) {
@@ -1077,5 +1061,5 @@ jQuery(document).ready(function ($) {
     });
 
 
-    $('#test_linkedin').on('click', chat.initLinkedinConnection);
+    $('#test_linkedin').on('click', chat.linkedinGetAuthToken);
 });

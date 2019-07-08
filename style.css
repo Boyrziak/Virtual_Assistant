@@ -1178,6 +1178,9 @@ body {
         bottom: -1px!important;
         top: unset !important;
     }
+    #widget_queue .necklace_wrap .arrow_button {
+        display: none;
+    }
 
     #widget_header {
         height: 7%;
