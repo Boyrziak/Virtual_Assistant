@@ -906,7 +906,7 @@ jQuery(document).ready(function ($) {
                 let init = {
                     method: 'GET'
                 };
-                let myLinkedinRequest = new Request(baseUrl + '/node/api/rest/v1/auth/exchangeToken?code=' + locationResult[1], init);
+                let myLinkedinRequest = new Request(baseUrl + '/node/api/rest/v1/auth/exchangeToken/' + locationResult[1], init);
                 fetch(myLinkedinRequest).then(function (result) {
                     return result.json();
                 }).then(function (jsonResponse) {
@@ -926,7 +926,8 @@ jQuery(document).ready(function ($) {
                     Authorization: 'Bearer ' + token
                 }
             };
-            let dataRequest = new Request(baseUrl + '/node/api/rest/v1/auth/getUser?access_token=' + token, newInit);
+            const user = lStorage.get(lStorage.keys.USER);
+            let dataRequest = new Request(baseUrl + '/node/api/rest/v1/auth/getUser?token=' + token + '&userId=' + user, newInit);
             fetch(dataRequest).then(function (result) {
                 return result.json();
             }).then(function (jsonResponse) {
