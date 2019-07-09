@@ -719,7 +719,28 @@ jQuery(document).ready(function ($) {
                 if (content.tagName.toLowerCase() === 'video') {
                     $(content).attr('controls', 'true');
                     $(content).attr('id', 'carousel_video');
+                    $(lightboxCard).append('<i class="fas fa-play"></i>');
+                    $(content).on("pause", function () {
+                        $(lightboxCard).find('i').css('display', 'block');
+                        setTimeout(() => {
+                            $(lightboxCard).find('i').removeClass('clicked_icon');
+                        }, 600);
+                    });
+                    $(content).on("play", function () {
+                        $(lightboxCard).find('i').addClass('clicked_icon');
+                        setTimeout(() => {
+                            $(lightboxCard).find('i').css('display', 'none');
+                        }, 600);
+                        content.play();
+                    });
                 }
+                $(lightboxCard).find('i').on('click', function () {
+                    $(this).addClass('clicked_icon');
+                    setTimeout(() => {
+                        $(this).css('display', 'none');
+                    }, 600);
+                    content.play();
+                });
                 lightbox.append(lightboxCard);
                 let bigDot = document.createElement('div');
                 $(bigDot).addClass('control_dot').appendTo(wrap.find('.dots_holder'));
@@ -927,7 +948,7 @@ jQuery(document).ready(function ($) {
                 }
             };
             const user = lStorage.get(lStorage.keys.USER);
-            let dataRequest = new Request(baseUrl + '/node/api/rest/v1/auth/getUser?token=' + token + '&userId=' + user, newInit);
+            let dataRequest = new Request(baseUrl + '/node/api/rest/v1/auth/getUser?token=' + token + '&userId=' + user.id, newInit);
             fetch(dataRequest).then(function (result) {
                 return result.json();
             }).then(function (jsonResponse) {
@@ -941,12 +962,14 @@ jQuery(document).ready(function ($) {
             chat.cancelNextMessageEvent();
         },
         audioRecording: function () {
-            $('#audio_input').addClass('recording');
-            chat.cancelNextMessageEvent();
-            console.log('Recognition started');
-            recognition.start();
-            pressed = true;
-            $(this).addClass('recording');
+            if (!pressed) {
+                $('#audio_input').addClass('recording');
+                chat.cancelNextMessageEvent();
+                console.log('Recognition started');
+                recognition.start();
+                pressed = true;
+                $(this).addClass('recording');
+            }
         }
     };
 
@@ -1017,6 +1040,7 @@ jQuery(document).ready(function ($) {
     recognition.continuous = false;
     recognition.lang = "en-GB";
     recognition.onresult = (event) => {
+        pressed = false;
         finalTranscript = '';
         interimTranscript = '';
         for (let i = event.resultIndex, len = event.results.length; i < len; i++) {
@@ -1031,6 +1055,7 @@ jQuery(document).ready(function ($) {
     };
     let pressed = false;
     recognition.onaudioend = (event) => {
+        pressed = false;
         if (!lStorage.has(lStorage.keys.USER)) {
             chat.socket.emit(WS_ENDPOINTS.INIT_USER_COVERTLY, {id: null});
         }
