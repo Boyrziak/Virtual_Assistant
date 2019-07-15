@@ -504,12 +504,11 @@ jQuery(document).ready(function ($) {
             if (lStorage.has(lStorage.keys.IS_WIDGET_OPEN) && (chat.getCurrentLocation() !== lStorage.get(lStorage.keys.PREVIOUS_URL))) {
                 chat.onUrlChanged();
             }
-            if (chat.isSessionExpired() && chat.getUser()) {
+            if (chat.isSessionExpired()) {
                 chat.socket.emit(WS_ENDPOINTS.INIT_BOT, { id: 1 });
-                if (lStorage.has(lStorage.keys.USER)) {
+                if (chat.getUser()) {
                     // return history for existing user
-                    const user = lStorage.get(lStorage.keys.USER);
-                    chat.user = user;
+                    chat.user = chat.getUser();
                     chat.socket.emit(WS_ENDPOINTS.CLIENT_CONNECTED, chat.user.id);
                     // chat.socket.emit(WS_ENDPOINTS.INIT_USER, ModelFactory.getUserObject(user.id));
                 } else {
@@ -517,20 +516,24 @@ jQuery(document).ready(function ($) {
                 }
             } else {
                 chat.bot = lStorage.get(lStorage.keys.BOT);
-                chat.user = lStorage.get(lStorage.keys.USER);
-                chat.socket.emit(WS_ENDPOINTS.CLIENT_CONNECTED, chat.user.id);
-                // chat.socket.emit(WS_ENDPOINTS.CLIENT_CONNECTED, chat.user.id);
-                const history = lStorage.get(lStorage.keys.HISTORY);
-                chat.messageArray.push(history);
-                chat.flushQueue(history);
-                setTimeout(() => {
-                    if (lStorage.has(lStorage.keys.IS_WIDGET_OPEN)) {
-                        if (JSON.parse(lStorage.get(lStorage.keys.IS_WIDGET_OPEN))) {
-                            // $('#widget_queue')[0].scrollTop = 648;
-                            chat.open();
+                if (chat.getUser()) {
+                    chat.user = lStorage.get(lStorage.keys.USER);
+                    chat.socket.emit(WS_ENDPOINTS.CLIENT_CONNECTED, chat.user.id);
+                    // chat.socket.emit(WS_ENDPOINTS.CLIENT_CONNECTED, chat.user.id);
+                    const history = lStorage.get(lStorage.keys.HISTORY);
+                    chat.messageArray.push(history);
+                    chat.flushQueue(history);
+                    setTimeout(() => {
+                        if (lStorage.has(lStorage.keys.IS_WIDGET_OPEN)) {
+                            if (JSON.parse(lStorage.get(lStorage.keys.IS_WIDGET_OPEN))) {
+                                // $('#widget_queue')[0].scrollTop = 648;
+                                chat.open();
+                            }
                         }
-                    }
-                }, 1000);
+                    }, 1000);
+                } else {
+                    chat.socket.emit(WS_ENDPOINTS.INIT_USER, ModelFactory.getUserObject(null));
+                }
             }
             setInterval(() => {
                 console.log('just for fun');
@@ -857,7 +860,7 @@ jQuery(document).ready(function ($) {
             } else if (scrollDistance >= holder.outerWidth() * (carouselLength - 1)) {
                 holder.find('.right_pane').css('display', 'none');
                 holder.find('.left_pane').css('display', 'flex');
-            // eslint-disable-next-line yoda
+                // eslint-disable-next-line yoda
             } else if (0 < scrollDistance < holder.outerWidth() * (carouselLength - 1)) {
                 holder.find('.right_pane').css('display', 'flex');
                 holder.find('.left_pane').css('display', 'flex');
