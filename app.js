@@ -1,10 +1,11 @@
 // eslint-disable-next-line no-undef
 jQuery(document).ready(function ($) {
-    const baseUrl = 'https://kh-gis-chat-bot.intetics.com';
+    const baseUrl = 'http://localhost:3000';
+    // const baseUrl = 'https://kh-gis-chat-bot.intetics.com';
 
     $('#widget_button').draggable({
         containment: 'window',
-        cursor: "grabbing",
+        cursor: 'grabbing',
         start: function () {
             $('#widget_button').off('click');
         },
@@ -17,7 +18,7 @@ jQuery(document).ready(function ($) {
     $('#widget_container').draggable({
         handle: '#widget_header',
         containment: 'window',
-        cursor: "grabbing"
+        cursor: 'grabbing'
     });
 
     class MessageWrapper {
@@ -119,7 +120,9 @@ jQuery(document).ready(function ($) {
         MESSAGE: 'message',
         CONNECT: 'connect',
         DISCONNECT: 'disconnect',
-        EXCEPTION: 'exception'
+        EXCEPTION: 'exception',
+        CLIENT_CONNECTED: 'client-connected',
+        CLIENT_DISCONNECTED: 'client-disconnected'
     };
 
     const lStorage = {
@@ -131,7 +134,8 @@ jQuery(document).ready(function ($) {
             BOT: 'bot',
             HISTORY: 'history',
             IS_WIDGET_OPEN: 'isWidgetOpen',
-            PREVIOUS_URL: 'previousUrl'
+            PREVIOUS_URL: 'previousUrl',
+            VISIBLE_TAB_ID: 'visTabId'
         },
         set: function (key, item) {
             localStorage.setItem(key, JSON.stringify(item));
@@ -146,16 +150,19 @@ jQuery(document).ready(function ($) {
             return localStorage.getItem(key) !== null;
         },
         addMessageToHistory: function (message) {
-            let history = this.get(this.keys.HISTORY);
-            history = history == null ? [] : history;
-            history.push(message);
-            this.set(this.keys.HISTORY, history);
-            // console.log(history);
-            return history;
+            if (chat.isCurrentTabActive() && chat.getUser()) { // only active tab can add message to history and user has to be initialized
+                let history = this.get(this.keys.HISTORY);
+                history = history == null ? [] : history;
+                history.push(message);
+                this.set(this.keys.HISTORY, history);
+                // console.log(history);
+                return history;
+            };
         }
 
     };
     const chat = {
+        tabId: performance.now() * Math.pow(10, 13), // unique id for current browser tab (instead of using UUID)
         nextMessageTimer: null,
         socket: {},
         opened: false,
@@ -173,18 +180,6 @@ jQuery(document).ready(function ($) {
         pausedMessage: null,
         currentLocation: location.href,
         expires: 10,
-        connect: function () {
-            let openWindow = chat.getCookie('opened');
-            // console.log(openWindow);
-            if (!openWindow) {
-                console.log('Cookie has expired');
-            }
-            console.log('Connected');
-            $('.connection_indicator').css('color', 'green');
-            $('#widget_input_field').attr('placeholder', 'Enter your message...');
-            $('#widget_input_field').attr('contenteditable', 'true');
-            chat.initialize();
-        },
         initBot: function (bot) {
             chat.bot = bot;
             lStorage.set(lStorage.keys.BOT, bot);
@@ -194,6 +189,7 @@ jQuery(document).ready(function ($) {
         initUser: function (user) {
             chat.user = user;
             lStorage.set(lStorage.keys.USER, user);
+            chat.socket.emit(WS_ENDPOINTS.CLIENT_CONNECTED, chat.user.id);
             console.log(`get init-user response with: ${user}`);
             console.log(`starting to init history`);
             chat.socket.emit(WS_ENDPOINTS.INIT_HISTORY, user);
@@ -202,6 +198,7 @@ jQuery(document).ready(function ($) {
         initUserCovertly: function (user) {
             chat.user = user;
             lStorage.set(lStorage.keys.USER, user);
+            chat.socket.emit(WS_ENDPOINTS.CLIENT_CONNECTED, chat.user.id);
             console.log(`get init-user response with: ${user}`);
         },
         chatMessage: function (messageDto) {
@@ -256,12 +253,12 @@ jQuery(document).ready(function ($) {
             });
             button.addClass('clicked');
             body.addClass('opened');
-            body.show('blind', {direction: 'down'}, 1000);
+            body.show('blind', { direction: 'down' }, 1000);
             if (body.offset().top <= 5) {
-                $(body).animate({top: '10px'}, 500);
+                $(body).animate({ top: '10px' }, 500);
             }
             if (body.offset().left <= 5) {
-                $(body).animate({left: '10px'}, 500);
+                $(body).animate({ left: '10px' }, 500);
             }
             button.draggable('disable');
             $('#widget_input').empty();
@@ -269,7 +266,7 @@ jQuery(document).ready(function ($) {
             lStorage.set(lStorage.keys.IS_WIDGET_OPEN, self.opened);
             $('#preview_container').empty().hide('drop', 600);
             // self.scrollQuery(10);
-            let timer = setInterval(() => {
+            const timer = setInterval(() => {
                 $('#widget_queue')[0].scrollTop = 99999;
             }, 20);
             setTimeout(() => {
@@ -278,7 +275,7 @@ jQuery(document).ready(function ($) {
             setTimeout(() => {
                 if ($(window).outerWidth() <= 780) {
                     $('#widget_container').css('height', '95%');
-                    let widgetHeight = $('#widget_container').outerHeight();
+                    const widgetHeight = $('#widget_container').outerHeight();
                     console.log(widgetHeight);
                     $('#widget_container').css('height', widgetHeight + 'px');
                     $('#widget_button').on('click', chat.open);
@@ -297,20 +294,20 @@ jQuery(document).ready(function ($) {
             });
             button.removeClass('clicked');
             body.removeClass('opened');
-            body.hide('blind', {direction: 'down'}, 1000);
+            body.hide('blind', { direction: 'down' }, 1000);
             // TODO update the line below when refactoring the init method
             lStorage.set(lStorage.keys.IS_WIDGET_OPEN, self.opened);
             button.draggable('enable');
             if (button.offset().top + button.outerHeight() >= $(window).outerHeight() - 5) {
-                $(button).animate({top: $(window).outerHeight() - button.outerHeight() - 10 + 'px'}, 500);
+                $(button).animate({ top: $(window).outerHeight() - button.outerHeight() - 10 + 'px' }, 500);
             }
 
             if (button.offset().left <= 5) {
-                $(body).animate({left: '10px'}, 500);
+                $(body).animate({ left: '10px' }, 500);
             }
 
             if (button.offset().left + button.outerWidth() >= $(window).outerWidth - 5) {
-                $(body).animate({left: $(window).outerWidth - button.outerWidth() + 10 + 'px'}, 500);
+                $(body).animate({ left: $(window).outerWidth - button.outerWidth() + 10 + 'px' }, 500);
             }
         },
         reposition: function () {
@@ -318,14 +315,14 @@ jQuery(document).ready(function ($) {
             const windowHeight = $(window).outerHeight();
             const windowWidth = $(window).outerWidth();
             if (body.offset().top <= 5) {
-                $(body).animate({top: '10px'}, 500);
+                $(body).animate({ top: '10px' }, 500);
             } else if (body.offset().top + body.outerHeight() > windowHeight) {
-                $(body).animate({top: windowHeight - body.outerHeight() - 5 + 'px'}, 500);
+                $(body).animate({ top: windowHeight - body.outerHeight() - 5 + 'px' }, 500);
             }
             if (body.offset().left < 0) {
-                $(body).animate({left: '10px'}, 500);
+                $(body).animate({ left: '10px' }, 500);
             } else if (body.offset().left + body.outerWidth() > windowWidth) {
-                $(body).animate({left: windowWidth - body.outerWidth() - 5 + 'px'}, 500);
+                $(body).animate({ left: windowWidth - body.outerWidth() - 5 + 'px' }, 500);
             }
         },
         setCookie: function (name, value, options) {
@@ -373,7 +370,7 @@ jQuery(document).ready(function ($) {
             const sender = messageDto.senderType;
             const self = this;
             setTimeout(function () {
-                const options = {direction: ''};
+                const options = { direction: '' };
                 if (sender === 'bot') {
                     options.direction = 'left';
                 } else {
@@ -458,15 +455,15 @@ jQuery(document).ready(function ($) {
                     });
                     $(choiceContainer).append(choiceButton);
                 });
-                $(choiceContainer).appendTo('#widget_queue').show('drop', {direction: 'left'}, 600);
+                $(choiceContainer).appendTo('#widget_queue').show('drop', { direction: 'left' }, 600);
                 // self.scrollQuery(600);
             }
         },
         scrollQuery: function (timeout) {
-            $('#widget_queue').animate({scrollTop: $('#widget_queue')[0].scrollHeight}, timeout);
+            $('#widget_queue').animate({ scrollTop: $('#widget_queue')[0].scrollHeight }, timeout);
         },
         showPreview: function (text) {
-            const options = {direction: 'left'};
+            const options = { direction: 'left' };
             $('#preview_container').hide('drop', options, 600);
             setTimeout(function () {
                 $('#preview_container').empty().append(text).show('fold', options, 600);
@@ -481,30 +478,44 @@ jQuery(document).ready(function ($) {
             // return msg.hasOwnProperty('text') || (msg.hasOwnProperty('event') && msg.event.hasOwnProperty('display'));
             return false;
         },
+        isUrlChanged: function () {
+            return chat.getCurrentLocation() !== lStorage.get(lStorage.keys.PREVIOUS_URL);
+        },
         onUrlChanged: function () {
-            console.log('new url detected');
-            lStorage.set('previousUrl', chat.getCurrentLocation());
-            const userHistory = lStorage.get(lStorage.keys.HISTORY).filter(m => m.senderType === 'user');
-            if (!chat.isUserReactedExplicitly(userHistory[userHistory.length - 1])) {
-                const messageDto = ModelFactory.messageDtoBuilderEvent('URL-CHANGED-EVENT', SenderType.USER);
-                chat.onRespond(messageDto);
+            if (chat.isCurrentTabActive()) {
+                console.log('new url detected');
+                lStorage.set(lStorage.keys.PREVIOUS_URL, chat.getCurrentLocation());
+                const userHistory = lStorage.get(lStorage.keys.HISTORY).filter(m => m.senderType === 'user');
+                if (!chat.isUserReactedExplicitly(userHistory[userHistory.length - 1])) {
+                    const messageDto = ModelFactory.messageDtoBuilderEvent('URL-CHANGED-EVENT', SenderType.USER);
+                    chat.onRespond(messageDto);
+                }
+                console.log($('#widget_queue').length);
             }
-            console.log($('#widget_queue').length);
         },
         initialize: function () {
-            if (chat.isSessionExpired()) {
-                chat.socket.emit(WS_ENDPOINTS.INIT_BOT, {id: 1});
+            if (document.visibilityState === 'visible') {
+                lStorage.set(lStorage.keys.VISIBLE_TAB_ID, chat.tabId);
+            }
+            if (lStorage.has(lStorage.keys.IS_WIDGET_OPEN) && (chat.getCurrentLocation() !== lStorage.get(lStorage.keys.PREVIOUS_URL))) {
+                chat.onUrlChanged();
+            }
+            if (chat.isSessionExpired() && chat.getUser()) {
+                chat.socket.emit(WS_ENDPOINTS.INIT_BOT, { id: 1 });
                 if (lStorage.has(lStorage.keys.USER)) {
                     // return history for existing user
                     const user = lStorage.get(lStorage.keys.USER);
                     chat.user = user;
-                    chat.socket.emit(WS_ENDPOINTS.INIT_USER, ModelFactory.getUserObject(user.id));
+                    chat.socket.emit(WS_ENDPOINTS.CLIENT_CONNECTED, chat.user.id);
+                    // chat.socket.emit(WS_ENDPOINTS.INIT_USER, ModelFactory.getUserObject(user.id));
                 } else {
                     chat.socket.emit(WS_ENDPOINTS.INIT_USER, ModelFactory.getUserObject(null));
                 }
             } else {
                 chat.bot = lStorage.get(lStorage.keys.BOT);
                 chat.user = lStorage.get(lStorage.keys.USER);
+                chat.socket.emit(WS_ENDPOINTS.CLIENT_CONNECTED, chat.user.id);
+                // chat.socket.emit(WS_ENDPOINTS.CLIENT_CONNECTED, chat.user.id);
                 const history = lStorage.get(lStorage.keys.HISTORY);
                 chat.messageArray.push(history);
                 chat.flushQueue(history);
@@ -516,12 +527,9 @@ jQuery(document).ready(function ($) {
                         }
                     }
                 }, 1000);
-                // history.forEach(m => chat.addMessage(m));
-                if (lStorage.has(lStorage.keys.IS_WIDGET_OPEN) && (chat.getCurrentLocation() !== lStorage.get(lStorage.keys.PREVIOUS_URL))) {
-                    chat.onUrlChanged();
-                }
             }
             setInterval(() => {
+                console.log('just for fun');
                 chat.setCookie('opened', 'true');
             }, 1000);
         },
@@ -540,8 +548,10 @@ jQuery(document).ready(function ($) {
         },
         sendNextMessageEvent: function (delay, eventName) {
             chat.nextMessageTimer = setTimeout(function () {
-                const messageDto = ModelFactory.messageDtoBuilderEvent(eventName, SenderType.USER);
-                chat.onRespond(messageDto);
+                if (chat.isCurrentTabActive()) {
+                    const messageDto = ModelFactory.messageDtoBuilderEvent(eventName, SenderType.USER);
+                    chat.onRespond(messageDto);
+                }
             }, delay);
         },
         cancelNextMessageEvent: function () {
@@ -564,9 +574,9 @@ jQuery(document).ready(function ($) {
             const self = this;
             const newMessage = document.createElement('div');
             $(newMessage).addClass('widget_message bot_message carousel_card shadow_card');
-            let cardButtons = {buttons: card.buttons};
+            const cardButtons = { buttons: card.buttons };
             let content = null;
-            let icon = document.createElement('i');
+            const icon = document.createElement('i');
             $(icon).addClass('far fa-play-circle');
             if (card.imageUri) {
                 content = new Image();
@@ -593,9 +603,9 @@ jQuery(document).ready(function ($) {
                         $(lightbox).find('video').attr('controls', 'true');
                         $(lightbox).find('video').attr('id', 'carousel_video');
                     }
-                    $(lightbox).show('blind', {direction: 'up'}, 700);
+                    $(lightbox).show('blind', { direction: 'up' }, 700);
                     $(document).mouseup(function (e) {
-                        let container = $('#widget_lightbox');
+                        const container = $('#widget_lightbox');
                         if (container.has(e.target).length === 0) {
                             $('#widget_lightbox').hide('fade', 600);
                             $('#modal_overlay').hide('fade', 800);
@@ -622,9 +632,9 @@ jQuery(document).ready(function ($) {
                         $(lightbox).find('video').attr('id', 'carousel_video');
                     }
                     chat.cancelNextMessageEvent();
-                    $(lightbox).show('blind', {direction: 'up'}, 700);
+                    $(lightbox).show('blind', { direction: 'up' }, 700);
                     $(document).mouseup(function (e) {
-                        let container = $('#widget_lightbox');
+                        const container = $('#widget_lightbox');
                         if (container.has(e.target).length === 0) {
                             $('#widget_lightbox').hide('fade', 600);
                             $('#modal_overlay').hide('fade', 800);
@@ -645,7 +655,7 @@ jQuery(document).ready(function ($) {
                     }, 1500);
                 });
             });
-            $(newMessage).appendTo('#widget_queue').show('drop', {direction: 'left'}, 600);
+            $(newMessage).appendTo('#widget_queue').show('drop', { direction: 'left' }, 600);
             self.showChoice(cardButtons);
         },
         showCarousel: function (cards, message) {
@@ -659,15 +669,17 @@ jQuery(document).ready(function ($) {
                 const newMessage = document.createElement('div');
                 $(newMessage).addClass('widget_message bot_message carousel_card');
                 let content = null;
-                let icon = document.createElement('i');
+                const icon = document.createElement('i');
                 $(icon).addClass('far fa-play-circle');
+                // eslint-disable-next-line no-unused-expressions
                 card.imageUri ? (content = new Image(), content.src = card.imageUri, $(content).addClass('message_image'))
                     : card.videoUri ? (content = document.createElement('video'), content.src = card.videoUri, $(newMessage).append(icon), $(content).addClass('message_video')) : null;
 
                 $(newMessage).append(content);
                 $(carouselHolder).append(newMessage);
-                let dot = document.createElement('div');
+                const dot = document.createElement('div');
                 $(dot).addClass('control_dot').appendTo($(dotsHolder));
+                // eslint-disable-next-line no-unused-expressions
                 index === 0 ? $(dot).addClass('active_dot') : null;
 
                 content.addEventListener('click', function () {
@@ -680,35 +692,35 @@ jQuery(document).ready(function ($) {
                     chat.cancelNextMessageEvent();
                     chat.showCarouselLightbox(cards, index);
                 });
-
             });
 
             $(carouselWrap).append(carouselHolder);
-            $(carouselWrap).appendTo('#widget_queue').show('drop', {direction: 'left'}, 600);
+            $(carouselWrap).appendTo('#widget_queue').show('drop', { direction: 'left' }, 600);
             $(carouselWrap).append('<div class="pane left_pane"><div class="arrow_button left_arrow"><i class="fas fa-chevron-left"></i></div></div>');
             $(carouselWrap).append('<div class="pane right_pane"><div class="arrow_button right_arrow"><i class="fas fa-chevron-right"></i></div></div>');
 
-            let width = $(carouselHolder).outerWidth();
-            $(carouselHolder).find('.carousel_card').css({'min-width': width || 267.91 + 'px'});
+            const width = $(carouselHolder).outerWidth();
+            $(carouselHolder).find('.carousel_card').css({ 'min-width': width || 267.91 + 'px' });
 
             $(carouselWrap).find('.arrow_button').on('click', function () {
                 chat.scrollHolder(this, carouselHolder, cards.length, 9);
             });
 
             $('.control_dot').on('click', function () {
-                chat.dotScroller(this, carouselHolder, cards.length, 8)
+                chat.dotScroller(this, carouselHolder, cards.length, 8);
             });
 
             chat.checkArrows($(carouselWrap), $(carouselHolder).scrollLeft(), cards.length);
         },
         showCarouselLightbox: function (cards, scrollTo) {
             scrollTo = scrollTo || 0;
-            let wrap = $('#carousel_wrap');
-            let lightbox = $('#carousel_lightbox');
+            const wrap = $('#carousel_wrap');
+            const lightbox = $('#carousel_lightbox');
             lightbox.empty();
             wrap.find('.dots_holder').empty();
             cards.forEach((card, index) => {
                 let content = null;
+                // eslint-disable-next-line no-unused-expressions
                 card.imageUri ? (content = new Image(), content.src = card.imageUri) : card.videoUri ? (content = document.createElement('video'), content.src = card.videoUri) : null;
                 const lightboxCard = document.createElement('div');
                 $(lightboxCard).addClass('lightbox_card');
@@ -720,13 +732,13 @@ jQuery(document).ready(function ($) {
                     $(content).attr('controls', 'true');
                     $(content).attr('id', 'carousel_video');
                     $(lightboxCard).append('<i class="fas fa-play"></i>');
-                    $(content).on("pause", function () {
+                    $(content).on('pause', function () {
                         $(lightboxCard).find('i').css('display', 'block');
                         setTimeout(() => {
                             $(lightboxCard).find('i').removeClass('clicked_icon');
                         }, 600);
                     });
-                    $(content).on("play", function () {
+                    $(content).on('play', function () {
                         $(lightboxCard).find('i').addClass('clicked_icon');
                         setTimeout(() => {
                             $(lightboxCard).find('i').css('display', 'none');
@@ -742,7 +754,7 @@ jQuery(document).ready(function ($) {
                     content.play();
                 });
                 lightbox.append(lightboxCard);
-                let bigDot = document.createElement('div');
+                const bigDot = document.createElement('div');
                 $(bigDot).addClass('control_dot').appendTo(wrap.find('.dots_holder'));
             });
             $('#carousel_overlay').show('fade', 800, () => {
@@ -753,7 +765,7 @@ jQuery(document).ready(function ($) {
                     wrap.css('display', 'flex');
                     $('.loader_circle').css('display', 'none');
                     $('#carousel_overlay').css('display', 'flex');
-                    $('#carousel_lightbox').animate({opacity: 1}, 400);
+                    $('#carousel_lightbox').animate({ opacity: 1 }, 400);
                     $(document).mouseup(function (e) {
                         if (wrap.has(e.target).length === 0 && $('#carousel_overlay').css('display') !== 'none') {
                             wrap.css('display', 'none');
@@ -775,13 +787,13 @@ jQuery(document).ready(function ($) {
                         top: $('#carousel_lightbox').offset().top - 50 + 'px',
                         display: 'block'
                     });
-                    let currentDot = wrap.find('.control_dot')[scrollTo];
+                    const currentDot = wrap.find('.control_dot')[scrollTo];
                     $(currentDot).addClass('active_dot');
-                    let currentOffset = (lightbox.outerWidth() + 10) * scrollTo;
-                    lightbox.animate({scrollLeft: currentOffset + 'px'}, 0);
+                    const currentOffset = (lightbox.outerWidth() + 10) * scrollTo;
+                    lightbox.animate({ scrollLeft: currentOffset + 'px' }, 0);
 
                     wrap.find('.control_dot').on('click', function () {
-                        chat.dotScroller(this, $('#carousel_lightbox')[0], cards.length, 10)
+                        chat.dotScroller(this, $('#carousel_lightbox')[0], cards.length, 10);
                     });
 
                     wrap.find('.arrow_button').on('click', function () {
@@ -795,12 +807,12 @@ jQuery(document).ready(function ($) {
         scrollHolder: function (element, carousel, carouselLength, rightOffset) {
             console.log('Scrolled by arrow');
             $(element).off('click');
-            let holder = $(carousel);
-            let parent = holder.parent();
-            let currentScroll = holder.scrollLeft();
-            let scrollDistance = $(element).hasClass('right_arrow') ? currentScroll + holder.outerWidth() + rightOffset : currentScroll - holder.outerWidth() - rightOffset;
-            holder.animate({scrollLeft: scrollDistance}, 600);
-            let currentActive = parent.find('.active_dot');
+            const holder = $(carousel);
+            const parent = holder.parent();
+            const currentScroll = holder.scrollLeft();
+            const scrollDistance = $(element).hasClass('right_arrow') ? currentScroll + holder.outerWidth() + rightOffset : currentScroll - holder.outerWidth() - rightOffset;
+            holder.animate({ scrollLeft: scrollDistance }, 600);
+            const currentActive = parent.find('.active_dot');
             if ($(element).hasClass('right_arrow')) {
                 if (currentActive.next('.control_dot')) {
                     currentActive.next('.control_dot').addClass('active_dot');
@@ -825,13 +837,13 @@ jQuery(document).ready(function ($) {
         },
         dotScroller: function (dot, carousel, carouselLength, rightOffset) {
             console.log('Scrolled by dot');
-            let holder = $(carousel);
-            let parent = $(holder).parent();
+            const holder = $(carousel);
+            const parent = $(holder).parent();
             $(parent).find('.active_dot').removeClass('active_dot');
             $(dot).addClass('active_dot');
-            let scrollDistance = holder.parent().find('.control_dot').index(dot) * (holder.outerWidth() + rightOffset);
+            const scrollDistance = holder.parent().find('.control_dot').index(dot) * (holder.outerWidth() + rightOffset);
             console.log(holder.parent().find('.control_dot').index(dot));
-            holder.animate({scrollLeft: scrollDistance}, 600);
+            holder.animate({ scrollLeft: scrollDistance }, 600);
             chat.checkArrows($(parent), scrollDistance, carouselLength);
         },
         checkArrows: function (holder, scrollDistance, carouselLength) {
@@ -841,18 +853,19 @@ jQuery(document).ready(function ($) {
             } else if (scrollDistance >= holder.outerWidth() * (carouselLength - 1)) {
                 holder.find('.right_pane').css('display', 'none');
                 holder.find('.left_pane').css('display', 'flex');
+            // eslint-disable-next-line yoda
             } else if (0 < scrollDistance < holder.outerWidth() * (carouselLength - 1)) {
                 holder.find('.right_pane').css('display', 'flex');
                 holder.find('.left_pane').css('display', 'flex');
             }
         },
         showNecklace: function (links) {
-            let necklaceWrap = document.createElement('div');
+            const necklaceWrap = document.createElement('div');
             $(necklaceWrap).addClass('necklace_wrap');
-            let necklaceHolder = document.createElement('div');
+            const necklaceHolder = document.createElement('div');
             $(necklaceHolder).addClass('necklace_holder');
             links.forEach(function (link) {
-                let linkContainer = document.createElement('div');
+                const linkContainer = document.createElement('div');
                 $(linkContainer).addClass('necklase_link_wrap');
                 $(linkContainer).append('<a target="_blank" href="' + link.linkUri + '"><img src="' + link.imageUri + '"></a>');
                 $(linkContainer).hover(function () {
@@ -870,34 +883,33 @@ jQuery(document).ready(function ($) {
             $(necklaceWrap).find('.arrow_button').on('click', function () {
                 console.log('click');
                 if ($(this).hasClass('right_arrow')) {
-                    $(necklaceHolder).animate({scrollLeft: $(necklaceHolder).outerWidth()}, 600);
+                    $(necklaceHolder).animate({ scrollLeft: $(necklaceHolder).outerWidth() }, 600);
                 } else {
-                    $(necklaceHolder).animate({scrollLeft: 0}, 600);
+                    $(necklaceHolder).animate({ scrollLeft: 0 }, 600);
                 }
-
             });
             $(necklaceWrap).appendTo('#widget_queue');
         },
         flushQueue: function (currentQueue) {
-            let self = this;
+            const self = this;
             if (currentQueue.length > 20) {
                 currentQueue.splice(0, currentQueue.length - 20);
             }
             if (currentQueue.length > 0) {
-                let currentElement = currentQueue.shift();
+                const currentElement = currentQueue.shift();
                 self.addMessage(currentElement);
                 self.flushQueue(currentQueue);
             }
         },
         flushNewQueue: function (currentQueue) {
-            let self = this;
+            const self = this;
             if (currentQueue.length > 0) {
-                let currentElement = currentQueue.shift();
+                const currentElement = currentQueue.shift();
                 setTimeout(() => {
                     // self.scrollQuery(400);
-                    $('#waves_message').show('drop', {'direction': 'left'}, 800);
+                    $('#waves_message').show('drop', { 'direction': 'left' }, 800);
                     setTimeout(() => {
-                        $('#waves_message').hide('drop', {'direction': 'left'}, 200);
+                        $('#waves_message').hide('drop', { 'direction': 'left' }, 200);
                         self.addMessage(currentElement);
                         self.flushQueue(currentQueue);
                     }, self.type_timer);
@@ -905,13 +917,13 @@ jQuery(document).ready(function ($) {
             }
         },
         linkedinGetAuthToken: function () {
-            let init = {
+            const init = {
                 method: 'GET',
                 headers: {
                     'Access-Control-Allow-Origin': '*'
                 }
             };
-            let myLinkedinRequest = new Request(baseUrl + '/node/api/rest/v1/auth/getToken', init);
+            const myLinkedinRequest = new Request(baseUrl + '/node/api/rest/v1/auth/getToken', init);
             fetch(myLinkedinRequest).then((response) => {
                 console.log(response);
                 return response.json();
@@ -921,18 +933,19 @@ jQuery(document).ready(function ($) {
             });
         },
         linkedinExchangeAuthToken: function () {
-            let locationResult = /\?code=([^\s]*)\&state=(\w*)/gi.exec(location.search);
+            // eslint-disable-next-line no-useless-escape
+            const locationResult = /\?code=([^\s]*)\&state=(\w*)/gi.exec(location.search);
             if (locationResult) {
                 console.log('Code: ' + locationResult[1] + ' | state: ' + locationResult[2]);
-                let init = {
+                const init = {
                     method: 'GET'
                 };
-                let myLinkedinRequest = new Request(baseUrl + '/node/api/rest/v1/auth/exchangeToken/' + locationResult[1], init);
+                const myLinkedinRequest = new Request(baseUrl + '/node/api/rest/v1/auth/exchangeToken/' + locationResult[1], init);
                 fetch(myLinkedinRequest).then(function (result) {
                     return result.json();
                 }).then(function (jsonResponse) {
                     console.log(jsonResponse);
-                    chat.setCookie('access_token', jsonResponse.access_token, {expires: jsonResponse.expires});
+                    chat.setCookie('access_token', jsonResponse.access_token, { expires: jsonResponse.expires });
                     chat.linkedinGetUser(jsonResponse.access_token);
                 });
             } else {
@@ -940,7 +953,7 @@ jQuery(document).ready(function ($) {
             }
         },
         linkedinGetUser: function (token) {
-            let newInit = {
+            const newInit = {
                 method: 'GET',
                 headers: {
                     Connection: 'Keep-Alive',
@@ -948,7 +961,7 @@ jQuery(document).ready(function ($) {
                 }
             };
             const user = lStorage.get(lStorage.keys.USER);
-            let dataRequest = new Request(baseUrl + '/node/api/rest/v1/auth/getUser?token=' + token + '&userId=' + user.id, newInit);
+            const dataRequest = new Request(baseUrl + '/node/api/rest/v1/auth/getUser?token=' + token + '&userId=' + user.id, newInit);
             fetch(dataRequest).then(function (result) {
                 return result.json();
             }).then(function (jsonResponse) {
@@ -970,6 +983,12 @@ jQuery(document).ready(function ($) {
                 pressed = true;
                 $(this).addClass('recording');
             }
+        },
+        isCurrentTabActive: function () {
+            return chat.tabId === lStorage.get(lStorage.keys.VISIBLE_TAB_ID);
+        },
+        getUser: function () {
+            return lStorage.has(lStorage.keys.USER) ? lStorage.get(lStorage.keys.USER) : null;
         }
     };
 
@@ -980,7 +999,7 @@ jQuery(document).ready(function ($) {
     });
 
     $('#widget_input_field').keydown(function (e) {
-        let result = /^\s+$/gi.exec($(this).text());
+        const result = /^\s+$/gi.exec($(this).text());
         if (e.keyCode === 13 && $(this).text() !== '' && !result) {
             e.preventDefault();
             const textContent = $(this).text();
@@ -990,8 +1009,8 @@ jQuery(document).ready(function ($) {
         } else if (e.keyCode === 13 && ($(this).text() === '' || result)) {
             e.preventDefault();
         } else {
-            if (!lStorage.has(lStorage.keys.USER)) {
-                chat.socket.emit(WS_ENDPOINTS.INIT_USER_COVERTLY, {id: null});
+            if (!chat.getUser()) {
+                chat.socket.emit(WS_ENDPOINTS.INIT_USER_COVERTLY, { id: null });
             }
         }
     });
@@ -1010,7 +1029,8 @@ jQuery(document).ready(function ($) {
         resizeTimer = setTimeout(chat.reposition, 500);
     });
 
-    chat.socket = io(baseUrl, {path: '/chat/socket.io'});
+    // eslint-disable-next-line no-undef
+    chat.socket = io(baseUrl, { path: '/chat/socket.io' });
     // chat.socket = io('http://localhost:3000', {path: '/chat/socket.io'});
     // if (chat.currentLocation.startsWith('https://kh-gis-chat-bot.intetics.com')) {
     //     // eslint-disable-next-line no-undef
@@ -1020,7 +1040,22 @@ jQuery(document).ready(function ($) {
     //     chat.socket = io('http://localhost:3000', { path: '/chat/socket.io' });
     // }
 
-    chat.socket.on(WS_ENDPOINTS.CONNECT, chat.connect);
+    chat.socket.on(WS_ENDPOINTS.CONNECT, function (socket) {
+        /* console.log(socket);
+        socket.on('disconnect', () => {
+            chat.socket.emit(WS_ENDPOINTS.CLIENT_DISCONNECTED, 'user disconnected');
+        }); */
+        const openWindow = chat.getCookie('opened');
+        // console.log(openWindow);
+        if (!openWindow) {
+            console.log('Cookie has expired');
+        }
+        console.log('Connected');
+        $('.connection_indicator').css('color', 'green');
+        $('#widget_input_field').attr('placeholder', 'Enter your message...');
+        $('#widget_input_field').attr('contenteditable', 'true');
+        chat.initialize();
+    });
     chat.socket.on(WS_ENDPOINTS.INIT_BOT, chat.initBot);
     chat.socket.on(WS_ENDPOINTS.INIT_USER, chat.initUser);
     chat.socket.on(WS_ENDPOINTS.INIT_USER_COVERTLY, chat.initUserCovertly);
@@ -1030,21 +1065,20 @@ jQuery(document).ready(function ($) {
     chat.socket.on(WS_ENDPOINTS.EXCEPTION, chat.chatException);
     chat.socket.on(WS_ENDPOINTS.DISCONNECT, chat.chatDisconnect);
 
-
     window.SpeechRecognition = window.webkitSpeechRecognition || window.SpeechRecognition;
     let finalTranscript = '';
     let interimTranscript = '';
-    let recognition = new window.SpeechRecognition();
+    const recognition = new window.SpeechRecognition();
     recognition.interimResults = true;
     recognition.maxAlternatives = 10;
     recognition.continuous = false;
-    recognition.lang = "en-GB";
+    recognition.lang = 'en-GB';
     recognition.onresult = (event) => {
         pressed = false;
         finalTranscript = '';
         interimTranscript = '';
         for (let i = event.resultIndex, len = event.results.length; i < len; i++) {
-            let transcript = event.results[i][0].transcript;
+            const transcript = event.results[i][0].transcript;
             if (event.results[i].isFinal) {
                 finalTranscript += transcript;
             } else {
@@ -1056,8 +1090,8 @@ jQuery(document).ready(function ($) {
     let pressed = false;
     recognition.onaudioend = (event) => {
         pressed = false;
-        if (!lStorage.has(lStorage.keys.USER)) {
-            chat.socket.emit(WS_ENDPOINTS.INIT_USER_COVERTLY, {id: null});
+        if (!chat.getUser) {
+            chat.socket.emit(WS_ENDPOINTS.INIT_USER_COVERTLY, { id: null });
         }
         console.log('Recognition stopped');
         recognition.stop();
@@ -1076,16 +1110,24 @@ jQuery(document).ready(function ($) {
 
     $('#audio_input').on('click', chat.audioRecording);
 
-
     $('.show_buttons').on('click', function () {
         $(this).toggleClass('rotated');
         $('#mobile_buttons').toggleClass('expanded');
     });
 
     $(window).on('unload', () => {
-        chat.setCookie('opened', 'false', {expires: chat.expires});
+        chat.setCookie('opened', 'false', { expires: chat.expires });
     });
 
-
     $('#test_linkedin').on('click', chat.linkedinGetAuthToken);
+
+    document.addEventListener('visibilitychange', function () {
+        if (document.visibilityState === 'visible') {
+            lStorage.set(lStorage.keys.VISIBLE_TAB_ID, chat.tabId);
+        }
+        if (document.visibilityState === 'visible' && chat.isUrlChanged()) {
+            chat.onUrlChanged();
+        }
+        console.log(`visibility ${document.visibilityState}`);
+    });
 });
