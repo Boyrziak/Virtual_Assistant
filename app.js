@@ -87,7 +87,7 @@ jQuery(document).ready(function ($) {
             _content[0].text.text = [content];
             const messageContent = new MessageContent(_content, chat.getCurrentLocation());
             const response = new MessageDto(messageContent, senderType, chat.user);
-            console.log(`BUILD TEXT: ${JSON.stringify(response)}`);
+            console.log(`BUILD TEXT: ${response}`);
             return response;
         }
 
@@ -177,6 +177,7 @@ jQuery(document).ready(function ($) {
         pause_timer: 500,
         access_token: '',
         authPath: '',
+        lastDelay: null,
         pausedMessage: null,
         currentLocation: location.href,
         expires: 10,
@@ -202,12 +203,12 @@ jQuery(document).ready(function ($) {
             console.log(`get init-user response with: ${user}`);
         },
         chatMessage: function (messageDto) {
-            console.log(messageDto);
             const delayArr = messageDto.message.messages.filter(mw => mw.hasOwnProperty('payload') && mw.payload.hasOwnProperty('type') && mw.payload.type === 'delay');
             if (delayArr.length > 0) {
                 const delay = delayArr[0].payload.delayValue;
                 const eventName = delayArr[0].payload.eventName;
                 chat.sendNextMessageEvent(delay, eventName);
+                chat.lastDelay = delayArr;
             }
             chat.messageArray.push(messageDto);
             chat.flushNewQueue(chat.messageArray);
@@ -427,6 +428,9 @@ jQuery(document).ready(function ($) {
         },
         onRespond: function (messageDto) {
             chat.cancelNextMessageEvent();
+            console.log(`Sender: ${messageDto.senderType}`);
+            console.log(`Message: ${JSON.stringify(messageDto)}`);
+            chat.messageArray = [];
             chat.socket.emit(WS_ENDPOINTS.MESSAGE, messageDto);
             chat.addMessage(messageDto);
         },
@@ -902,6 +906,7 @@ jQuery(document).ready(function ($) {
             }
         },
         flushNewQueue: function (currentQueue) {
+            console.log('Flushing queue');
             const self = this;
             if (currentQueue.length > 0) {
                 const currentElement = currentQueue.shift();
@@ -923,7 +928,8 @@ jQuery(document).ready(function ($) {
                     'Access-Control-Allow-Origin': '*'
                 }
             };
-            const myLinkedinRequest = new Request(baseUrl + '/node/api/rest/v1/auth/getToken', init);
+            const user = lStorage.get(lStorage.keys.USER);
+            const myLinkedinRequest = new Request(baseUrl + '/node/api/rest/v1/auth/getToken?href=' + location.href + '&userId=' + user.id, init);
             fetch(myLinkedinRequest).then((response) => {
                 console.log(response);
                 return response.json();
@@ -940,13 +946,14 @@ jQuery(document).ready(function ($) {
                 const init = {
                     method: 'GET'
                 };
-                const myLinkedinRequest = new Request(baseUrl + '/node/api/rest/v1/auth/exchangeToken/' + locationResult[1], init);
+                const myLinkedinRequest = new Request(baseUrl + '/node/api/rest/v1/auth/exchangeToken?code=' + locationResult[1], init);
                 fetch(myLinkedinRequest).then(function (result) {
                     return result.json();
                 }).then(function (jsonResponse) {
                     console.log(jsonResponse);
                     chat.setCookie('access_token', jsonResponse.access_token, { expires: jsonResponse.expires });
                     chat.linkedinGetUser(jsonResponse.access_token);
+                    chat.linkedinGetEmail(jsonResponse.access_token);
                 });
             } else {
                 console.log('No Auth Token!');
@@ -969,6 +976,24 @@ jQuery(document).ready(function ($) {
                 chat.guestName = jsonResponse.localizedFirstName;
             });
         },
+        linkedinGetEmail: function (token) {
+            const newInit = {
+                method: 'GET',
+                headers: {
+                    Connection: 'Keep-Alive',
+                    Authorization: 'Bearer ' + token
+                }
+            };
+            const user = lStorage.get(lStorage.keys.USER);
+            const dataRequest = new Request(baseUrl + '/node/api/rest/v1/auth/getEmail?token=' + token + '&userId=' + user.id, newInit);
+            fetch(dataRequest).then(function (result) {
+                return result.json();
+            }).then(function (jsonResponse) {
+                console.log(jsonResponse);
+                location.href = jsonResponse.href;
+                // chat.guestName = jsonResponse.localizedFirstName;
+            });
+        },
         connectWithHuman: function () {
             const msg = ModelFactory.messageDtoBuilderEvent('CONNECT_WITH_HUMAN', SenderType.USER, 'connect with human');
             chat.onRespond(msg);
@@ -976,11 +1001,12 @@ jQuery(document).ready(function ($) {
         },
         audioRecording: function () {
             if (!pressed) {
+                $('#audio_input').off('click');
+                pressed = true;
                 $('#audio_input').addClass('recording');
                 chat.cancelNextMessageEvent();
                 console.log('Recognition started');
                 recognition.start();
-                pressed = true;
                 $(this).addClass('recording');
             }
         },
@@ -1074,7 +1100,6 @@ jQuery(document).ready(function ($) {
     recognition.continuous = false;
     recognition.lang = 'en-GB';
     recognition.onresult = (event) => {
-        pressed = false;
         finalTranscript = '';
         interimTranscript = '';
         for (let i = event.resultIndex, len = event.results.length; i < len; i++) {
@@ -1096,7 +1121,11 @@ jQuery(document).ready(function ($) {
         console.log('Recognition stopped');
         recognition.stop();
         $('#audio_input').removeClass('recording');
-        pressed = false;
+        if (chat.lastDelay) {
+            const delay = chat.lastDelay[0].payload.delayValue;
+            const eventName = chat.lastDelay[0].payload.eventName;
+            chat.sendNextMessageEvent(delay, eventName);
+        }
 
         setTimeout(() => {
             if (finalTranscript !== '') {
@@ -1104,6 +1133,7 @@ jQuery(document).ready(function ($) {
                 chat.onRespond(messageDto);
                 $('#widget_input_field').empty();
                 finalTranscript = '';
+                $('#audio_input').on('click', chat.audioRecording);
             }
         }, 300);
     };
