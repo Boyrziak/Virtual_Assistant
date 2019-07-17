@@ -557,6 +557,7 @@ jQuery(document).ready(function ($) {
             }, 300);
         },
         sendNextMessageEvent: function (delay, eventName) {
+            chat.cancelNextMessageEvent(); // there is no any queue for NEXT-MESSAGE-EVENT, any new NEXT-MESSAGE-EVENT canceling previous one
             chat.nextMessageTimer = setTimeout(function () {
                 const messageDto = ModelFactory.messageDtoBuilderEvent(eventName, SenderType.USER);
                 chat.onRespond(messageDto);
