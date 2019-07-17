@@ -188,19 +188,15 @@ jQuery(document).ready(function ($) {
             console.log(bot);
         },
         initUser: function (user) {
-            chat.user = user;
-            lStorage.set(lStorage.keys.USER, user);
-            chat.socket.emit(WS_ENDPOINTS.CLIENT_CONNECTED, chat.user.id);
-            console.log(`get init-user response with: ${user}`);
-            console.log(`starting to init history`);
+            chat.initUserCovertly(user);
             chat.socket.emit(WS_ENDPOINTS.INIT_HISTORY, user);
             // socket.emit(WS_ENDPOINTS.MESSAGE, ModelFactory.messageDtoBuilderEvent('WELCOME', SenderType.USER));
         },
         initUserCovertly: function (user) {
-            chat.user = user;
-            lStorage.set(lStorage.keys.USER, user);
-            chat.socket.emit(WS_ENDPOINTS.CLIENT_CONNECTED, chat.user.id);
             console.log(`get init-user response with: ${user}`);
+            lStorage.set(lStorage.keys.USER, user);
+            chat.user = user;
+            chat.socket.emit(WS_ENDPOINTS.CLIENT_CONNECTED, chat.user.id);
         },
         chatMessage: function (messageDto) {
             const delayArr = messageDto.message.messages.filter(mw => mw.hasOwnProperty('payload') && mw.payload.hasOwnProperty('type') && mw.payload.type === 'delay');
@@ -224,7 +220,7 @@ jQuery(document).ready(function ($) {
                 // history.forEach(m => );
                 chat.socket.emit(WS_ENDPOINTS.MESSAGE, ModelFactory.messageDtoBuilderEvent('WELCOME', SenderType.USER));
             } else {
-                console.log('init history null');
+                console.log('init history canceled, because of server has returned null');
             }
         },
         openUrl(url) {
@@ -427,12 +423,14 @@ jQuery(document).ready(function ($) {
             }
         },
         onRespond: function (messageDto) {
-            chat.cancelNextMessageEvent();
-            console.log(`Sender: ${messageDto.senderType}`);
-            console.log(`Message: ${JSON.stringify(messageDto)}`);
-            chat.messageArray = [];
-            chat.socket.emit(WS_ENDPOINTS.MESSAGE, messageDto);
-            chat.addMessage(messageDto);
+            if (chat.isCurrentTabActive()) { // only active tab can send request to bot (including NEXT-MESSAGE-EVENT)
+                chat.cancelNextMessageEvent();
+                console.log(`Sender: ${messageDto.senderType}`);
+                console.log(`Message: ${JSON.stringify(messageDto)}`);
+                chat.messageArray = [];
+                chat.socket.emit(WS_ENDPOINTS.MESSAGE, messageDto);
+                chat.addMessage(messageDto);
+            }
         },
         showChoice: function (choice) {
             const self = this;
@@ -483,14 +481,15 @@ jQuery(document).ready(function ($) {
             return false;
         },
         isUrlChanged: function () {
+            console.log(`${chat.getCurrentLocation()} - ${lStorage.get(lStorage.keys.PREVIOUS_URL)}`);
             return chat.getCurrentLocation() !== lStorage.get(lStorage.keys.PREVIOUS_URL);
         },
         onUrlChanged: function () {
             if (chat.isCurrentTabActive()) {
                 console.log('new url detected');
                 lStorage.set(lStorage.keys.PREVIOUS_URL, chat.getCurrentLocation());
-                const userHistory = lStorage.get(lStorage.keys.HISTORY).filter(m => m.senderType === 'user');
-                if (!chat.isUserReactedExplicitly(userHistory[userHistory.length - 1])) {
+                const userHistory = Array.isArray(lStorage.get(lStorage.keys.HISTORY)) ? lStorage.get(lStorage.keys.HISTORY).filter(m => m.senderType === 'user') : null;
+                if (userHistory && !chat.isUserReactedExplicitly(userHistory[userHistory.length - 1])) {
                     const messageDto = ModelFactory.messageDtoBuilderEvent('URL-CHANGED-EVENT', SenderType.USER);
                     chat.onRespond(messageDto);
                 }
@@ -500,9 +499,6 @@ jQuery(document).ready(function ($) {
         initialize: function () {
             if (document.visibilityState === 'visible') {
                 lStorage.set(lStorage.keys.VISIBLE_TAB_ID, chat.tabId);
-            }
-            if (lStorage.has(lStorage.keys.IS_WIDGET_OPEN) && (chat.getCurrentLocation() !== lStorage.get(lStorage.keys.PREVIOUS_URL))) {
-                chat.onUrlChanged();
             }
             if (chat.isSessionExpired()) {
                 chat.socket.emit(WS_ENDPOINTS.INIT_BOT, { id: 1 });
@@ -521,23 +517,29 @@ jQuery(document).ready(function ($) {
                     chat.socket.emit(WS_ENDPOINTS.CLIENT_CONNECTED, chat.user.id);
                     // chat.socket.emit(WS_ENDPOINTS.CLIENT_CONNECTED, chat.user.id);
                     const history = lStorage.get(lStorage.keys.HISTORY);
-                    chat.messageArray.push(history);
-                    chat.flushQueue(history);
-                    setTimeout(() => {
-                        if (lStorage.has(lStorage.keys.IS_WIDGET_OPEN)) {
-                            if (JSON.parse(lStorage.get(lStorage.keys.IS_WIDGET_OPEN))) {
-                                // $('#widget_queue')[0].scrollTop = 648;
-                                chat.open();
-                            }
-                        }
-                    }, 1000);
+                    chat.renderHistory(history);
                 } else {
                     chat.socket.emit(WS_ENDPOINTS.INIT_USER, ModelFactory.getUserObject(null));
                 }
             }
+            if (chat.isUrlChanged()) {
+                chat.onUrlChanged();
+            }
             setInterval(() => {
                 console.log('just for fun');
                 chat.setCookie('opened', 'true');
+            }, 1000);
+        },
+        renderHistory: function (history) {
+            chat.messageArray.push(history);
+            chat.flushQueue(history);
+            setTimeout(() => {
+                if (lStorage.has(lStorage.keys.IS_WIDGET_OPEN)) {
+                    if (JSON.parse(lStorage.get(lStorage.keys.IS_WIDGET_OPEN))) {
+                        // $('#widget_queue')[0].scrollTop = 648;
+                        chat.open();
+                    }
+                }
             }, 1000);
         },
         deleteMyDataRequest: function () {
@@ -548,17 +550,16 @@ jQuery(document).ready(function ($) {
         clearHistoryConfirmed: function (data) {
             console.log('Clear History confirmed  => ', data);
             delete chat.user;
-            lStorage.clear();
+            lStorage.remove(lStorage.keys.USER);
+            lStorage.remove(lStorage.keys.HISTORY);
             setTimeout(() => {
                 $('#widget_queue').empty();
             }, 300);
         },
         sendNextMessageEvent: function (delay, eventName) {
             chat.nextMessageTimer = setTimeout(function () {
-                if (chat.isCurrentTabActive()) {
-                    const messageDto = ModelFactory.messageDtoBuilderEvent(eventName, SenderType.USER);
-                    chat.onRespond(messageDto);
-                }
+                const messageDto = ModelFactory.messageDtoBuilderEvent(eventName, SenderType.USER);
+                chat.onRespond(messageDto);
             }, delay);
         },
         cancelNextMessageEvent: function () {
@@ -1157,6 +1158,11 @@ jQuery(document).ready(function ($) {
     document.addEventListener('visibilitychange', function () {
         if (document.visibilityState === 'visible') {
             lStorage.set(lStorage.keys.VISIBLE_TAB_ID, chat.tabId);
+            if (!chat.user && chat.getUser()) { // init process because of tab left opened after clearing user data
+                chat.user = chat.getUser();
+                const history = lStorage.get(lStorage.keys.HISTORY) ? lStorage.get(lStorage.keys.HISTORY) : [];
+                chat.initHistory(history);
+            }
         }
         if (document.visibilityState === 'visible' && chat.isUrlChanged()) {
             chat.onUrlChanged();
