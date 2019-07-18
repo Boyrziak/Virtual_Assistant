@@ -2,6 +2,8 @@
 jQuery(document).ready(function ($) {
     const baseUrl = 'http://localhost:3000';
     // const baseUrl = 'https://kh-gis-chat-bot.intetics.com';
+    const STOP = 'stop';
+    const START = 'start';
 
     $('#widget_button').draggable({
         containment: 'window',
@@ -29,6 +31,14 @@ jQuery(document).ready(function ($) {
             this.choice = choice;
             this.carousel = carousel;
         }
+    }
+
+    class ServiceMessageDto {
+        constructor(userDto, payload, tabId) {
+            this.userDto = userDto;
+            this.payload = payload;
+            this.tabId = tabId;
+        };
     }
 
     class Text {
@@ -86,7 +96,7 @@ jQuery(document).ready(function ($) {
             _content[0].text = new Text();
             _content[0].text.text = [content];
             const messageContent = new MessageContent(_content, chat.getCurrentLocation());
-            const response = new MessageDto(messageContent, senderType, chat.user);
+            const response = new MessageDto(messageContent, senderType, chat.getUser());
             console.log(`BUILD TEXT: ${response}`);
             return response;
         }
@@ -97,9 +107,13 @@ jQuery(document).ready(function ($) {
             _content[0].event.name = content;
             _content[0].event.display = display || undefined;
             const messageContent = new MessageContent(_content, chat.getCurrentLocation());
-            const response = new MessageDto(messageContent, senderType, chat.user);
+            const response = new MessageDto(messageContent, senderType, chat.getUser());
             console.log(`BUILD EVENT: ${JSON.stringify(response)}`);
             return response;
+        }
+
+        static serviceMessageBuilder(payload) {
+            return new ServiceMessageDto(chat.getUser(), payload, chat.tabId);
         }
     }
 
@@ -118,6 +132,7 @@ jQuery(document).ready(function ($) {
         CLEAR_HISTORY: 'clear-history',
         CLEAR_HISTORY_CONFIRMATION: 'clear-history-confirmation',
         MESSAGE: 'message',
+        SERVICE_MESSAGE: 'service-message',
         CONNECT: 'connect',
         DISCONNECT: 'disconnect',
         EXCEPTION: 'exception',
@@ -199,16 +214,8 @@ jQuery(document).ready(function ($) {
             chat.socket.emit(WS_ENDPOINTS.CLIENT_CONNECTED, chat.user.id);
         },
         chatMessage: function (messageDto) {
-            const delayArr = messageDto.message.messages.filter(mw => mw.hasOwnProperty('payload') && mw.payload.hasOwnProperty('type') && mw.payload.type === 'delay');
-            if (delayArr.length > 0) {
-                const delay = delayArr[0].payload.delayValue;
-                const eventName = delayArr[0].payload.eventName;
-                chat.sendNextMessageEvent(delay, eventName);
-                chat.lastDelay = delayArr;
-            }
             chat.messageArray.push(messageDto);
             chat.flushNewQueue(chat.messageArray);
-            // chat.addMessage(messageDto);
         },
         initHistory: function (history) {
             lStorage.set(lStorage.keys.HISTORY, history);
@@ -424,7 +431,7 @@ jQuery(document).ready(function ($) {
         },
         onRespond: function (messageDto) {
             if (chat.isCurrentTabActive()) { // only active tab can send request to bot (including NEXT-MESSAGE-EVENT)
-                chat.cancelNextMessageEvent();
+                // chat.cancelNextMessageEvent();
                 console.log(`Sender: ${messageDto.senderType}`);
                 console.log(`Message: ${JSON.stringify(messageDto)}`);
                 chat.messageArray = [];
@@ -475,11 +482,6 @@ jQuery(document).ready(function ($) {
             // TODO put over here implementation that return real status of session expiration
             return !lStorage.has(lStorage.keys.HISTORY);
         },
-        isUserReactedExplicitly: function (lastUserMessage) {
-            // const msg = lastUserMessage.message.messages[0];
-            // return msg.hasOwnProperty('text') || (msg.hasOwnProperty('event') && msg.event.hasOwnProperty('display'));
-            return false;
-        },
         isUrlChanged: function () {
             console.log(`${chat.getCurrentLocation()} - ${lStorage.get(lStorage.keys.PREVIOUS_URL)}`);
             return chat.getCurrentLocation() !== lStorage.get(lStorage.keys.PREVIOUS_URL);
@@ -489,7 +491,7 @@ jQuery(document).ready(function ($) {
                 console.log('new url detected');
                 lStorage.set(lStorage.keys.PREVIOUS_URL, chat.getCurrentLocation());
                 const userHistory = Array.isArray(lStorage.get(lStorage.keys.HISTORY)) ? lStorage.get(lStorage.keys.HISTORY).filter(m => m.senderType === 'user') : null;
-                if (userHistory && !chat.isUserReactedExplicitly(userHistory[userHistory.length - 1])) {
+                if (userHistory) {
                     const messageDto = ModelFactory.messageDtoBuilderEvent('URL-CHANGED-EVENT', SenderType.USER);
                     chat.onRespond(messageDto);
                 }
@@ -526,7 +528,7 @@ jQuery(document).ready(function ($) {
                 chat.onUrlChanged();
             }
             setInterval(() => {
-                console.log('just for fun');
+                // console.log('just for fun');
                 chat.setCookie('opened', 'true');
             }, 1000);
         },
@@ -545,7 +547,6 @@ jQuery(document).ready(function ($) {
         deleteMyDataRequest: function () {
             const messageDto = ModelFactory.messageDtoBuilderEvent('CLEAR_USER_DATA', SenderType.USER, 'clear my data');
             chat.onRespond(messageDto);
-            chat.cancelNextMessageEvent();
         },
         clearHistoryConfirmed: function (data) {
             console.log('Clear History confirmed  => ', data);
@@ -555,19 +556,6 @@ jQuery(document).ready(function ($) {
             setTimeout(() => {
                 $('#widget_queue').empty();
             }, 300);
-        },
-        sendNextMessageEvent: function (delay, eventName) {
-            chat.cancelNextMessageEvent(); // there is no any queue for NEXT-MESSAGE-EVENT, any new NEXT-MESSAGE-EVENT canceling previous one
-            chat.nextMessageTimer = setTimeout(function () {
-                const messageDto = ModelFactory.messageDtoBuilderEvent(eventName, SenderType.USER);
-                chat.onRespond(messageDto);
-            }, delay);
-        },
-        cancelNextMessageEvent: function () {
-            if (chat.nextMessageTimer) {
-                clearTimeout(chat.nextMessageTimer);
-            }
-            chat.nextMessageTimer = 0;
         },
         idleAction: function (timeout) {
             console.log('Idle for ' + timeout + ' seconds');
@@ -599,7 +587,7 @@ jQuery(document).ready(function ($) {
             }
             $(newMessage).append(content);
             icon.addEventListener('click', function () {
-                chat.cancelNextMessageEvent();
+                chat.socket.emit(WS_ENDPOINTS.SERVICE_MESSAGE, STOP);
                 $('#modal_overlay').show('fade', 800, () => {
                     $('#modal_overlay').css('display', 'flex');
                     const lightbox = $('#widget_lightbox');
@@ -640,7 +628,7 @@ jQuery(document).ready(function ($) {
                         $(lightbox).find('video').attr('controls', 'true');
                         $(lightbox).find('video').attr('id', 'carousel_video');
                     }
-                    chat.cancelNextMessageEvent();
+                    chat.socket.emit(WS_ENDPOINTS.SERVICE_MESSAGE, STOP);
                     $(lightbox).show('blind', { direction: 'up' }, 700);
                     $(document).mouseup(function (e) {
                         const container = $('#widget_lightbox');
@@ -650,13 +638,7 @@ jQuery(document).ready(function ($) {
                             $('#widget_lightbox').find('video')[0].pause();
                             document.getElementById('carousel_video').pause();
                             content.pause();
-                            const delayArr = message.message.messages.filter(mw => mw.hasOwnProperty('payload') && mw.payload.hasOwnProperty('type') && mw.payload.type === 'delay');
-                            console.log(message);
-                            if (delayArr.length > 0) {
-                                const delay = delayArr[0].payload.delayValue;
-                                const eventName = delayArr[0].payload.eventName;
-                                chat.sendNextMessageEvent(delay, eventName);
-                            }
+                            chat.socket.emit(WS_ENDPOINTS.SERVICE_MESSAGE, START);
                         }
                     });
                     setTimeout(() => {
@@ -693,12 +675,12 @@ jQuery(document).ready(function ($) {
 
                 content.addEventListener('click', function () {
                     chat.pausedMessage = message;
-                    chat.cancelNextMessageEvent();
+                    chat.socket.emit(WS_ENDPOINTS.SERVICE_MESSAGE, STOP);
                     chat.showCarouselLightbox(cards, index);
                 });
 
                 icon.addEventListener('click', function () {
-                    chat.cancelNextMessageEvent();
+                    chat.socket.emit(WS_ENDPOINTS.SERVICE_MESSAGE, STOP);
                     chat.showCarouselLightbox(cards, index);
                 });
             });
@@ -783,13 +765,7 @@ jQuery(document).ready(function ($) {
                             $('#carousel_overlay').hide('fade', 800);
                             document.getElementById('carousel_video').pause();
                             wrap.find('.arrow_button').remove();
-                            const delayArr = chat.pausedMessage.message.messages.filter(mw => mw.hasOwnProperty('payload') && mw.payload.hasOwnProperty('type') && mw.payload.type === 'delay');
-                            if (delayArr.length > 0) {
-                                const delay = delayArr[0].payload.delayValue;
-                                const eventName = delayArr[0].payload.eventName;
-                                chat.sendNextMessageEvent(delay, eventName);
-                            }
-                            // content.pause();
+                            chat.socket.emit(WS_ENDPOINTS.SERVICE_MESSAGE, START);
                         }
                     });
                     $('#close_carousel_lightbox').css({
@@ -1002,14 +978,13 @@ jQuery(document).ready(function ($) {
         connectWithHuman: function () {
             const msg = ModelFactory.messageDtoBuilderEvent('CONNECT_WITH_HUMAN', SenderType.USER, 'connect with human');
             chat.onRespond(msg);
-            chat.cancelNextMessageEvent();
         },
         audioRecording: function () {
             if (!pressed) {
                 $('#audio_input').off('click');
                 pressed = true;
                 $('#audio_input').addClass('recording');
-                chat.cancelNextMessageEvent();
+                chat.socket.emit(WS_ENDPOINTS.SERVICE_MESSAGE, STOP);
                 console.log('Recognition started');
                 recognition.start();
                 $(this).addClass('recording');
@@ -1126,11 +1101,7 @@ jQuery(document).ready(function ($) {
         console.log('Recognition stopped');
         recognition.stop();
         $('#audio_input').removeClass('recording');
-        if (chat.lastDelay) {
-            const delay = chat.lastDelay[0].payload.delayValue;
-            const eventName = chat.lastDelay[0].payload.eventName;
-            chat.sendNextMessageEvent(delay, eventName);
-        }
+        chat.socket.emit(WS_ENDPOINTS.SERVICE_MESSAGE, START);
 
         setTimeout(() => {
             if (finalTranscript !== '') {
