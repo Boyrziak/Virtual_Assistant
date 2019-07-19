@@ -587,7 +587,7 @@ jQuery(document).ready(function ($) {
             }
             $(newMessage).append(content);
             icon.addEventListener('click', function () {
-                chat.socket.emit(WS_ENDPOINTS.SERVICE_MESSAGE, STOP);
+                chat.sendServiceMessage(STOP);
                 $('#modal_overlay').show('fade', 800, () => {
                     $('#modal_overlay').css('display', 'flex');
                     const lightbox = $('#widget_lightbox');
@@ -604,6 +604,7 @@ jQuery(document).ready(function ($) {
                     $(document).mouseup(function (e) {
                         const container = $('#widget_lightbox');
                         if (container.has(e.target).length === 0) {
+                            chat.sendServiceMessage(START);
                             $('#widget_lightbox').hide('fade', 600);
                             $('#modal_overlay').hide('fade', 800);
                             document.getElementById('carousel_video').pause();
@@ -628,17 +629,17 @@ jQuery(document).ready(function ($) {
                         $(lightbox).find('video').attr('controls', 'true');
                         $(lightbox).find('video').attr('id', 'carousel_video');
                     }
-                    chat.socket.emit(WS_ENDPOINTS.SERVICE_MESSAGE, STOP);
+                    chat.sendServiceMessage(STOP);
                     $(lightbox).show('blind', { direction: 'up' }, 700);
                     $(document).mouseup(function (e) {
                         const container = $('#widget_lightbox');
                         if (container.has(e.target).length === 0) {
+                            chat.sendServiceMessage(START);
                             $('#widget_lightbox').hide('fade', 600);
                             $('#modal_overlay').hide('fade', 800);
                             $('#widget_lightbox').find('video')[0].pause();
                             document.getElementById('carousel_video').pause();
                             content.pause();
-                            chat.socket.emit(WS_ENDPOINTS.SERVICE_MESSAGE, START);
                         }
                     });
                     setTimeout(() => {
@@ -675,12 +676,12 @@ jQuery(document).ready(function ($) {
 
                 content.addEventListener('click', function () {
                     chat.pausedMessage = message;
-                    chat.socket.emit(WS_ENDPOINTS.SERVICE_MESSAGE, STOP);
+                    chat.sendServiceMessage(STOP);
                     chat.showCarouselLightbox(cards, index);
                 });
 
                 icon.addEventListener('click', function () {
-                    chat.socket.emit(WS_ENDPOINTS.SERVICE_MESSAGE, STOP);
+                    chat.sendServiceMessage(STOP);
                     chat.showCarouselLightbox(cards, index);
                 });
             });
@@ -759,13 +760,13 @@ jQuery(document).ready(function ($) {
                     $('#carousel_lightbox').animate({ opacity: 1 }, 400);
                     $(document).mouseup(function (e) {
                         if (wrap.has(e.target).length === 0 && $('#carousel_overlay').css('display') !== 'none') {
+                            chat.sendServiceMessage(START);
                             wrap.css('display', 'none');
                             $('#close_carousel_lightbox').css('display', 'none');
                             lightbox.css('opacity', 0);
                             $('#carousel_overlay').hide('fade', 800);
                             document.getElementById('carousel_video').pause();
                             wrap.find('.arrow_button').remove();
-                            chat.socket.emit(WS_ENDPOINTS.SERVICE_MESSAGE, START);
                         }
                     });
                     $('#close_carousel_lightbox').css({
@@ -984,7 +985,7 @@ jQuery(document).ready(function ($) {
                 $('#audio_input').off('click');
                 pressed = true;
                 $('#audio_input').addClass('recording');
-                chat.socket.emit(WS_ENDPOINTS.SERVICE_MESSAGE, STOP);
+                chat.sendServiceMessage(STOP);
                 console.log('Recognition started');
                 recognition.start();
                 $(this).addClass('recording');
@@ -995,6 +996,10 @@ jQuery(document).ready(function ($) {
         },
         getUser: function () {
             return lStorage.has(lStorage.keys.USER) ? lStorage.get(lStorage.keys.USER) : null;
+        },
+        sendServiceMessage(srvMsg) {
+            chat.socket.emit(WS_ENDPOINTS.SERVICE_MESSAGE, ModelFactory.serviceMessageBuilder(srvMsg));
+            console.log(`service message ${srvMsg.toUpperCase()} sent`);
         }
     };
 
@@ -1101,7 +1106,7 @@ jQuery(document).ready(function ($) {
         console.log('Recognition stopped');
         recognition.stop();
         $('#audio_input').removeClass('recording');
-        chat.socket.emit(WS_ENDPOINTS.SERVICE_MESSAGE, START);
+        chat.sendServiceMessage(START);
 
         setTimeout(() => {
             if (finalTranscript !== '') {
