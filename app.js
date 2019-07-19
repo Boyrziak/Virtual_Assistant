@@ -370,7 +370,7 @@ jQuery(document).ready(function ($) {
             });
         },
 
-        addMessage: function (messageDto) {
+        addMessage: function (messageDto, toHistory) {
             const sender = messageDto.senderType;
             const self = this;
             setTimeout(function () {
@@ -412,7 +412,9 @@ jQuery(document).ready(function ($) {
                     }
                 });
                 self.scrollQuery(1);
-                lStorage.addMessageToHistory(messageDto);
+                if (toHistory) {
+                    lStorage.addMessageToHistory(messageDto);
+                }
             }, 600);
         },
         showEvent: function (event, sender, options) {
@@ -436,7 +438,7 @@ jQuery(document).ready(function ($) {
                 console.log(`Message: ${JSON.stringify(messageDto)}`);
                 chat.messageArray = [];
                 chat.socket.emit(WS_ENDPOINTS.MESSAGE, messageDto);
-                chat.addMessage(messageDto);
+                chat.addMessage(messageDto, true);
             }
         },
         showChoice: function (choice) {
@@ -555,6 +557,13 @@ jQuery(document).ready(function ($) {
             lStorage.remove(lStorage.keys.HISTORY);
             setTimeout(() => {
                 $('#widget_queue').empty();
+                $('#widget_queue').append('<div id="waves_message" class="widget_message bot_message">\n' +
+                    '                <div id="wave">\n' +
+                    '                    <span class="dot"></span>\n' +
+                    '                    <span class="dot"></span>\n' +
+                    '                    <span class="dot"></span>\n' +
+                    '                </div>\n' +
+                    '            </div>');
             }, 300);
         },
         idleAction: function (timeout) {
@@ -878,12 +887,12 @@ jQuery(document).ready(function ($) {
         },
         flushQueue: function (currentQueue) {
             const self = this;
-            if (currentQueue.length > 20) {
-                currentQueue.splice(0, currentQueue.length - 20);
-            }
+            // if (currentQueue.length > 20) {
+            //     currentQueue.splice(0, currentQueue.length - 20);
+            // }
             if (currentQueue.length > 0) {
                 const currentElement = currentQueue.shift();
-                self.addMessage(currentElement);
+                self.addMessage(currentElement, false);
                 self.flushQueue(currentQueue);
             }
         },
@@ -897,8 +906,8 @@ jQuery(document).ready(function ($) {
                     $('#waves_message').show('drop', { 'direction': 'left' }, 800);
                     setTimeout(() => {
                         $('#waves_message').hide('drop', { 'direction': 'left' }, 200);
-                        self.addMessage(currentElement);
-                        self.flushQueue(currentQueue);
+                        self.addMessage(currentElement, true);
+                        self.flushNewQueue(currentQueue);
                     }, self.type_timer);
                 }, self.pause_timer);
             }
@@ -1041,11 +1050,11 @@ jQuery(document).ready(function ($) {
     });
 
     // eslint-disable-next-line no-undef
-    chat.socket = io(baseUrl, { path: '/chat/socket.io' });
+    // chat.socket = io(baseUrl, { path: '/chat/socket.io' });
     // chat.socket = io('http://localhost:3000', {path: '/chat/socket.io'});
     // if (chat.currentLocation.startsWith('https://kh-gis-chat-bot.intetics.com')) {
     //     // eslint-disable-next-line no-undef
-    //     chat.socket = io('https://kh-gis-chat-bot.intetics.com', { path: '/chat/socket.io' });
+        chat.socket = io('https://kh-gis-chat-bot.intetics.com', { path: '/chat/socket.io' });
     // } else {
     //     // eslint-disable-next-line no-undef
     //     chat.socket = io('http://localhost:3000', { path: '/chat/socket.io' });
