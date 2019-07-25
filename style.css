@@ -24,6 +24,22 @@ body {
     cursor: pointer;
 }
 
+#test_observable {
+    width: 150px;
+    height: 50px;
+    display: flex;
+    align-content: center;
+    justify-content: center;
+    align-items: center;
+    position: absolute;
+    top: 600px;
+    left: 200px;
+    background: #e7873c;
+    color: white;
+    font-size: 20px;
+    cursor: pointer;
+}
+
 #widget_button {
     border: 2px solid transparent;
     border-radius: 100%;

@@ -10,7 +10,7 @@
     <link rel="stylesheet" href="jquery-ui.min.css">
     <script src="jquery.js" type="text/javascript"></script>
     <script src="jquery-ui.min.js" type="text/javascript"></script>
-    <script src="app.js" type="text/javascript"></script>
+    <script type="module" src="src/app.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.2.0/socket.io.js"></script>
     <title>Test</title>
 </head>
@@ -19,6 +19,9 @@
     <a href="file:///C:/Users/atroskov/development/chatBot/InteticsVirtualAssistant/tests/testchatbot/index2.html">link</a>
     <div id="test_linkedin">
         Login
+    </div>
+    <div id="test_observable">
+        Observable
     </div>
 </div>
 <div id="widget_container">
@@ -89,21 +92,12 @@
     <img src="Layer%207.png">
     <div id="preview_container"></div>
 </div>
-<div id="modal_overlay">
-    <div id="widget_lightbox">
-    </div>
-    <div id="close_lightbox">
-        <!--<i class="fas fa-times"></i>-->
-        <img src="cancel.png" title="Close">
-    </div>
-</div>
 <div id="carousel_overlay">
     <div class="loader_circle">
         <div class="loader_dot dot_1"></div>
         <div class="loader_dot dot_2"></div>
     </div>
     <div id="carousel_wrap">
-        <!--<div class="arrow_container"></div>-->
         <div class="pane left_pane">
             <div class="arrow_button left_arrow"><i class="fas fa-chevron-left"></i></div>
         </div>
@@ -115,7 +109,6 @@
         <div class="dots_holder"></div>
     </div>
     <div id="close_carousel_lightbox">
-        <!--<i class="fas fa-times"></i>-->
         <img src="cancel.png" title="Close">
     </div>
 </div>
