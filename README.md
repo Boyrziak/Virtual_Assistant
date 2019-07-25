@@ -13,6 +13,10 @@ When the chat is opened dragging will be enabled via dragging the header
 
 ## Chat
 
+#### initialize ()
+
+Initializes all data from storage and sets up the bot to the last state. Inits local history
+
 ### Messaging
 
 #### chatMessage (Object{} `messageDto`)
@@ -66,6 +70,31 @@ Appends and renders links to social media. Accepts array of links which contain 
 Can be used to show any link.
 
 ### History
+
+#### renderHistory (Array[] `history`) 
+
+Renders history from Local Storage. Flushes `history` array to render via `flushQueue` method. Also renders bot open if it was so.
+
+
+#### flushQueue (Array[] `currentQueue`)
+
+Recursively calls `addMessage` function from shifting the `currentQueue` **Array**. The flag to write message to history is always `false` here. Also can cut the shown history to make lazy load in future.
+
+#### clearHistoryConfirmed (Object{} `data`)
+
+Clears history and deletes the user from storage. Empties the queue and appends the typing animation again.
+
+### Visualisation
+
+#### open ()
+
+Opens the bot from hidden view. Used as callback from widget button click and in the initialization step. Removes the subscription after click to prevent multiclick, show widget, hide button and reposition widget if needed. 
+Makes header draggable and disable dragging by the button. Also scrolls the queue down and makes changes for mobile adaptive layout.
+Subscribe the button again after full render.
+
+#### close () 
+
+
 
 
 
