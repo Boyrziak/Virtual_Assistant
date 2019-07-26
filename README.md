@@ -94,8 +94,101 @@ Subscribe the button again after full render.
 
 #### close () 
 
+Closes the bot to hidden view. Used as callback from close button on header. Reposition the button if needed. 
+
+#### reposition ()
+
+Checks if the widget remains in the window boundaries. Reposition it to have distance 5px from the closest boundaries.
+
+#### showPreview (String `text`)
+
+Renders and shows 
+
+### Cookie
+
+#### setCookie (String `name`, String `value`, Object{} `options`)
+
+Sets cookie valued `value` to `name`. `options` can set expiration and prop names.
+
+#### getCookie (String `name`)
+
+Gets cookie by `name`
+
+#### deleteCookie (String `name`)
+
+Deletes cookie by `name`
+
+### Linkedin
+
+#### linkedinGetAuthToken ()
+
+Makes request for authentication code to the backend. Request url has `user.id` and current `location.href`. Response contains json with `uri` property, which is used to navigate to the authorization page.
+After authentication code is located in the http parameter
+
+#### linkedinExchangeAuthToken ()
+
+Claims code from http request and makes another request to the backend, sending code to Linkedin to get authorization token. Then methods `linkedinGetUser` and `linkedinGetEmail` are called
+
+#### linkedinGetUser (String `token`)
+
+Makes request to the backend with authorization token to get authorized user data. 
+
+#### linkedinGetEmail (String `token`)
+
+Makes request to the backend with authorization token to get authorized user email. 
+
+### Util
+
+#### openUrl (String `url`)
+
+Navigates page to the `url`
+
+#### scrollQuery (Number `timeout`)
+
+Scrolls widget queue to the bottom with `timeout` speed
+
+#### isUrlChanged ()
+
+Checks if page were navigated to another url
+
+#### idleAction (Number `timeout`)
+
+Starts idle countdown for `timeout` milliseconds
+
+#### getCurrentLocation ()
+
+Returns current location
+
+#### getUser ()
+
+Returns current user 
+
+### Listeners
+
+Listeners are made using jQuery `on` method or using Rx.js `subscribe`
+
+#### $('.human_connect').on('click')
+
+##### Runs connectWithHuman ()
+
+Makes a request for human connection, appends message 'connect with human' to the queue
+
+#### $(window).resize() 
+
+Sets timeout for chat reposition after window resize
+
+#### $('#audio_input').on('click')
+
+##### Runs audioRecording ()
+
+Changes view of the audio button, stops next message event end starts audio recording
+
+#### $('.show_buttons').on('click')
+
+Works on mobile view. Changes show button and shows or hide mobile buttons
+
+#### $(window).on('unload')
+
+When page is changed or closed cookie `opened` is written
 
 
-
-
-##Description
